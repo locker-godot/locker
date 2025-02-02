@@ -1,0 +1,97 @@
+[gd_scene load_steps=6 format=3 uid="uid://nsasxp7tvxqc"]
+
+[ext_resource type="Script" path="res://addons/locker/storage_manager/scene_storage_manager.gd" id="1_g2jt1"]
+[ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_ppk2r"]
+[ext_resource type="Script" path="res://test/scripts/player.gd" id="2_0ejpl"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/inputs_accessor.gd" id="3_4lwy6"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/player_accessor.gd" id="3_oggo8"]
+
+[node name="TestOneScene" type="Node2D"]
+
+[node name="StorageManager" type="Node" parent="."]
+script = ExtResource("1_g2jt1")
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(535, 322)
+texture = ExtResource("1_ppk2r")
+script = ExtResource("2_0ejpl")
+
+[node name="PlayerAccessor" type="Node" parent="Player"]
+script = ExtResource("3_oggo8")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AccessButtons" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="Slot1" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot1"]
+layout_mode = 2
+text = "Save 1"
+
+[node name="Load" type="Button" parent="UILayer/UI/AccessButtons/Slot1"]
+layout_mode = 2
+text = "Load 1"
+
+[node name="Slot2" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Save 2"
+
+[node name="Load" type="Button" parent="UILayer/UI/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Load 2"
+
+[node name="Slot3" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Save 3"
+
+[node name="Load" type="Button" parent="UILayer/UI/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Load 3"
+
+[node name="CustomInputs" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -40.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="Color" type="ColorPickerButton" parent="UILayer/UI/CustomInputs"]
+layout_mode = 2
+text = "Pick a Color!"
+
+[node name="Name" type="LineEdit" parent="UILayer/UI/CustomInputs"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+placeholder_text = "Type something!"
+
+[node name="InputsAccessor" type="Node" parent="UILayer/UI/CustomInputs"]
+script = ExtResource("3_4lwy6")
+
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Save" to="StorageManager" method="save_data" binds= [1]]
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Load" to="StorageManager" method="load_data" binds= [1]]
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot2/Save" to="StorageManager" method="save_data" binds= [2]]
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot2/Load" to="StorageManager" method="load_data" binds= [2]]
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Save" to="StorageManager" method="save_data" binds= [3]]
+[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Load" to="StorageManager" method="load_data" binds= [3]]
+[connection signal="color_changed" from="UILayer/UI/CustomInputs/Color" to="Player" method="set_modulate"]
