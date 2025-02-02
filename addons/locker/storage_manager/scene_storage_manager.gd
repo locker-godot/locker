@@ -6,8 +6,8 @@
 class_name LokSceneStorageManager
 extends LokStorageManager
 
-func save_data(file_id: int) -> bool:
+func save_data(file_id: int) -> Dictionary:
 	return LokGlobalStorageManager.save_data(file_id)
 
-func load_data(file_id: int) -> bool:
+func load_data(file_id: int) -> Dictionary:
 	return LokGlobalStorageManager.load_data(file_id)

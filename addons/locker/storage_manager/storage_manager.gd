@@ -6,6 +6,6 @@
 class_name LokStorageManager
 extends Node
 
-func save_data(file_id: int) -> bool: return false
+func save_data(file_id: int) -> Dictionary: return {}
 
-func load_data(file_id: int) -> bool: return false
+func load_data(file_id: int) -> Dictionary: return {}
