@@ -4,6 +4,8 @@
 ## [StorageAccessor]s that need saving and loading.
 extends LokStorageManager
 
+var accessors := {}
+
 func get_saves_directory() -> String:
 	if not ProjectSettings.has_setting("addons/locker/saves_directory"):
 		return ""
@@ -21,3 +23,11 @@ func get_save_files_format() -> String:
 		return ""
 	
 	return ProjectSettings.get_setting("addons/locker/save_files_format")
+
+func add_accessor(accessor: LokStorageAccessor) -> bool:
+	accessors[accessor.get_path()] = accessor
+	
+	return true
+
+func remove_accessor(accessor: LokStorageAccessor) -> bool:
+	return accessors.erase(accessor.get_path())
