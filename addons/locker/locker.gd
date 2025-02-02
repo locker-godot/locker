@@ -1,10 +1,11 @@
 @tool
+class_name LockerPlugin
 extends EditorPlugin
 
 var locker_autoload_name := "LokGlobalStorageManager"
 var locker_autoload_path := "res://addons/locker/storage_manager/global_storage_manager.gd"
 
-var locker_settings := {
+static var settings := {
 	"addons/locker/saves_directory": {
 		"default_value": "user://saves/",
 		"is_basic": true,
@@ -52,15 +53,15 @@ var locker_settings := {
 	}
 }
 
-func add_locker_settings() -> void:
-	for setting: String in locker_settings.keys():
-		ProjectSettings.set_setting(setting, locker_settings[setting]["default_value"])
-		ProjectSettings.set_initial_value(setting, locker_settings[setting]["default_value"])
-		ProjectSettings.set_as_basic(setting, locker_settings[setting]["is_basic"])
-		ProjectSettings.add_property_info(locker_settings[setting]["property_info"])
+func add_settings() -> void:
+	for setting: String in settings.keys():
+		ProjectSettings.set_setting(setting, settings[setting]["default_value"])
+		ProjectSettings.set_initial_value(setting, settings[setting]["default_value"])
+		ProjectSettings.set_as_basic(setting, settings[setting]["is_basic"])
+		ProjectSettings.add_property_info(settings[setting]["property_info"])
 
-func remove_locker_settings() -> void:
-	for setting: String in locker_settings.keys():
+func remove_settings() -> void:
+	for setting: String in settings.keys():
 		ProjectSettings.set_setting(setting, null)
 
 func _enter_tree() -> void:
@@ -74,9 +75,9 @@ func _exit_tree() -> void:
 # Registers plugin's autoload and settings.
 func _enable_plugin() -> void:
 	add_autoload_singleton(locker_autoload_name, locker_autoload_path)
-	add_locker_settings()
+	add_settings()
 
 # Unregisters plugin's autoload and settings.
 func _disable_plugin() -> void:
 	remove_autoload_singleton(locker_autoload_name)
-	remove_locker_settings()
+	remove_settings()

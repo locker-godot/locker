@@ -9,28 +9,28 @@ var accessors := {}
 var access_strategy: LokAccessStrategy = LokJSONAccessStrategy.new()
 
 func get_saves_directory() -> String:
-	if not ProjectSettings.has_setting("addons/locker/saves_directory"):
-		return ""
-	
-	return ProjectSettings.get_setting("addons/locker/saves_directory")
+	return ProjectSettings.get_setting(
+		"addons/locker/saves_directory",
+		LockerPlugin.settings["addons/locker/saves_directory"]["default_value"]
+	)
 
 func get_save_files_prefix() -> String:
-	if not ProjectSettings.has_setting("addons/locker/save_files_prefix"):
-		return ""
-	
-	return ProjectSettings.get_setting("addons/locker/save_files_prefix")
+	return ProjectSettings.get_setting(
+		"addons/locker/save_files_prefix",
+		LockerPlugin.settings["addons/locker/save_files_prefix"]["default_value"]
+	)
 
 func get_save_files_format() -> String:
-	if not ProjectSettings.has_setting("addons/locker/save_files_format"):
-		return ""
-	
-	return ProjectSettings.get_setting("addons/locker/save_files_format")
+	return ProjectSettings.get_setting(
+		"addons/locker/save_files_format",
+		LockerPlugin.settings["addons/locker/save_files_format"]["default_value"]
+	)
 
 func get_encryption_password() -> String:
-	if not ProjectSettings.has_setting("addons/locker/encryption_password"):
-		return ""
-	
-	return ProjectSettings.get_setting("addons/locker/encryption_password")
+	return ProjectSettings.get_setting(
+		"addons/locker/encryption_password",
+		LockerPlugin.settings["addons/locker/encryption_password"]["default_value"]
+	)
 
 func get_save_path(file_id: int) -> String:
 	var result: String = ""
@@ -54,12 +54,14 @@ func gather_data() -> Dictionary:
 	var data: Dictionary = {}
 	
 	for accessor_path: NodePath in accessors.keys():
-		data[accessor_path] = accessors[accessor_path].save_data()
+		data[var_to_str(accessor_path)] = accessors[accessor_path].save_data()
 	
 	return data
 
 func distribute_data(data: Dictionary) -> void:
-	for accessor_path: NodePath in data.keys():
+	for str_accessor_path: String in data.keys():
+		var accessor_path: NodePath = str_to_var(str_accessor_path)
+		
 		var accessor := (
 			get_tree().current_scene.get_node(accessor_path)
 		) as LokStorageAccessor
@@ -68,7 +70,9 @@ func distribute_data(data: Dictionary) -> void:
 			push_error("Accessor %s not found" % [ accessor_path ])
 			continue
 		
-		accessor.load_data(data.get(accessor_path))
+		var accessor_data: Dictionary = data[str_accessor_path]
+		
+		accessor.load_data(accessor_data)
 
 func save_data(file_id: int) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
