@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 
-var locker_autoload_name := "LokGlobalStorageAccessor"
+var locker_autoload_name := "LokGlobalStorageManager"
 var locker_autoload_path := "res://addons/locker/storage_manager/global_storage_manager.gd"
 
 var locker_settings := {
