@@ -2,7 +2,7 @@
 class_name LokJSONAccessStrategy
 extends LokAccessStrategy
 
-func save_data(file_id: int) -> Dictionary:
+func save_data(file_id: int, data: Dictionary) -> Dictionary:
 	var save_path: String = LokGlobalStorageManager.get_save_path(file_id)
 	
 	var file := FileAccess.open(save_path, FileAccess.WRITE)
@@ -10,8 +10,6 @@ func save_data(file_id: int) -> Dictionary:
 	if file == null:
 		push_error("Error on saving data: %s" % [ FileAccess.get_open_error() ])
 		return {}
-	
-	var data: Dictionary = LokGlobalStorageManager.gather_data()
 	
 	file.store_string(JSON.stringify(data, "\t"))
 	
@@ -41,7 +39,5 @@ func load_data(file_id: int) -> Dictionary:
 	if data == null:
 		push_error("Couldn't parse JSON data")
 		return {}
-	
-	LokGlobalStorageManager.distribute_data(data)
 	
 	return data
