@@ -3,9 +3,8 @@ class_name LockerPlugin
 extends EditorPlugin
 
 const CONFIG_PATH: String = "res://addons/locker/config.cfg"
-
-var locker_autoload_name := "LokGlobalStorageManager"
-var locker_autoload_path := "res://addons/locker/storage_manager/global_storage_manager.gd"
+const AUTOLOAD_NAME := "LokGlobalStorageManager"
+const AUTOLOAD_PATH := "res://addons/locker/storage_manager/global_storage_manager.gd"
 
 static var settings := {
 	"addons/locker/saves_directory": {
@@ -64,6 +63,30 @@ static var settings := {
 		"config_section": "Encryption"
 	}
 }
+
+static func get_saves_directory() -> String:
+	return ProjectSettings.get_setting(
+		"addons/locker/saves_directory",
+		settings["addons/locker/saves_directory"]["default_value"]
+	)
+
+static func get_save_files_prefix() -> String:
+	return ProjectSettings.get_setting(
+		"addons/locker/save_files_prefix",
+		settings["addons/locker/save_files_prefix"]["default_value"]
+	)
+
+static func get_save_files_format() -> String:
+	return ProjectSettings.get_setting(
+		"addons/locker/save_files_format",
+		settings["addons/locker/save_files_format"]["default_value"]
+	)
+
+static func get_encryption_password() -> String:
+	return ProjectSettings.get_setting(
+		"addons/locker/encryption_password",
+		settings["addons/locker/encryption_password"]["default_value"]
+	)
 
 # Saves the settings in the settings_to_save dictionary
 func save_settings(settings_to_save: Dictionary) -> void:
@@ -150,12 +173,12 @@ func _exit_tree() -> void:
 
 # Registers plugin's autoload and settings.
 func _enable_plugin() -> void:
-	add_autoload_singleton(locker_autoload_name, locker_autoload_path)
+	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
 	add_settings()
 
 # Unregisters plugin's autoload and settings.
 func _disable_plugin() -> void:
-	remove_autoload_singleton(locker_autoload_name)
+	remove_autoload_singleton(AUTOLOAD_NAME)
 	remove_settings()
 
 func _on_project_settings_changed() -> void:

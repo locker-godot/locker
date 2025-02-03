@@ -9,30 +9,6 @@ var accessors: Array[LokStorageAccessor] = []
 
 var access_strategy: LokAccessStrategy = LokJSONAccessStrategy.new()
 
-func get_saves_directory() -> String:
-	return ProjectSettings.get_setting(
-		"addons/locker/saves_directory",
-		LockerPlugin.settings["addons/locker/saves_directory"]["default_value"]
-	)
-
-func get_save_files_prefix() -> String:
-	return ProjectSettings.get_setting(
-		"addons/locker/save_files_prefix",
-		LockerPlugin.settings["addons/locker/save_files_prefix"]["default_value"]
-	)
-
-func get_save_files_format() -> String:
-	return ProjectSettings.get_setting(
-		"addons/locker/save_files_format",
-		LockerPlugin.settings["addons/locker/save_files_format"]["default_value"]
-	)
-
-func get_encryption_password() -> String:
-	return ProjectSettings.get_setting(
-		"addons/locker/encryption_password",
-		LockerPlugin.settings["addons/locker/encryption_password"]["default_value"]
-	)
-
 func get_accessors_grouped_by_id() -> Dictionary:
 	var grouped_accessors: Dictionary = {}
 	
@@ -60,10 +36,10 @@ func get_repeated_accessors_grouped_by_id() -> Dictionary:
 func get_save_path(file_id: int) -> String:
 	var result: String = ""
 	
-	result += get_saves_directory()
-	result += get_save_files_prefix()
+	result += LockerPlugin.get_saves_directory()
+	result += LockerPlugin.get_save_files_prefix()
 	result += str(file_id)
-	result += get_save_files_format()
+	result += LockerPlugin.get_save_files_format()
 	
 	return result
 
@@ -104,7 +80,7 @@ func warn_repeated_accessor_ids(repeated_accessors: Dictionary) -> void:
 	print_rich(warning)
 
 func save_data(file_id: int) -> Dictionary:
-	var saves_directory: String = get_saves_directory()
+	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
 		var err: Error = DirAccess.make_dir_recursive_absolute(saves_directory)
@@ -118,7 +94,7 @@ func save_data(file_id: int) -> Dictionary:
 	return access_strategy.save_data(file_id)
 
 func load_data(file_id: int) -> Dictionary:
-	var saves_directory: String = get_saves_directory()
+	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
 		push_error("Data not found in directory: '%s'" % [
