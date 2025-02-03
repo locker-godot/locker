@@ -32,15 +32,21 @@ func set_id(new_id: String) -> void:
 		
 		update_configuration_warnings()
 
+func save_data(file_id: int) -> Dictionary:
+	return LokGlobalStorageManager.save_data(file_id, [ self.id ])
+
+func load_data(file_id: int) -> Dictionary:
+	return LokGlobalStorageManager.load_data(file_id, [ self.id ])
+
+func retrieve_data() -> Dictionary: return {}
+
+func consume_data(_data: Dictionary) -> void: pass
+
 func _enter_tree() -> void:
 	LokGlobalStorageManager.add_accessor(self)
 
 func _exit_tree() -> void:
 	LokGlobalStorageManager.remove_accessor(self)
-
-func save_data() -> Dictionary: return {}
-
-func load_data(_data: Dictionary) -> void: pass
 
 func _get_configuration_warnings() -> PackedStringArray:
 	var warnings: PackedStringArray = []

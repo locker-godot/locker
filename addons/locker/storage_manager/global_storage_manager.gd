@@ -73,17 +73,25 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	
 	return accessor_index != -1
 
-func gather_data() -> Dictionary:
+func gather_data(accessor_ids: Array[String] = []) -> Dictionary:
 	var data: Dictionary = {}
 	
 	for accessor: LokStorageAccessor in accessors:
-		data[accessor.id] = accessor.save_data()
+		if not accessor_ids.is_empty() and not accessor.id in accessor_ids:
+			continue
+		
+		data[accessor.id] = accessor.retrieve_data()
 	
 	return data
 
-func distribute_data(data: Dictionary) -> void:
+func distribute_data(
+	data: Dictionary, accessor_ids: Array[String] = []
+) -> void:
 	for accessor: LokStorageAccessor in accessors:
-		accessor.load_data(data.get(accessor.id, {}))
+		if not accessor_ids.is_empty() and not accessor.id in accessor_ids:
+			continue
+		
+		accessor.consume_data(data.get(accessor.id, {}))
 
 func warn_repeated_accessor_ids() -> void:
 	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
@@ -102,7 +110,7 @@ func warn_repeated_accessor_ids() -> void:
 	
 	print_rich(warning)
 
-func save_data(file_id: int) -> Dictionary:
+func save_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
 	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
@@ -114,9 +122,11 @@ func save_data(file_id: int) -> Dictionary:
 			])
 			return {}
 	
-	return access_strategy.save_data(file_id)
+	var data: Dictionary = gather_data(accessor_ids)
+	
+	return access_strategy.save_data(file_id, data)
 
-func load_data(file_id: int) -> Dictionary:
+func load_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
 	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
@@ -125,7 +135,11 @@ func load_data(file_id: int) -> Dictionary:
 		])
 		return {}
 	
-	return access_strategy.load_data(file_id)
+	var data: Dictionary = access_strategy.load_data(file_id)
+	
+	distribute_data(data, accessor_ids)
+	
+	return data
 
 func _init() -> void:
 	if not Engine.is_editor_hint():

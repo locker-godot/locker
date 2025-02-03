@@ -6,6 +6,10 @@
 class_name LokStorageManager
 extends Node
 
-func save_data(file_id: int) -> Dictionary: return {}
+func save_data(
+	file_id: int, accessor_ids: Array[String] = []
+) -> Dictionary: return {}
 
-func load_data(file_id: int) -> Dictionary: return {}
+func load_data(
+	file_id: int, accessor_ids: Array[String] = []
+) -> Dictionary: return {}

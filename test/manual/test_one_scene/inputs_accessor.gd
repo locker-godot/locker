@@ -5,13 +5,13 @@ extends LokStorageAccessor
 
 @onready var name_input: LineEdit = $"../Name"
 
-func save_data() -> Dictionary:
+func retrieve_data() -> Dictionary:
 	return {
 		"color": var_to_str(color.color),
 		"name": name_input.text
 	}
 
-func load_data(data: Dictionary) -> void:
+func consume_data(data: Dictionary) -> void:
 	if data.has("color"):
 		color.color = str_to_var(data["color"])
 		
