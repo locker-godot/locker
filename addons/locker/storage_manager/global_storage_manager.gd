@@ -52,12 +52,24 @@ func get_save_path(file_id: int) -> String:
 func add_accessor(accessor: LokStorageAccessor) -> bool:
 	accessors.append(accessor)
 	
+	if not accessor.id_changed.is_connected(_on_accessor_id_changed):
+		accessor.id_changed.connect(_on_accessor_id_changed)
+	
+	if not Engine.is_editor_hint():
+		warn_repeated_accessor_ids()
+	
 	return true
 
 func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	var accessor_index: int = accessors.find(accessor)
 	
 	accessors.remove_at(accessor_index)
+	
+	if accessor.id_changed.is_connected(_on_accessor_id_changed):
+		accessor.id_changed.disconnect(_on_accessor_id_changed)
+	
+	if not Engine.is_editor_hint():
+		warn_repeated_accessor_ids()
 	
 	return accessor_index != -1
 
@@ -73,7 +85,12 @@ func distribute_data(data: Dictionary) -> void:
 	for accessor: LokStorageAccessor in accessors:
 		accessor.load_data(data.get(accessor.id, {}))
 
-func warn_repeated_accessor_ids(repeated_accessors: Dictionary) -> void:
+func warn_repeated_accessor_ids() -> void:
+	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
+	
+	if repeated_accessors.is_empty():
+		return
+	
 	var warning: String = "[img]res://addons/locker/assets/icon.svg[/img] "
 	warning += "[color=#f5cb5c]Detected Storage Accessors with repeated ids, which may cause loss of data:[/color]\n"
 	
@@ -118,9 +135,10 @@ func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	
-	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
-	
-	if repeated_accessors.is_empty():
+	warn_repeated_accessor_ids()
+
+func _on_accessor_id_changed(old_id: String, new_id: String) -> void:
+	if Engine.is_editor_hint():
 		return
 	
-	warn_repeated_accessor_ids(repeated_accessors)
+	warn_repeated_accessor_ids()

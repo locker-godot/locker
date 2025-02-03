@@ -17,13 +17,20 @@
 class_name LokStorageAccessor
 extends Node
 
+signal id_changed(from: String, to: String)
+
 @export var id: String:
 	set = set_id
 
 func set_id(new_id: String) -> void:
+	var old_id: String = id
+	
 	id = new_id
 	
-	update_configuration_warnings()
+	if new_id != old_id:
+		id_changed.emit(old_id, new_id)
+		
+		update_configuration_warnings()
 
 func _enter_tree() -> void:
 	LokGlobalStorageManager.add_accessor(self)
