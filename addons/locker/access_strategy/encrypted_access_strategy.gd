@@ -2,7 +2,7 @@
 class_name LokEncryptedAccessStrategy
 extends LokAccessStrategy
 
-func save_data(file_id: int, accessors: Dictionary) -> Dictionary:
+func save_data(file_id: int) -> Dictionary:
 	var save_path: String = LokGlobalStorageManager.get_save_path(file_id)
 	
 	var file := FileAccess.open_encrypted_with_pass(
@@ -23,7 +23,7 @@ func save_data(file_id: int, accessors: Dictionary) -> Dictionary:
 	
 	return data
 
-func load_data(file_id: int, accessors: Dictionary) -> Dictionary:
+func load_data(file_id: int) -> Dictionary:
 	var save_path: String = LokGlobalStorageManager.get_save_path(file_id)
 	
 	if not FileAccess.file_exists(save_path):

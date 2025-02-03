@@ -86,7 +86,7 @@ func save_data(file_id: int) -> Dictionary:
 			])
 			return {}
 	
-	return access_strategy.save_data(file_id, accessors)
+	return access_strategy.save_data(file_id)
 
 func load_data(file_id: int) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
@@ -97,4 +97,4 @@ func load_data(file_id: int) -> Dictionary:
 		])
 		return {}
 	
-	return access_strategy.load_data(file_id, accessors)
+	return access_strategy.load_data(file_id)
