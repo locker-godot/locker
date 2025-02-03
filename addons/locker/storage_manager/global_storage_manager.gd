@@ -39,16 +39,6 @@ func get_repeated_accessors_grouped_by_id() -> Dictionary:
 	
 	return repeated_accessors
 
-func get_save_path(file_id: int) -> String:
-	var result: String = ""
-	
-	result += LockerPlugin.get_saves_directory()
-	result += LockerPlugin.get_save_files_prefix()
-	result += str(file_id)
-	result += LockerPlugin.get_save_files_format()
-	
-	return result
-
 func add_accessor(accessor: LokStorageAccessor) -> bool:
 	accessors.append(accessor)
 	

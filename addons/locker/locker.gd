@@ -94,6 +94,16 @@ static func get_encryption_password() -> String:
 		settings["addons/locker/encryption_password"]["default_value"]
 	)
 
+static func get_save_path(file_id: int) -> String:
+	var result: String = ""
+	
+	result += get_saves_directory()
+	result += get_save_files_prefix()
+	result += str(file_id)
+	result += get_save_files_format()
+	
+	return result
+
 # Saves the settings in the settings_to_save dictionary
 func save_settings(settings_to_save: Dictionary) -> void:
 	if settings_to_save.is_empty():
