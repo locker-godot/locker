@@ -1,0 +1,12 @@
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<mask id="path-1-outside-1_1_2" maskUnits="userSpaceOnUse" x="0" y="1" width="16" height="14" fill="black">
+<rect fill="white" y="1" width="16" height="14"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1 2H15V13H14V14H11V13H5V14H2V13H1V2Z"/>
+</mask>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1 2H15V13H14V14H11V13H5V14H2V13H1V2Z" fill="#46494C"/>
+<path d="M15 2H16V1H15V2ZM1 2V1H0V2H1ZM15 13V14H16V13H15ZM14 13V12H13V13H14ZM14 14V15H15V14H14ZM11 14H10V15H11V14ZM11 13H12V12H11V13ZM5 13V12H4V13H5ZM5 14V15H6V14H5ZM2 14H1V15H2V14ZM2 13H3V12H2V13ZM1 13H0V14H1V13ZM15 1H1V3H15V1ZM16 13V2H14V13H16ZM14 14H15V12H14V14ZM13 13V14H15V13H13ZM14 13H11V15H14V13ZM12 14V13H10V14H12ZM5 14H11V12H5V14ZM6 14V13H4V14H6ZM2 15H5V13H2V15ZM1 13V14H3V13H1ZM1 14H2V12H1V14ZM0 2V13H2V2H0Z" fill="#C5C3C6" mask="url(#path-1-outside-1_1_2)"/>
+<circle cx="4" cy="4" r="3.5" transform="matrix(-1 0 0 1 14 3.5)" stroke="#C5C3C6"/>
+<line x1="2.5" y1="5" x2="2.5" y2="7" stroke="#C5C3C6"/>
+<line y1="-0.5" x2="2" y2="-0.5" transform="matrix(-1 0 0 1 7 8)" stroke="#C5C3C6"/>
+<line x1="2.5" y1="8" x2="2.5" y2="10" stroke="#C5C3C6"/>
+</svg>
