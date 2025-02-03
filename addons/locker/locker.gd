@@ -82,6 +82,12 @@ static func get_save_files_format() -> String:
 		settings["addons/locker/save_files_format"]["default_value"]
 	)
 
+static func get_use_encryption() -> bool:
+	return ProjectSettings.get_setting(
+		"addons/locker/use_encryption",
+		settings["addons/locker/use_encryption"]["default_value"]
+	)
+
 static func get_encryption_password() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/encryption_password",

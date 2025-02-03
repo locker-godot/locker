@@ -8,7 +8,7 @@ func save_data(file_id: int) -> Dictionary:
 	var file := FileAccess.open_encrypted_with_pass(
 		save_path,
 		FileAccess.WRITE,
-		LokGlobalStorageManager.get_encryption_password()
+		LockerPlugin.get_encryption_password()
 	)
 	
 	if file == null:
@@ -33,7 +33,7 @@ func load_data(file_id: int) -> Dictionary:
 	var file := FileAccess.open_encrypted_with_pass(
 		save_path,
 		FileAccess.READ,
-		LokGlobalStorageManager.get_encryption_password()
+		LockerPlugin.get_encryption_password()
 	)
 	
 	if file == null:

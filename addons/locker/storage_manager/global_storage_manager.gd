@@ -9,6 +9,12 @@ var accessors: Array[LokStorageAccessor] = []
 
 var access_strategy: LokAccessStrategy = LokJSONAccessStrategy.new()
 
+func select_access_strategy() -> void:
+	if LockerPlugin.get_use_encryption():
+		access_strategy = LokEncryptedAccessStrategy.new()
+	else:
+		access_strategy = LokJSONAccessStrategy.new()
+
 func get_accessors_grouped_by_id() -> Dictionary:
 	var grouped_accessors: Dictionary = {}
 	
@@ -103,6 +109,10 @@ func load_data(file_id: int) -> Dictionary:
 		return {}
 	
 	return access_strategy.load_data(file_id)
+
+func _init() -> void:
+	if not Engine.is_editor_hint():
+		select_access_strategy()
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
