@@ -1,10 +1,11 @@
+@tool
 ## This class is registered as an autoload when the Locker plugin is active.
 ## 
 ## It's this class that's responsible for keeping track of all the
 ## [StorageAccessor]s that need saving and loading.
 extends LokStorageManager
 
-var accessors := {}
+var accessors: Array[LokStorageAccessor] = []
 
 var access_strategy: LokAccessStrategy = LokJSONAccessStrategy.new()
 
@@ -32,35 +33,63 @@ func get_encryption_password() -> String:
 		LockerPlugin.settings["addons/locker/encryption_password"]["default_value"]
 	)
 
+func get_accessors_grouped_by_id() -> Dictionary:
+	var grouped_accessors: Dictionary = {}
+	
+	for accessor: LokStorageAccessor in accessors:
+		if not grouped_accessors.has(accessor.id):
+			grouped_accessors[accessor.id] = []
+		
+		grouped_accessors[accessor.id].append(accessor)
+	
+	return grouped_accessors
+
+func get_repeated_accessors_grouped_by_id() -> Dictionary:
+	var repeated_accessors: Dictionary = {}
+	
+	var accessor_groups: Dictionary = get_accessors_grouped_by_id()
+	
+	for accessor_id: String in accessor_groups.keys():
+		if accessor_groups[accessor_id].size() <= 1:
+			continue
+		
+		repeated_accessors[accessor_id] = accessor_groups[accessor_id]
+	
+	return repeated_accessors
+
 func get_save_path(file_id: int) -> String:
 	var result: String = ""
 	
 	result += get_saves_directory()
-	result += get_save_files_prefix() 
+	result += get_save_files_prefix()
 	result += str(file_id)
 	result += get_save_files_format()
 	
 	return result
 
 func add_accessor(accessor: LokStorageAccessor) -> bool:
-	accessors[accessor.get_path()] = accessor
+	accessors.append(accessor)
 	
 	return true
 
 func remove_accessor(accessor: LokStorageAccessor) -> bool:
-	return accessors.erase(accessor.get_path())
+	var accessor_index: int = accessors.find(accessor)
+	
+	accessors.remove_at(accessor_index)
+	
+	return accessor_index != -1
 
 func gather_data() -> Dictionary:
 	var data: Dictionary = {}
 	
-	for accessor_path: NodePath in accessors.keys():
-		data[var_to_str(accessor_path)] = accessors[accessor_path].save_data()
+	for accessor: LokStorageAccessor in accessors:
+		data[accessor.id] = accessor.save_data()
 	
 	return data
 
 func distribute_data(data: Dictionary) -> void:
-	for str_accessor_path: String in data.keys():
-		var accessor_path: NodePath = str_to_var(str_accessor_path)
+	for accessor: LokStorageAccessor in accessors:
+		accessor.load_data(data.get(accessor.id, {}))
 		
 		var accessor := (
 			get_tree().current_scene.get_node(accessor_path)
