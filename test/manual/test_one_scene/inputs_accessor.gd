@@ -12,7 +12,9 @@ func save_data() -> Dictionary:
 	}
 
 func load_data(data: Dictionary) -> void:
-	color.color = str_to_var(data["color"])
-	name_input.text = data["name"]
-	
-	color.color_changed.emit(color.color)
+	if data.has("color"):
+		color.color = str_to_var(data["color"])
+		
+		color.color_changed.emit(color.color)
+	if data.has("name"):
+		name_input.text = data["name"]

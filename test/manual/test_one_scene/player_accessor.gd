@@ -9,4 +9,5 @@ func save_data() -> Dictionary:
 	}
 
 func load_data(data: Dictionary) -> void:
-	player.global_position = str_to_var(data["position"])
+	if data.has("position"):
+		player.global_position = str_to_var(data["position"])
