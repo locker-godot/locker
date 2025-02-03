@@ -1,3 +1,4 @@
+@tool
 ## The [LokStorageAccessor] is a node specialized in saving and loading data.
 ## 
 ## This class should have its [method save_data] and [method load_data] methods
@@ -16,6 +17,14 @@
 class_name LokStorageAccessor
 extends Node
 
+@export var id: String:
+	set = set_id
+
+func set_id(new_id: String) -> void:
+	id = new_id
+	
+	update_configuration_warnings()
+
 func _enter_tree() -> void:
 	LokGlobalStorageManager.add_accessor(self)
 
@@ -25,3 +34,11 @@ func _exit_tree() -> void:
 func save_data() -> Dictionary: return {}
 
 func load_data(_data: Dictionary) -> void: pass
+
+func _get_configuration_warnings() -> PackedStringArray:
+	var warnings: PackedStringArray = []
+	
+	if id == "":
+		warnings.append("To work properly, you must set a unique id to this Storage Accessor.")
+	
+	return warnings

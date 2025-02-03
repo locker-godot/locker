@@ -1,4 +1,4 @@
-
+@tool
 extends LokStorageAccessor
 
 @onready var player: Sprite2D = $".."
