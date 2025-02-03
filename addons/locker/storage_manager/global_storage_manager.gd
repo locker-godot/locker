@@ -90,18 +90,18 @@ func gather_data() -> Dictionary:
 func distribute_data(data: Dictionary) -> void:
 	for accessor: LokStorageAccessor in accessors:
 		accessor.load_data(data.get(accessor.id, {}))
+
+func warn_repeated_accessor_ids(repeated_accessors: Dictionary) -> void:
+	var warning: String = "[img]res://addons/locker/assets/icon.svg[/img] "
+	warning += "[color=#f5cb5c]Detected Storage Accessors with repeated ids, which may cause loss of data:[/color]\n"
+	
+	for accessor_id: String in repeated_accessors.keys():
+		warning += "[color=#f5cb5c]- ID '%s':[/color]\n" % [ accessor_id ]
 		
-		var accessor := (
-			get_tree().current_scene.get_node(accessor_path)
-		) as LokStorageAccessor
-		
-		if accessor == null:
-			push_error("Accessor %s not found" % [ accessor_path ])
-			continue
-		
-		var accessor_data: Dictionary = data[str_accessor_path]
-		
-		accessor.load_data(accessor_data)
+		for accessor: LokStorageAccessor in repeated_accessors[accessor_id]:
+			warning += "[color=#f5cb5c] - %s;[/color]\n" % [ accessor.get_path() ]
+	
+	print_rich(warning)
 
 func save_data(file_id: int) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
@@ -127,3 +127,14 @@ func load_data(file_id: int) -> Dictionary:
 		return {}
 	
 	return access_strategy.load_data(file_id)
+
+func _ready() -> void:
+	if Engine.is_editor_hint():
+		return
+	
+	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
+	
+	if repeated_accessors.is_empty():
+		return
+	
+	warn_repeated_accessor_ids(repeated_accessors)
