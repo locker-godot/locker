@@ -6,8 +6,22 @@
 class_name LokSceneStorageManager
 extends LokStorageManager
 
-func save_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
-	return LokGlobalStorageManager.save_data(file_id, accessor_ids)
+func save_data(
+	file_id: int,
+	version_number: String = "1.0.0",
+	accessor_ids: Array[String] = []
+) -> Dictionary:
+	return LokGlobalStorageManager.save_data(
+		file_id,
+		version_number,
+		accessor_ids
+	)
 
-func load_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
-	return LokGlobalStorageManager.load_data(file_id, accessor_ids)
+func load_data(
+	file_id: int,
+	accessor_ids: Array[String] = []
+) -> Dictionary:
+	return LokGlobalStorageManager.load_data(
+		file_id,
+		accessor_ids
+	)

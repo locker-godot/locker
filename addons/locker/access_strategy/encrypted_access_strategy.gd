@@ -2,7 +2,12 @@
 class_name LokEncryptedAccessStrategy
 extends LokAccessStrategy
 
-func save_data(file_id: int, data: Dictionary) -> Dictionary:
+func save_data(
+	file_id: int,
+	data: Dictionary,
+	version_number: String = "1.0.0",
+	suppress_errors: bool = false
+) -> Dictionary:
 	var save_path: String = LockerPlugin.get_save_path(file_id)
 	
 	var file: FileAccess
@@ -47,7 +52,10 @@ func save_data(file_id: int, data: Dictionary) -> Dictionary:
 	
 	return data
 
-func load_data(file_id: int) -> Dictionary:
+func load_data(
+	file_id: int,
+	suppress_errors: bool = false
+) -> Dictionary:
 	var save_path: String = LockerPlugin.get_save_path(file_id)
 	
 	if not FileAccess.file_exists(save_path):

@@ -19,10 +19,12 @@ func get_accessors_grouped_by_id() -> Dictionary:
 	var grouped_accessors: Dictionary = {}
 	
 	for accessor: LokStorageAccessor in accessors:
-		if not grouped_accessors.has(accessor.id):
-			grouped_accessors[accessor.id] = []
+		var accessor_id: String = accessor.get_id()
 		
-		grouped_accessors[accessor.id].append(accessor)
+		if not grouped_accessors.has(accessor_id):
+			grouped_accessors[accessor_id] = []
+		
+		grouped_accessors[accessor_id].append(accessor)
 	
 	return grouped_accessors
 
@@ -63,25 +65,48 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	
 	return accessor_index != -1
 
-func gather_data(accessor_ids: Array[String] = []) -> Dictionary:
+func gather_data(
+	accessor_ids: Array[String] = [],
+	version_number: String = "1.0.0"
+) -> Dictionary:
 	var data: Dictionary = {}
 	
 	for accessor: LokStorageAccessor in accessors:
-		if not accessor_ids.is_empty() and not accessor.id in accessor_ids:
+		accessor.set_version_number(version_number)
+		
+		var accessor_id: String = accessor.get_id()
+		
+		if accessor_id == "":
+			continue
+		if (
+			not accessor_ids.is_empty() and
+			not accessor_id in accessor_ids
+		):
 			continue
 		
-		data[accessor.id] = accessor.retrieve_data()
+		data[accessor_id] = accessor.retrieve_data()
 	
 	return data
 
 func distribute_data(
-	data: Dictionary, accessor_ids: Array[String] = []
+	data: Dictionary,
+	accessor_ids: Array[String] = [],
+	version_number: String = "1.0.0"
 ) -> void:
 	for accessor: LokStorageAccessor in accessors:
-		if not accessor_ids.is_empty() and not accessor.id in accessor_ids:
+		accessor.set_version_number(version_number)
+		
+		var accessor_id: String = accessor.get_id()
+		
+		if accessor_id == "":
+			continue
+		if (
+			not accessor_ids.is_empty() and
+			not accessor_id in accessor_ids
+		):
 			continue
 		
-		accessor.consume_data(data.get(accessor.id, {}))
+		accessor.consume_data(data.get(accessor_id, {}))
 
 func warn_repeated_accessor_ids() -> void:
 	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
@@ -100,7 +125,11 @@ func warn_repeated_accessor_ids() -> void:
 	
 	print_rich(warning)
 
-func save_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
+func save_data(
+	file_id: int,
+	version_number: String = "1.0.0",
+	accessor_ids: Array[String] = []
+) -> Dictionary:
 	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
@@ -110,24 +139,33 @@ func save_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
 			push_error("Unable to create saves directory: '%s'" % [
 				saves_directory
 			])
+			
 			return {}
 	
-	var data: Dictionary = gather_data(accessor_ids)
+	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
-	return access_strategy.save_data(file_id, data)
+	return access_strategy.save_data(file_id, data, version_number)
 
-func load_data(file_id: int, accessor_ids: Array[String] = []) -> Dictionary:
+func load_data(
+	file_id: int,
+	accessor_ids: Array[String] = []
+) -> Dictionary:
 	var saves_directory: String = LockerPlugin.get_saves_directory()
 	
 	if not DirAccess.dir_exists_absolute(saves_directory):
 		push_error("Data not found in directory: '%s'" % [
 			saves_directory
 		])
+		
 		return {}
 	
 	var data: Dictionary = access_strategy.load_data(file_id)
+	var version_number: String = data.get("version", "")
 	
-	distribute_data(data, accessor_ids)
+	if version_number == "":
+		distribute_data(data, accessor_ids)
+	else:
+		distribute_data(data, accessor_ids, version_number)
 	
 	return data
 
