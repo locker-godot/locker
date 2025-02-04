@@ -40,6 +40,17 @@ static var settings := {
 		},
 		"config_section": "General"
 	},
+	"addons/locker/save_versions": {
+		"default_value": true,
+		"current_value": true,
+		"is_basic": true,
+		"property_info": {
+			"name": "addons/locker/save_versions",
+			"type": TYPE_BOOL,
+			"hint": PROPERTY_HINT_NONE
+		},
+		"config_section": "General"
+	},
 	"addons/locker/use_encryption": {
 		"default_value": true,
 		"current_value": true,
@@ -61,6 +72,27 @@ static var settings := {
 			"hint": PROPERTY_HINT_NONE
 		},
 		"config_section": "Encryption"
+	},
+	"addons/locker/debug/debug_mode": {
+		"default_value": true,
+		"current_value": true,
+		"is_basic": true,
+		"property_info": {
+			"name": "addons/locker/debug/debug_mode",
+			"type": TYPE_BOOL
+		},
+		"config_section": "Debug"
+	},
+	"addons/locker/debug/warning_color": {
+		"default_value": Color("#f5cb5c"),
+		"current_value": Color("#f5cb5c"),
+		"is_basic": true,
+		"property_info": {
+			"name": "addons/locker/debug/warning_color",
+			"type": TYPE_COLOR,
+			"hint": PROPERTY_HINT_COLOR_NO_ALPHA
+		},
+		"config_section": "Debug"
 	}
 }
 
@@ -82,6 +114,12 @@ static func get_save_files_format() -> String:
 		settings["addons/locker/save_files_format"]["default_value"]
 	)
 
+static func get_save_versions() -> bool:
+	return ProjectSettings.get_setting(
+		"addons/locker/save_versions",
+		settings["addons/locker/save_versions"]["default_value"]
+	)
+
 static func get_use_encryption() -> bool:
 	return ProjectSettings.get_setting(
 		"addons/locker/use_encryption",
@@ -92,6 +130,18 @@ static func get_encryption_password() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/encryption_password",
 		settings["addons/locker/encryption_password"]["default_value"]
+	)
+
+static func get_debug_mode() -> bool:
+	return ProjectSettings.get_setting(
+		"addons/locker/debug/debug_mode",
+		settings["addons/locker/debug/debug_mode"]["default_value"]
+	)
+
+static func get_debug_warning_color() -> Color:
+	return ProjectSettings.get_setting(
+		"addons/locker/debug/warning_color",
+		settings["addons/locker/debug/warning_color"]["default_value"]
 	)
 
 static func get_save_path(file_id: int) -> String:
@@ -191,6 +241,7 @@ func _exit_tree() -> void:
 func _enable_plugin() -> void:
 	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
 	add_settings()
+	load_settings()
 
 # Unregisters plugin's autoload and settings.
 func _disable_plugin() -> void:
