@@ -1,10 +1,12 @@
-[gd_scene load_steps=6 format=3 uid="uid://nsasxp7tvxqc"]
+[gd_scene load_steps=8 format=3 uid="uid://nsasxp7tvxqc"]
 
 [ext_resource type="Script" path="res://addons/locker/storage_manager/scene_storage_manager.gd" id="1_g2jt1"]
 [ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_ppk2r"]
 [ext_resource type="Script" path="res://test/scripts/player.gd" id="2_0ejpl"]
-[ext_resource type="Script" path="res://test/manual/test_one_scene/inputs_accessor.gd" id="3_4lwy6"]
-[ext_resource type="Script" path="res://test/manual/test_one_scene/player_accessor.gd" id="3_oggo8"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="4_355pw"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="5_wtdtj"]
+[ext_resource type="Resource" uid="uid://dlivqnyyhtns6" path="res://test/manual/test_one_scene/player_accessor_v1_0_0.tres" id="6_cqjq8"]
+[ext_resource type="Resource" uid="uid://7ieyrubssued" path="res://test/manual/test_one_scene/inputs_accessor_v1_0_0.tres" id="7_cmxrm"]
 
 [node name="TestOneScene" type="Node2D"]
 
@@ -17,7 +19,11 @@ texture = ExtResource("1_ppk2r")
 script = ExtResource("2_0ejpl")
 
 [node name="PlayerAccessor" type="Node" parent="Player"]
-script = ExtResource("3_oggo8")
+script = ExtResource("4_355pw")
+versions = Array[ExtResource("5_wtdtj")]([ExtResource("6_cqjq8")])
+dependencies = {
+"player": NodePath("..")
+}
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 
@@ -67,6 +73,37 @@ text = "Save 3"
 layout_mode = 2
 text = "Load 3"
 
+[node name="IndividualAccessButtons" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -66.0
+offset_right = 121.0
+grow_vertical = 0
+
+[node name="PlayerAccess" type="HBoxContainer" parent="UILayer/UI/IndividualAccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/IndividualAccessButtons/PlayerAccess"]
+layout_mode = 2
+text = "Save Player Slot 2"
+
+[node name="Load" type="Button" parent="UILayer/UI/IndividualAccessButtons/PlayerAccess"]
+layout_mode = 2
+text = "Load Player Slot 2"
+
+[node name="InputsAccess" type="HBoxContainer" parent="UILayer/UI/IndividualAccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/IndividualAccessButtons/InputsAccess"]
+layout_mode = 2
+text = "Save Inputs Slot 2"
+
+[node name="Load" type="Button" parent="UILayer/UI/IndividualAccessButtons/InputsAccess"]
+layout_mode = 2
+text = "Load Inputs Slot 2"
+
 [node name="CustomInputs" type="VBoxContainer" parent="UILayer/UI"]
 layout_mode = 1
 anchors_preset = 1
@@ -86,7 +123,12 @@ layout_mode = 2
 placeholder_text = "Type something!"
 
 [node name="InputsAccessor" type="Node" parent="UILayer/UI/CustomInputs"]
-script = ExtResource("3_4lwy6")
+script = ExtResource("4_355pw")
+versions = Array[ExtResource("5_wtdtj")]([ExtResource("7_cmxrm")])
+dependencies = {
+"color": NodePath("../Color"),
+"name": NodePath("../Name")
+}
 
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Save" to="StorageManager" method="save_data" binds= [1]]
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Load" to="StorageManager" method="load_data" binds= [1]]
@@ -94,4 +136,8 @@ script = ExtResource("3_4lwy6")
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot2/Load" to="StorageManager" method="load_data" binds= [2]]
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Save" to="StorageManager" method="save_data" binds= [3]]
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Load" to="StorageManager" method="load_data" binds= [3]]
+[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/PlayerAccess/Save" to="Player/PlayerAccessor" method="save_data" binds= [2]]
+[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/PlayerAccess/Load" to="Player/PlayerAccessor" method="load_data" binds= [2]]
+[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/InputsAccess/Save" to="UILayer/UI/CustomInputs/InputsAccessor" method="save_data" binds= [2]]
+[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/InputsAccess/Load" to="UILayer/UI/CustomInputs/InputsAccessor" method="load_data" binds= [2]]
 [connection signal="color_changed" from="UILayer/UI/CustomInputs/Color" to="Player" method="set_modulate"]
