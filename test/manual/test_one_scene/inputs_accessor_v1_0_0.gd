@@ -20,7 +20,7 @@ func consume_data(
 	dependencies: Dictionary
 ) -> void:
 	var color: ColorPickerButton = dependencies.get("color")
-	var name_input: ColorPickerButton = dependencies.get("name_input")
+	var name_input: LineEdit = dependencies.get("name_input")
 	
 	if color != null and data.has("color"):
 		color.color = str_to_var(data["color"])

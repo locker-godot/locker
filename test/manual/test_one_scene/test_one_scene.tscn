@@ -21,7 +21,7 @@ script = ExtResource("2_0ejpl")
 [node name="PlayerAccessor" type="Node" parent="Player"]
 script = ExtResource("4_355pw")
 versions = Array[ExtResource("5_wtdtj")]([ExtResource("6_cqjq8")])
-dependencies = {
+dependency_paths = {
 "player": NodePath("..")
 }
 
@@ -125,9 +125,9 @@ placeholder_text = "Type something!"
 [node name="InputsAccessor" type="Node" parent="UILayer/UI/CustomInputs"]
 script = ExtResource("4_355pw")
 versions = Array[ExtResource("5_wtdtj")]([ExtResource("7_cmxrm")])
-dependencies = {
+dependency_paths = {
 "color": NodePath("../Color"),
-"name": NodePath("../Name")
+"name_input": NodePath("../Name")
 }
 
 [connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Save" to="StorageManager" method="save_data" binds= [1]]
