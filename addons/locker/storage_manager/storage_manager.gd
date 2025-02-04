@@ -9,7 +9,8 @@ extends Node
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
-	accessor_ids: Array[String] = []
+	accessor_ids: Array[String] = [],
+	remove_version: Callable = func(number: String) -> bool: return false
 ) -> Dictionary: return {}
 
 func load_data(

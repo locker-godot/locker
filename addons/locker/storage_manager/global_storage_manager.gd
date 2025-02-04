@@ -60,9 +60,6 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	if accessor.id_changed.is_connected(_on_accessor_id_changed):
 		accessor.id_changed.disconnect(_on_accessor_id_changed)
 	
-	if not Engine.is_editor_hint():
-		warn_repeated_accessor_ids()
-	
 	return accessor_index != -1
 
 func gather_data(
@@ -128,7 +125,8 @@ func warn_repeated_accessor_ids() -> void:
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
-	accessor_ids: Array[String] = []
+	accessor_ids: Array[String] = [],
+	remove_version: Callable = func(number: String) -> bool: return false
 ) -> Dictionary:
 	var saves_directory: String = LockerPlugin.get_saves_directory()
 	

@@ -19,21 +19,41 @@ extends Node
 
 signal id_changed(from: String, to: String)
 
+var storage_manager := LokGlobalStorageManager:
+	set = set_storage_manager,
+	get = get_storage_manager
+
 @export var versions: Array[LokStorageAccessorVersion] = []:
-	set = set_versions
+	set = set_versions,
+	get = get_versions
 
 @export var version_number: String = "1.0.0":
-	set = set_version_number
+	set = set_version_number,
+	get = get_version_number
 
-@export var dependencies: Dictionary = {}
+@export var dependency_paths: Dictionary = {}:
+	set = set_dependency_paths,
+	get = get_dependency_paths
 
 var version: LokStorageAccessorVersion:
-	set = set_version
+	set = set_version,
+	get = get_version
+
+#region Setters & Getters
+
+func set_storage_manager(new_manager: LokGlobalStorageManager) -> void:
+	storage_manager = new_manager
+
+func get_storage_manager() -> LokGlobalStorageManager:
+	return storage_manager
 
 func set_versions(new_versions: Array[LokStorageAccessorVersion]) -> void:
 	versions = new_versions
 	
 	version = find_version(version_number)
+
+func get_versions() -> Array[LokStorageAccessorVersion]:
+	return versions
 
 func set_version_number(new_number: String) -> void:
 	var old_number: String = version_number
@@ -42,6 +62,15 @@ func set_version_number(new_number: String) -> void:
 	
 	if old_number != new_number:
 		version = find_version(new_number)
+
+func get_version_number() -> String:
+	return version_number
+
+func set_dependency_paths(new_paths: Dictionary) -> void:
+	dependency_paths = new_paths
+
+func get_dependency_paths() -> Dictionary:
+	return dependency_paths
 
 func set_version(new_version: LokStorageAccessorVersion) -> void:
 	var old_version: LokStorageAccessorVersion = version
@@ -54,10 +83,20 @@ func set_version(new_version: LokStorageAccessorVersion) -> void:
 	if old_version != null:
 		if old_version.id_changed.is_connected(_on_version_id_changed):
 			old_version.id_changed.disconnect(_on_version_id_changed)
-		if not new_version.id_changed.is_connected(_on_version_id_changed):
-			new_version.id_changed.connect(_on_version_id_changed)
+	
+	if not new_version.id_changed.is_connected(_on_version_id_changed):
+		new_version.id_changed.connect(_on_version_id_changed)
 	
 	update_configuration_warnings()
+
+func get_version() -> LokStorageAccessorVersion:
+	return version
+
+func set_id(new_id: String) -> void:
+	if version == null:
+		return
+	
+	version.id = new_id
 
 func get_id() -> String:
 	if version == null:
@@ -65,20 +104,34 @@ func get_id() -> String:
 	
 	return version.id
 
-#func instantiate_version(
-	#number: String = version_number
-#) -> LokStorageAccessorVersion:
-	#var version_script: GDScript = versions.get(number)
-	#
-	#if version_script == null:
-		#return null
-	#
-	#var result: Object = version_script.new()
-	#
-	#if result is not LokStorageAccessorVersion:
-		#return null
-	#
-	#return result
+func get_dependencies() -> Dictionary:
+	var result: Dictionary = {}
+	
+	for dependency_name: Variant in dependency_paths:
+		var dependency_path: Variant = dependency_paths[dependency_name]
+		
+		if dependency_path is NodePath:
+			result[dependency_name] = get_node(dependency_path)
+		else:
+			result[dependency_name] = dependency_path
+	
+	return result
+
+#endregion
+
+#region Methods
+
+static func create(
+	_versions: Array[LokStorageAccessorVersion],
+	_version_number: String,
+	_storage_manager: LokGlobalStorageManager
+) -> LokStorageAccessor:
+	var result := LokStorageAccessor.new()
+	result.storage_manager = _storage_manager
+	result.versions = _versions
+	result.version_number = _version_number
+	
+	return result
 
 func find_version(
 	number: String = version_number
@@ -90,32 +143,29 @@ func find_version(
 	return null
 
 func select_version(number: String) -> bool:
-	version_number = number
+	set_version_number(number)
 	
-	var found: bool = version != null
+	var found_version: bool = version != null
 	
-	return found
+	return found_version
 
-func get_dependency_nodes() -> Dictionary:
-	var result: Dictionary = {}
+func save_data(
+	file_id: int,
+	version_number: String = "1.0.0",
+	remove_version: Callable = func(number: String) -> bool: return false
+) -> Dictionary:
+	if storage_manager == null:
+		return {}
 	
-	for key: Variant in dependencies:
-		var value: Variant = dependencies[key]
-		
-		if value is NodePath:
-			result[key] = get_node(value)
-		else:
-			result[key] = value
-	
-	return result
-
-func save_data(file_id: int, version_number: String = "1.0.0") -> Dictionary:
-	return LokGlobalStorageManager.save_data(
-		file_id, version_number, [ get_id() ]
+	return storage_manager.save_data(
+		file_id, version_number, [ get_id() ], remove_version
 	)
 
 func load_data(file_id: int) -> Dictionary:
-	return LokGlobalStorageManager.load_data(
+	if storage_manager == null:
+		return {}
+	
+	return storage_manager.load_data(
 		file_id, [ get_id() ]
 	)
 
@@ -123,25 +173,28 @@ func retrieve_data() -> Dictionary:
 	if version == null:
 		return {}
 	
-	return version.retrieve_data(get_dependency_nodes())
+	return version.retrieve_data(get_dependencies())
 
 func consume_data(data: Dictionary) -> void:
 	if version == null:
 		return
 	
-	version.consume_data(data, get_dependency_nodes())
+	version.consume_data(data, get_dependencies())
 
 func _init() -> void:
 	version = find_version(version_number)
 
-#func _ready() -> void:
-	#update_configuration_warnings()
-
 func _enter_tree() -> void:
-	LokGlobalStorageManager.add_accessor(self)
+	if storage_manager == null:
+		return
+	
+	storage_manager.add_accessor(self)
 
 func _exit_tree() -> void:
-	LokGlobalStorageManager.remove_accessor(self)
+	if storage_manager == null:
+		return
+	
+	storage_manager.remove_accessor(self)
 
 func _get_configuration_warnings() -> PackedStringArray:
 	var warnings: PackedStringArray = []
@@ -157,3 +210,5 @@ func _on_version_id_changed(from: String, to: String) -> void:
 	id_changed.emit(from, to)
 	
 	update_configuration_warnings()
+
+#endregion
