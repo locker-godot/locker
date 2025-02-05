@@ -85,7 +85,16 @@ func warn_repeated_accessors(repeated_accessors: Dictionary) -> void:
 		warning += "- ID '%s':\n" % [ accessor_id ]
 		
 		for accessor: LokStorageAccessor in repeated_accessors[accessor_id]:
-			warning += " - %s;\n" % [ accessor.get_path() ]
+			var accessor_name: Variant
+			
+			if accessor.is_inside_tree():
+				accessor_name = accessor.get_path()
+			elif not accessor.name == "":
+				accessor_name = accessor.name
+			else:
+				accessor_name = str(accessor)
+			
+			warning += " - %s;\n" % [ accessor_name ]
 	
 	print_rich(warning)
 
