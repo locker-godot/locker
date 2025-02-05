@@ -4,7 +4,7 @@ extends LokStorageAccessorVersion
 
 func retrieve_data(dependencies: Dictionary) -> Dictionary:
 	var color: ColorPickerButton = dependencies.get("color")
-	var name_input: ColorPickerButton = dependencies.get("name_input")
+	var name_input: LineEdit = dependencies.get("name_input")
 	
 	var result := {}
 	
