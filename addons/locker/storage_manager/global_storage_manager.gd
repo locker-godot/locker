@@ -28,12 +28,15 @@ func add_accessor(accessor: LokStorageAccessor) -> bool:
 func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	var accessor_index: int = accessors.find(accessor)
 	
+	if accessor_index == -1:
+		return false
+	
 	accessors.remove_at(accessor_index)
 	
 	if accessor.id_changed.is_connected(_on_accessor_id_changed):
 		accessor.id_changed.disconnect(_on_accessor_id_changed)
 	
-	return accessor_index != -1
+	return true
 
 func get_accessors_grouped_by_id() -> Dictionary:
 	var grouped_accessors: Dictionary = {}
