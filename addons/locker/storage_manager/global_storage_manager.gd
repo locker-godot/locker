@@ -7,11 +7,21 @@ extends LokStorageManager
 
 const DEBUG_ICON_PATH: String = "res://addons/locker/assets/icon.svg"
 
-var accessors: Array[LokStorageAccessor] = []
+var accessors: Array[LokStorageAccessor] = []:
+	set = set_accessors,
+	get = get_accessors
 
-var access_strategy: LokAccessStrategy
+var access_strategy: LokAccessStrategy:
+	set = set_access_strategy,
+	get = get_access_strategy
 
 #region Setters & Getters
+
+func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
+	accessors = new_accessors
+
+func get_accessors() -> Array[LokStorageAccessor]:
+	return accessors
 
 func add_accessor(accessor: LokStorageAccessor) -> bool:
 	accessors.append(accessor)
@@ -20,7 +30,7 @@ func add_accessor(accessor: LokStorageAccessor) -> bool:
 		accessor.id_changed.connect(_on_accessor_id_changed)
 	
 	if not Engine.is_editor_hint():
-		if LockerPlugin.get_debug_mode():
+		if get_debug_mode():
 			verify_accessors()
 	
 	return true
@@ -37,6 +47,17 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 		accessor.id_changed.disconnect(_on_accessor_id_changed)
 	
 	return true
+
+func get_accessor_by_id(
+	id: String, version_number: String = ""
+) -> LokStorageAccessor:
+	for accessor: LokStorageAccessor in accessors:
+		accessor.set_version_number(version_number)
+		
+		if accessor.get_id() == id:
+			return accessor
+	
+	return null
 
 func get_accessors_grouped_by_id() -> Dictionary:
 	var grouped_accessors: Dictionary = {}
@@ -64,16 +85,56 @@ func get_repeated_accessors_grouped_by_id() -> Dictionary:
 	
 	return repeated_accessors
 
+func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
+	access_strategy = new_strategy
+
+func get_access_strategy() -> LokAccessStrategy:
+	return access_strategy
+
 func select_access_strategy() -> void:
-	if LockerPlugin.get_use_encryption():
+	if get_use_encryption():
 		access_strategy = LokEncryptedAccessStrategy.new()
 	else:
 		access_strategy = LokJSONAccessStrategy.new()
 
+func get_saves_directory() -> String:
+	return LockerPlugin.get_saves_directory()
+
+func get_save_files_prefix() -> String:
+	return LockerPlugin.get_save_files_prefix()
+
+func get_save_files_format() -> String:
+	return LockerPlugin.get_save_files_format()
+
+func get_save_versions() -> bool:
+	return LockerPlugin.get_save_versions()
+
+func get_use_encryption() -> bool:
+	return LockerPlugin.get_use_encryption()
+
+func get_encryption_password() -> String:
+	return LockerPlugin.get_encryption_password()
+
+func get_debug_mode() -> bool:
+	return LockerPlugin.get_debug_mode()
+
+func get_debug_warning_color() -> Color:
+	return LockerPlugin.get_debug_warning_color()
+
+func get_save_path(file_id: int) -> String:
+	var result: String = ""
+	
+	result += get_saves_directory()
+	result += get_save_files_prefix()
+	result += str(file_id)
+	result += get_save_files_format()
+	
+	return result
+
 #endregion
 
 func warn_repeated_accessors(repeated_accessors: Dictionary) -> void:
-	var warning_color: Color = LockerPlugin.get_debug_warning_color()
+	var warning_color: Color = get_debug_warning_color()
 	
 	var warning: String = "[img]%s[/img] " % [ DEBUG_ICON_PATH ]
 	warning += "[color=#%s]" % warning_color.to_html()
@@ -129,7 +190,7 @@ func gather_data(
 		):
 			continue
 		
-		if LockerPlugin.get_save_versions():
+		if get_save_versions() and accessor_version != "":
 			accessor_data["version"] = accessor_version
 		
 		data[accessor_id] = accessor_data
@@ -138,66 +199,55 @@ func gather_data(
 
 func distribute_data(
 	data: Dictionary,
-	accessor_ids: Array[String] = [],
-	version_number: String = "1.0.0"
+	accessor_ids: Array[String] = []
 ) -> void:
-	for accessor: LokStorageAccessor in accessors:
-		accessor.set_version_number(version_number)
-		
-		var accessor_id: String = accessor.get_id()
-		
-		if accessor_id == "":
-			continue
+	for accessor_id: String in data.keys():
 		if (
 			not accessor_ids.is_empty() and
 			not accessor_id in accessor_ids
 		):
 			continue
 		
-		accessor.consume_data(data.get(accessor_id, {}))
+		var accessor_data: Dictionary = data[accessor_id]
+		var accessor_version: String = accessor_data.get("version", "")
+		
+		var accessor: LokStorageAccessor = get_accessor_by_id(
+			accessor_id, accessor_version
+		)
+		
+		if accessor == null:
+			continue
+		
+		accessor.consume_data(accessor_data)
 
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
 	accessor_ids: Array[String] = [],
-	remove_version: Callable = func(number: String) -> bool: return false
+	replace: bool = false,
+	remover: Callable = default_remover
 ) -> Dictionary:
-	var saves_directory: String = LockerPlugin.get_saves_directory()
+	var saves_directory: String = get_saves_directory()
 	
-	if not DirAccess.dir_exists_absolute(saves_directory):
-		var err: Error = DirAccess.make_dir_recursive_absolute(saves_directory)
-		
-		if err != OK:
-			push_error("Unable to create saves directory: '%s'" % [
-				saves_directory
-			])
-			
-			return {}
+	if LokAccessStrategy.check_and_create_directory(saves_directory) == false:
+		return {}
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
-	return access_strategy.save_data(file_id, data, version_number)
+	return access_strategy.save_data(file_id, data, replace, remover)
 
 func load_data(
 	file_id: int,
 	accessor_ids: Array[String] = []
 ) -> Dictionary:
-	var saves_directory: String = LockerPlugin.get_saves_directory()
+	var saves_directory: String = get_saves_directory()
 	
-	if not DirAccess.dir_exists_absolute(saves_directory):
-		push_error("Data not found in directory: '%s'" % [
-			saves_directory
-		])
-		
+	if LokAccessStrategy.check_directory(saves_directory) == false:
 		return {}
 	
 	var data: Dictionary = access_strategy.load_data(file_id)
-	var version_number: String = data.get("version", "")
 	
-	if version_number == "":
-		distribute_data(data, accessor_ids)
-	else:
-		distribute_data(data, accessor_ids, version_number)
+	distribute_data(data, accessor_ids)
 	
 	return data
 

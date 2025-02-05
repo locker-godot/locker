@@ -6,11 +6,16 @@
 class_name LokStorageManager
 extends Node
 
+static func default_remover(
+	data_id: String, version_number: String
+) -> bool: return false
+
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
 	accessor_ids: Array[String] = [],
-	remove_version: Callable = func(number: String) -> bool: return false
+	replace: bool = false,
+	remover: Callable = default_remover
 ) -> Dictionary: return {}
 
 func load_data(

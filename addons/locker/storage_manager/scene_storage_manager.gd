@@ -10,13 +10,15 @@ func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
 	accessor_ids: Array[String] = [],
-	remove_version: Callable = func(number: String) -> bool: return false
+	replace: bool = false,
+	remover: Callable = default_remover
 ) -> Dictionary:
 	return LokGlobalStorageManager.save_data(
 		file_id,
 		version_number,
 		accessor_ids,
-		remove_version
+		replace,
+		remover
 	)
 
 func load_data(

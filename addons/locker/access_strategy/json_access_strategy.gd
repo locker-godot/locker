@@ -5,7 +5,8 @@ extends LokAccessStrategy
 func save_data(
 	file_id: int,
 	data: Dictionary,
-	version_number: String = "1.0.0",
+	replace: bool = false,
+	remover: Callable = LokStorageManager.default_remover,
 	suppress_errors: bool = false
 ) -> Dictionary:
 	var save_path: String = LockerPlugin.get_save_path(file_id)
@@ -19,8 +20,6 @@ func save_data(
 	var file_data: Dictionary = load_data(file_id, true)
 	
 	var result: Dictionary = data.merged(file_data)
-	
-	result["version"] = version_number
 	
 	file = FileAccess.open(save_path, FileAccess.WRITE)
 	

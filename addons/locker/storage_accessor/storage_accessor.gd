@@ -61,7 +61,10 @@ func set_version_number(new_number: String) -> void:
 	version_number = new_number
 	
 	if old_number != new_number:
-		version = find_version(new_number)
+		if new_number == "":
+			version = find_latest_version()
+		else:
+			version = find_version(new_number)
 
 func get_version_number() -> String:
 	return version_number
@@ -142,6 +145,18 @@ func find_version(
 	
 	return null
 
+func find_latest_version() -> LokStorageAccessorVersion:
+	var reducer: Callable = func(
+		prev: LokStorageAccessorVersion,
+		next: LokStorageAccessorVersion
+	) -> LokStorageAccessorVersion:
+		if LokStorageAccessorVersion.compare_versions(prev, next) == 1:
+			return prev
+		else:
+			return next
+	
+	return versions.reduce(reducer)
+
 func select_version(number: String) -> bool:
 	set_version_number(number)
 	
@@ -152,13 +167,13 @@ func select_version(number: String) -> bool:
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
-	remove_version: Callable = func(number: String) -> bool: return false
+	remover: Callable = LokStorageManager.default_remover
 ) -> Dictionary:
 	if storage_manager == null:
 		return {}
 	
 	return storage_manager.save_data(
-		file_id, version_number, [ get_id() ], remove_version
+		file_id, version_number, [ get_id() ], false, remover
 	)
 
 func load_data(file_id: int) -> Dictionary:
