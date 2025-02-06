@@ -58,13 +58,18 @@ func get_versions() -> Array[LokStorageAccessorVersion]:
 func set_version_number(new_number: String) -> void:
 	var old_number: String = version_number
 	
+	if old_number == new_number:
+		return
+	
 	version_number = new_number
 	
-	if old_number != new_number:
-		if new_number == "":
-			version = find_latest_version()
-		else:
-			version = find_version(new_number)
+	if new_number == "":
+		version = find_latest_version()
+	else:
+		version = find_version(new_number)
+	
+	if version != null:
+		version_number = version.number
 
 func get_version_number() -> String:
 	return version_number
@@ -164,16 +169,23 @@ func select_version(number: String) -> bool:
 	
 	return found_version
 
+func get_readable_name() -> String:
+	if is_inside_tree():
+		return str(get_path())
+	if not name == "":
+		return name
+	
+	return str(self)
+
 func save_data(
 	file_id: int,
-	version_number: String = "1.0.0",
-	remover: Callable = LokStorageManager.default_remover
+	version_number: String = "1.0.0"
 ) -> Dictionary:
 	if storage_manager == null:
 		return {}
 	
 	return storage_manager.save_data(
-		file_id, version_number, [ get_id() ], false, remover
+		file_id, version_number, [ get_id() ], false
 	)
 
 func load_data(file_id: int) -> Dictionary:
@@ -181,7 +193,7 @@ func load_data(file_id: int) -> Dictionary:
 		return {}
 	
 	return storage_manager.load_data(
-		file_id, [ get_id() ]
+		file_id, [ get_id() ], [], []
 	)
 
 func retrieve_data() -> Dictionary:
