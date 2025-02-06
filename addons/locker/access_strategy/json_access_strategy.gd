@@ -2,73 +2,142 @@
 class_name LokJSONAccessStrategy
 extends LokAccessStrategy
 
-func save_data(
-	file_id: int,
+func save_partition(
+	partition_path: String,
 	data: Dictionary,
 	replace: bool = false,
-	remover: Callable = LokStorageManager.default_remover,
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var save_path: String = LockerPlugin.get_save_path(file_id)
+	check_and_create_file(partition_path)
 	
-	var file: FileAccess
+	var result: Dictionary = data
+	var previous_data: Dictionary = {}
 	
-	if not FileAccess.file_exists(save_path):
-		file = FileAccess.open(save_path, FileAccess.WRITE)
-		file.close()
+	if not replace:
+		previous_data = load_partition(partition_path, true)
 	
-	var file_data: Dictionary = load_data(file_id, true)
+	result = data.merged(previous_data)
 	
-	var result: Dictionary = data.merged(file_data)
-	
-	file = FileAccess.open(save_path, FileAccess.WRITE)
-	
-	if file == null:
-		if not suppress_errors:
-			push_error(
-				"Error on saving data: %s" % [ FileAccess.get_open_error() ]
-			)
-		
-		return {}
-	
-	file.store_string(JSON.stringify(result, "\t"))
-	
-	file.close()
+	write_or_create_file(
+		partition_path, JSON.stringify(result, "\t"), "", suppress_errors
+	)
 	
 	return result
 
-func load_data(
-	file_id: int,
+func load_partition(
+	partition_path: String,
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var save_path: String = LockerPlugin.get_save_path(file_id)
-	
-	if not FileAccess.file_exists(save_path):
-		if not suppress_errors:
-			push_error("File %d not found in path %s" % [ file_id, save_path ])
-		
+	if not check_file(partition_path, suppress_errors):
 		return {}
 	
-	var file := FileAccess.open(save_path, FileAccess.READ)
-	
-	if file == null:
-		if not suppress_errors:
-			push_error(
-				"Error on loading data: %s" % [ FileAccess.get_open_error() ]
-			)
-		
-		return {}
-	
-	var file_content: String = file.get_as_text()
-	
-	file.close()
-	
-	var data: Variant = JSON.parse_string(file_content)
+	var partition_content: String = read_file(partition_path)
+	var data: Variant = JSON.parse_string(partition_content)
 	
 	if data == null:
 		if not suppress_errors:
-			push_error("Couldn't parse JSON data")
+			push_error(
+				"Couldn't parse JSON data from partition '%s'" % partition_path
+			)
 		
 		return {}
 	
 	return data
+
+func save_data(
+	file_path: String,
+	file_format: String,
+	data: Dictionary,
+	replace: bool = false,
+	suppress_errors: bool = false
+) -> Dictionary:
+	var result: Dictionary = {}
+	
+	for partition: String in data:
+		var partition_path: String = "%s/%s.%s" % [
+			file_path, partition, file_format
+		]
+		var partition_data: Dictionary = data[partition]
+		
+		result.merge(save_partition(
+			partition_path, partition_data, replace, suppress_errors
+		))
+	
+	return result
+	
+	#for partition: String in data:
+		#var partition_path: String = "%s/%s.%s" % [ file_path, partition, file_format ]
+		#var partition_data: Dictionary = data[partition]
+		#
+		#check_and_create_file(partition_path)
+		#
+		#var result: Dictionary = {}
+		#
+		#var previous_data: Dictionary = {}
+		#
+		#if not replace:
+			#previous_data = load_data(file_path, [ partition ], true)
+		#
+		#result = partition_data.merged(previous_data)
+		#
+		#write_or_create_file(
+			#partition_path, JSON.stringify(result, "\t"), "", suppress_errors
+		#)
+		#
+		#total_result.merge(result)
+	#
+	#return total_result
+	
+	#check_and_create_file(file_path)
+	#
+	#var result: Dictionary = data
+	#
+	#var file_data: Dictionary = {}
+	#
+	#if not replace:
+		#file_data = load_data(file_path, [], true)
+	#
+	#result = data.merged(file_data)
+	#
+	#write_or_create_file(
+		#file_path, JSON.stringify(result, "\t"), "", suppress_errors
+	#)
+	#
+	#return result
+
+func load_data(
+	file_path: String,
+	partitions: Array[String] = [],
+	suppress_errors: bool = false
+) -> Dictionary:
+	#var result: Dictionary = {}
+	#
+	#for partition: String in data:
+		#var partition_path: String = "%s/%s.%s" % [
+			#file_path, partition, file_format
+		#]
+		#var partition_data: Dictionary = data[partition]
+		#
+		#result.merge(save_partition(
+			#partition_path, partition_data, replace, suppress_errors
+		#))
+	#
+	#return result
+	
+	
+	
+	#if not check_file(file_path, suppress_errors):
+		#return {}
+	#
+	#var file_content: String = read_file(file_path)
+	#
+	#var data: Variant = JSON.parse_string(file_content)
+	#
+	#if data == null:
+		#if not suppress_errors:
+			#push_error("Couldn't parse JSON data")
+		#
+		#return {}
+	#
+	#return data
+	return {}

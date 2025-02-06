@@ -3,25 +3,23 @@ class_name LokEncryptedAccessStrategy
 extends LokAccessStrategy
 
 func save_data(
-	file_id: int,
+	file_path: String,
+	file_format: String,
 	data: Dictionary,
 	replace: bool = false,
-	remover: Callable = LokStorageManager.default_remover,
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var save_path: String = LockerPlugin.get_save_path(file_id)
-	
 	var file: FileAccess
 	
-	if not FileAccess.file_exists(save_path):
+	if not FileAccess.file_exists(file_path):
 		file = FileAccess.open_encrypted_with_pass(
-			save_path, FileAccess.WRITE, LockerPlugin.get_encryption_password()
+			file_path, FileAccess.WRITE, LockerPlugin.get_encryption_password()
 		)
 		file.store_string(JSON.stringify({}))
 		file.close()
 	
 	file = FileAccess.open_encrypted_with_pass(
-		save_path,
+		file_path,
 		FileAccess.READ,
 		LockerPlugin.get_encryption_password()
 	)
@@ -42,7 +40,7 @@ func save_data(
 	var merged_data: Dictionary = data.merged(file_data)
 	
 	file = FileAccess.open_encrypted_with_pass(
-		save_path,
+		file_path,
 		FileAccess.WRITE,
 		LockerPlugin.get_encryption_password()
 	)
@@ -54,17 +52,16 @@ func save_data(
 	return data
 
 func load_data(
-	file_id: int,
+	file_path: String,
+	partitions: Array[String] = [],
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var save_path: String = LockerPlugin.get_save_path(file_id)
-	
-	if not FileAccess.file_exists(save_path):
-		push_error("File %d not found in path %s" % [ file_id, save_path ])
+	if not FileAccess.file_exists(file_path):
+		push_error("File not found in path %s" % file_path)
 		return {}
 	
 	var file := FileAccess.open_encrypted_with_pass(
-		save_path,
+		file_path,
 		FileAccess.READ,
 		LockerPlugin.get_encryption_password()
 	)
