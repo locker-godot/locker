@@ -220,12 +220,15 @@ func distribute_data(
 		
 		accessor.consume_data(accessor_data)
 
+## Another optional parameter this method accept is the [param accessor_ids],
+## which is a list that enumerates the ids of the [LokStorageAccessor]
+## 
+## To better understand these parameters, read about that method.
 func save_data(
 	file_id: int,
 	version_number: String = "1.0.0",
 	accessor_ids: Array[String] = [],
-	replace: bool = false,
-	remover: Callable = default_remover
+	replace: bool = false
 ) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
 	
@@ -234,11 +237,13 @@ func save_data(
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
-	return access_strategy.save_data(file_id, data, replace, remover)
+	return access_strategy.save_data(file_id, data, replace)
 
 func load_data(
 	file_id: int,
-	accessor_ids: Array[String] = []
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
 	

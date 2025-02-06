@@ -7,6 +7,14 @@
 class_name LokSceneStorageManager
 extends LokStorageManager
 
+## The [member global_manager] property should be altered since it's just
+## a reference to the [LokGlobalStorageManager] autoload. [br]
+## Its reference is stored here instead of called directly to make
+## mocking it with unit testing easier.
+var global_manager := LokGlobalStorageManager:
+	set = set_global_manager,
+	get = get_global_manager
+
 ## The [member current_version] property is used as the version with which
 ## data is saved when using this [LokSceneStorageManager]. [br]
 ## By default, it is set to [code]"1.0.0"[/code].
@@ -14,11 +22,35 @@ var current_version: String = "1.0.0":
 	set = set_current_version,
 	get = get_current_version
 
+func set_global_manager(new_manager: LokGlobalStorageManager) -> void:
+	global_manager = new_manager
+
+func get_global_manager() -> LokGlobalStorageManager:
+	return global_manager
+
 func set_current_version(new_version: String) -> void:
 	current_version = new_version
 
 func get_current_version() -> String:
 	return current_version
+
+## The [method get_readable_name] method is a utility for debugging. [br]
+## It returns a more user friendly name for this node, so that errors
+## can use it to be clearer.
+func get_readable_name() -> String:
+	if is_inside_tree():
+		return get_path()
+	if name != "":
+		return name
+	
+	return str(self)
+
+## The [method push_error_no_manager] method pushes an error indicating
+## that no [LokSceneStorageManager] was found in the [member global_manager]
+## property, which shouldn't happen if that property wasn't altered as
+## recommended.
+func push_error_no_manager() -> void:
+	push_error("No GlobalManager found in %s" % get_readable_name())
 
 ## The [method save_data] method is just another way of calling
 ## the [method LokGlobalStorageManager.save_data] method, which
@@ -35,15 +67,17 @@ func save_data(
 	file_id: int,
 	version_number: String = current_version,
 	accessor_ids: Array[String] = [],
-	replace: bool = false,
-	remover: Callable = default_remover
+	replace: bool = false
 ) -> Dictionary:
-	return LokGlobalStorageManager.save_data(
+	if global_manager == null:
+		push_error_no_manager()
+		return {}
+	
+	return global_manager.save_data(
 		file_id,
 		version_number,
 		accessor_ids,
-		replace,
-		remover
+		replace
 	)
 
 ## The [method load_data] method uses the
@@ -55,12 +89,60 @@ func save_data(
 ## The [param accessor_ids] parameter specifies which of the
 ## currently registered [LokStorageAccessor]s should receive the loaded data.
 ## If left as an empty [Array], all current [LokStorageAccessor]s
-## receive the data.
+## receive the data. [br]
+## The [param partition_ids] and [param version_numbers] parameters work
+## in a similar way, restricting what [b]partitions[/b] and [b]versions[/b]
+## should be considered when loading.
+## At the end, this method returns a [Dictionary] with the information obtained.
 func load_data(
 	file_id: int,
-	accessor_ids: Array[String] = []
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
 ) -> Dictionary:
-	return LokGlobalStorageManager.load_data(
+	if global_manager == null:
+		push_error_no_manager()
+		return {}
+	
+	return global_manager.load_data(
 		file_id,
-		accessor_ids
+		accessor_ids,
+		partition_ids,
+		version_numbers
+	)
+
+## The [method read_data] method is an intermediate to calling the same method
+## in the [LokGlobalStorageManager] autoload. More information about it
+## can be found here: [member LokGlobalStorageManager.read_data].
+func read_data(
+	file_id: int,
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
+) -> Dictionary:
+	if global_manager == null:
+		push_error_no_manager()
+		return {}
+	
+	return global_manager.read_data(
+		file_id,
+		accessor_ids,
+		partition_ids,
+		version_numbers
+	)
+
+## The [method remove_data] method is an intermediate to calling the same method
+## in the [LokGlobalStorageManager] autoload. More information about it
+## can be found here: [member LokGlobalStorageManager.remove_data].
+func remove_data(
+	file_id: int,
+	remover: Callable = default_remover
+) -> Dictionary:
+	if global_manager == null:
+		push_error_no_manager()
+		return {}
+	
+	return global_manager.remove_data(
+		file_id,
+		remover
 	)
