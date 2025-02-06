@@ -1,0 +1,40 @@
+[gd_scene load_steps=8 format=3 uid="uid://dkhatgjle1mc3"]
+
+[ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_yddx4"]
+[ext_resource type="Script" path="res://test/scripts/player.gd" id="2_rc353"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="3_x1ok8"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="4_icwiw"]
+[ext_resource type="Resource" uid="uid://dlivqnyyhtns6" path="res://test/manual/test_one_scene/player/player_accessor/accessor_v1_0_0.tres" id="5_rxdpi"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/player/player_accessor/accessor_v2_0_0.gd" id="6_umagl"]
+
+[sub_resource type="Resource" id="Resource_r5qgr"]
+resource_local_to_scene = true
+script = ExtResource("6_umagl")
+number = "2.0.0"
+id = "player2"
+
+[node name="Player" type="Sprite2D"]
+texture = ExtResource("1_yddx4")
+script = ExtResource("2_rc353")
+
+[node name="PlayerAccessor" type="Node" parent="."]
+script = ExtResource("3_x1ok8")
+versions = Array[ExtResource("4_icwiw")]([ExtResource("5_rxdpi"), SubResource("Resource_r5qgr")])
+dependency_paths = {
+"player": NodePath("..")
+}
+
+[node name="Nickname" type="Label" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -95.0
+offset_top = -57.0
+offset_right = -33.0
+offset_bottom = -34.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+vertical_alignment = 1

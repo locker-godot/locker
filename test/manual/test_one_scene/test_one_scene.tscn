@@ -1,29 +1,41 @@
-[gd_scene load_steps=8 format=3 uid="uid://nsasxp7tvxqc"]
+[gd_scene load_steps=10 format=3 uid="uid://nsasxp7tvxqc"]
 
-[ext_resource type="Script" path="res://addons/locker/storage_manager/scene_storage_manager.gd" id="1_g2jt1"]
-[ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_ppk2r"]
-[ext_resource type="Script" path="res://test/scripts/player.gd" id="2_0ejpl"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/storage_manager.gd" id="1_y1wno"]
+[ext_resource type="PackedScene" uid="uid://dkhatgjle1mc3" path="res://test/manual/test_one_scene/player/player.tscn" id="2_7josc"]
 [ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="4_355pw"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/player/player_accessor/accessor_v2_0_0.gd" id="5_4c0u7"]
 [ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="5_wtdtj"]
-[ext_resource type="Resource" uid="uid://dlivqnyyhtns6" path="res://test/manual/test_one_scene/player_accessor_v1_0_0.tres" id="6_cqjq8"]
-[ext_resource type="Resource" uid="uid://7ieyrubssued" path="res://test/manual/test_one_scene/inputs_accessor_v1_0_0.tres" id="7_cmxrm"]
+[ext_resource type="Resource" uid="uid://dlivqnyyhtns6" path="res://test/manual/test_one_scene/player/player_accessor/accessor_v1_0_0.tres" id="6_cqjq8"]
+[ext_resource type="Resource" uid="uid://7ieyrubssued" path="res://test/manual/test_one_scene/inputs_accessor/inputs_accessor_v1_0_0.tres" id="7_cmxrm"]
+
+[sub_resource type="Resource" id="Resource_yovw6"]
+resource_local_to_scene = true
+script = ExtResource("5_4c0u7")
+number = "2.0.0"
+id = "player1"
+
+[sub_resource type="Resource" id="Resource_cpeh4"]
+resource_local_to_scene = true
+script = ExtResource("5_4c0u7")
+number = "2.0.0"
+id = "player2"
 
 [node name="TestOneScene" type="Node2D"]
 
 [node name="StorageManager" type="Node" parent="."]
-script = ExtResource("1_g2jt1")
+script = ExtResource("1_y1wno")
 
-[node name="Player" type="Sprite2D" parent="."]
-position = Vector2(535, 322)
-texture = ExtResource("1_ppk2r")
-script = ExtResource("2_0ejpl")
+[node name="Player1" parent="." instance=ExtResource("2_7josc")]
+position = Vector2(214, 291)
 
-[node name="PlayerAccessor" type="Node" parent="Player"]
-script = ExtResource("4_355pw")
-versions = Array[ExtResource("5_wtdtj")]([ExtResource("6_cqjq8")])
-dependency_paths = {
-"player": NodePath("..")
-}
+[node name="PlayerAccessor" parent="Player1" index="0"]
+versions = Array[ExtResource("5_wtdtj")]([ExtResource("6_cqjq8"), SubResource("Resource_yovw6")])
+
+[node name="Player2" parent="." instance=ExtResource("2_7josc")]
+position = Vector2(622, 354)
+
+[node name="PlayerAccessor" parent="Player2" index="0"]
+versions = Array[ExtResource("5_wtdtj")]([ExtResource("6_cqjq8"), SubResource("Resource_cpeh4")])
 
 [node name="UILayer" type="CanvasLayer" parent="."]
 
@@ -36,12 +48,22 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="AccessButtons" type="VBoxContainer" parent="UILayer/UI"]
-layout_mode = 0
-offset_right = 40.0
-offset_bottom = 40.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -79.5
+offset_right = 79.5
+offset_bottom = 128.0
+grow_horizontal = 2
+
+[node name="Title" type="Label" parent="UILayer/UI/AccessButtons"]
+layout_mode = 2
+text = "General Save & Load"
 
 [node name="Slot1" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
 layout_mode = 2
+alignment = 1
 
 [node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot1"]
 layout_mode = 2
@@ -53,6 +75,7 @@ text = "Load 1"
 
 [node name="Slot2" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
 layout_mode = 2
+alignment = 1
 
 [node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot2"]
 layout_mode = 2
@@ -64,6 +87,7 @@ text = "Load 2"
 
 [node name="Slot3" type="HBoxContainer" parent="UILayer/UI/AccessButtons"]
 layout_mode = 2
+alignment = 1
 
 [node name="Save" type="Button" parent="UILayer/UI/AccessButtons/Slot3"]
 layout_mode = 2
@@ -73,7 +97,13 @@ text = "Save 3"
 layout_mode = 2
 text = "Load 3"
 
-[node name="IndividualAccessButtons" type="VBoxContainer" parent="UILayer/UI"]
+[node name="VersionSelection" type="LineEdit" parent="UILayer/UI/AccessButtons"]
+layout_mode = 2
+text = "1.0.0"
+placeholder_text = "Version to use"
+alignment = 1
+
+[node name="Player1AccessButtons" type="VBoxContainer" parent="UILayer/UI"]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -82,29 +112,129 @@ offset_top = -66.0
 offset_right = 121.0
 grow_vertical = 0
 
-[node name="PlayerAccess" type="HBoxContainer" parent="UILayer/UI/IndividualAccessButtons"]
+[node name="Title" type="Label" parent="UILayer/UI/Player1AccessButtons"]
+layout_mode = 2
+text = "Player 1 Save & Load"
+horizontal_alignment = 1
+
+[node name="AccessButtons" type="VBoxContainer" parent="UILayer/UI/Player1AccessButtons"]
 layout_mode = 2
 
-[node name="Save" type="Button" parent="UILayer/UI/IndividualAccessButtons/PlayerAccess"]
-layout_mode = 2
-text = "Save Player Slot 2"
-
-[node name="Load" type="Button" parent="UILayer/UI/IndividualAccessButtons/PlayerAccess"]
-layout_mode = 2
-text = "Load Player Slot 2"
-
-[node name="InputsAccess" type="HBoxContainer" parent="UILayer/UI/IndividualAccessButtons"]
+[node name="Slot1" type="HBoxContainer" parent="UILayer/UI/Player1AccessButtons/AccessButtons"]
 layout_mode = 2
 
-[node name="Save" type="Button" parent="UILayer/UI/IndividualAccessButtons/InputsAccess"]
+[node name="Save" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot1"]
 layout_mode = 2
-text = "Save Inputs Slot 2"
+text = "Save 1"
 
-[node name="Load" type="Button" parent="UILayer/UI/IndividualAccessButtons/InputsAccess"]
+[node name="Load" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot1"]
 layout_mode = 2
-text = "Load Inputs Slot 2"
+text = "Load 1"
 
-[node name="CustomInputs" type="VBoxContainer" parent="UILayer/UI"]
+[node name="Slot2" type="HBoxContainer" parent="UILayer/UI/Player1AccessButtons/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Save 2"
+
+[node name="Load" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Load 2"
+
+[node name="Slot3" type="HBoxContainer" parent="UILayer/UI/Player1AccessButtons/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Save 3"
+
+[node name="Load" type="Button" parent="UILayer/UI/Player1AccessButtons/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Load 3"
+
+[node name="Player2AccessButtons" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -295.0
+offset_top = -128.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="Title" type="Label" parent="UILayer/UI/Player2AccessButtons"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = "Player 2 Save & Load"
+
+[node name="AccessButtons" type="VBoxContainer" parent="UILayer/UI/Player2AccessButtons"]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="Slot1" type="HBoxContainer" parent="UILayer/UI/Player2AccessButtons/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot1"]
+layout_mode = 2
+text = "Save 1"
+
+[node name="Load" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot1"]
+layout_mode = 2
+text = "Load 1"
+
+[node name="Slot2" type="HBoxContainer" parent="UILayer/UI/Player2AccessButtons/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Save 2"
+
+[node name="Load" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot2"]
+layout_mode = 2
+text = "Load 2"
+
+[node name="Slot3" type="HBoxContainer" parent="UILayer/UI/Player2AccessButtons/AccessButtons"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Save 3"
+
+[node name="Load" type="Button" parent="UILayer/UI/Player2AccessButtons/AccessButtons/Slot3"]
+layout_mode = 2
+text = "Load 3"
+
+[node name="Player1Config" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 1
+offset_right = 256.0
+offset_bottom = 66.0
+
+[node name="Title" type="Label" parent="UILayer/UI/Player1Config"]
+layout_mode = 2
+text = "Player 1 Customization"
+horizontal_alignment = 1
+
+[node name="ColorInput" type="ColorPickerButton" parent="UILayer/UI/Player1Config"]
+layout_mode = 2
+text = "Pick a Color!"
+
+[node name="NameInput" type="LineEdit" parent="UILayer/UI/Player1Config"]
+custom_minimum_size = Vector2(256, 0)
+layout_mode = 2
+placeholder_text = "Type something!"
+
+[node name="InputsAccessor" type="Node" parent="UILayer/UI/Player1Config"]
+script = ExtResource("4_355pw")
+versions = Array[ExtResource("5_wtdtj")]([ExtResource("7_cmxrm")])
+dependency_paths = {
+"color": NodePath("../ColorInput"),
+"name_input": NodePath("../NameInput")
+}
+
+[node name="Player2Config" type="VBoxContainer" parent="UILayer/UI"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -113,31 +243,29 @@ offset_left = -40.0
 offset_bottom = 40.0
 grow_horizontal = 0
 
-[node name="Color" type="ColorPickerButton" parent="UILayer/UI/CustomInputs"]
+[node name="Title" type="Label" parent="UILayer/UI/Player2Config"]
+layout_mode = 2
+text = "Player 2 Customization"
+horizontal_alignment = 1
+
+[node name="ColorInput" type="ColorPickerButton" parent="UILayer/UI/Player2Config"]
 layout_mode = 2
 text = "Pick a Color!"
 
-[node name="Name" type="LineEdit" parent="UILayer/UI/CustomInputs"]
+[node name="NameInput" type="LineEdit" parent="UILayer/UI/Player2Config"]
 custom_minimum_size = Vector2(256, 0)
 layout_mode = 2
 placeholder_text = "Type something!"
 
-[node name="InputsAccessor" type="Node" parent="UILayer/UI/CustomInputs"]
+[node name="InputsAccessor" type="Node" parent="UILayer/UI/Player2Config"]
 script = ExtResource("4_355pw")
 versions = Array[ExtResource("5_wtdtj")]([ExtResource("7_cmxrm")])
 dependency_paths = {
-"color": NodePath("../Color"),
-"name_input": NodePath("../Name")
+"color": NodePath("../ColorInput"),
+"name_input": NodePath("../NameInput")
 }
 
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Save" to="StorageManager" method="save_data" binds= [1]]
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot1/Load" to="StorageManager" method="load_data" binds= [1]]
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot2/Save" to="StorageManager" method="save_data" binds= [2]]
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot2/Load" to="StorageManager" method="load_data" binds= [2]]
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Save" to="StorageManager" method="save_data" binds= [3]]
-[connection signal="pressed" from="UILayer/UI/AccessButtons/Slot3/Load" to="StorageManager" method="load_data" binds= [3]]
-[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/PlayerAccess/Save" to="Player/PlayerAccessor" method="save_data" binds= [2]]
-[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/PlayerAccess/Load" to="Player/PlayerAccessor" method="load_data" binds= [2]]
-[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/InputsAccess/Save" to="UILayer/UI/CustomInputs/InputsAccessor" method="save_data" binds= [2]]
-[connection signal="pressed" from="UILayer/UI/IndividualAccessButtons/InputsAccess/Load" to="UILayer/UI/CustomInputs/InputsAccessor" method="load_data" binds= [2]]
-[connection signal="color_changed" from="UILayer/UI/CustomInputs/Color" to="Player" method="set_modulate"]
+[connection signal="text_submitted" from="UILayer/UI/AccessButtons/VersionSelection" to="StorageManager" method="set_current_version"]
+
+[editable path="Player1"]
+[editable path="Player2"]

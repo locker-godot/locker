@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="InputsAccessorV1_0_0" load_steps=2 format=3 uid="uid://7ieyrubssued"]
 
-[ext_resource type="Script" path="res://test/manual/test_one_scene/inputs_accessor_v1_0_0.gd" id="1_qf6hr"]
+[ext_resource type="Script" path="res://test/manual/test_one_scene/inputs_accessor/inputs_accessor_v1_0_0.gd" id="1_qf6hr"]
 
 [resource]
 script = ExtResource("1_qf6hr")
