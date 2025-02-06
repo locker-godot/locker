@@ -135,7 +135,7 @@ func test_get_accessors_grouped_by_id_works_properly() -> void:
 	}
 	
 	assert_eq(
-		manager.get_accessors_grouped_by_id(),
+		manager.get_accessors_grouped_by_id(""),
 		expected,
 		"Agroupation didn't work properly"
 	)
@@ -163,7 +163,7 @@ func test_get_repeated_accessors_grouped_by_id_works_properly() -> void:
 	}
 	
 	assert_eq(
-		manager.get_repeated_accessors_grouped_by_id(),
+		manager.get_repeated_accessors_grouped_by_id(""),
 		expected,
 		"Agroupation didn't work properly"
 	)
@@ -329,31 +329,22 @@ func test_distribute_data_distributes_only_to_accessors_specified() -> void:
 func test_save_data_gathers_data() -> void:
 	var DoubledAccessStrategy: GDScript = double(AccessStrategy)
 	
-	var remover: Callable = func(
-		_data_id: String, _version_number: String
-	) -> bool:
-		return false
-	
 	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
 	stub(manager.get_access_strategy).to_return(strategy)
 	
-	manager.save_data(1, "1.0.0", [], false, remover)
+	manager.save_data(1, "1.0.0", [], false)
 	
 	assert_called(manager, "gather_data")
 
 func test_save_data_delegates_to_strategy() -> void:
 	var DoubledAccessStrategy: GDScript = partial_double(AccessStrategy)
 	
-	var remover: Callable = func(
-		_data_id: String, _version_number: String
-	) -> bool: return false
-	
 	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
 	stub(strategy.save_data).to_do_nothing()
 	
 	stub(manager.get_access_strategy).to_return(strategy)
 	
-	manager.save_data(1, "1.0.0", [], false, remover)
+	manager.save_data(1, "1.0.0", [], false)
 	
 	assert_called(strategy, "save_data")
 
@@ -369,7 +360,7 @@ func test_load_data_distributes_data() -> void:
 	
 	stub(manager.get_access_strategy).to_return(strategy)
 	
-	manager.load_data(1, [])
+	manager.load_data(1, [], [], [])
 	
 	assert_called(manager, "distribute_data")
 
@@ -381,6 +372,6 @@ func test_load_data_delegates_to_strategy() -> void:
 	
 	stub(manager.get_access_strategy).to_return(strategy)
 	
-	manager.load_data(1, [])
+	manager.load_data(1, [], [], [])
 	
 	assert_called(strategy, "load_data")

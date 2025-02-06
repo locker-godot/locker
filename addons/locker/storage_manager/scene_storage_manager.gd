@@ -7,7 +7,7 @@
 class_name LokSceneStorageManager
 extends LokStorageManager
 
-## The [member global_manager] property should be altered since it's just
+## The [member global_manager] property should not be altered since it's just
 ## a reference to the [LokGlobalStorageManager] autoload. [br]
 ## Its reference is stored here instead of called directly to make
 ## mocking it with unit testing easier.
@@ -39,7 +39,7 @@ func get_current_version() -> String:
 ## can use it to be clearer.
 func get_readable_name() -> String:
 	if is_inside_tree():
-		return get_path()
+		return str(get_path())
 	if name != "":
 		return name
 	

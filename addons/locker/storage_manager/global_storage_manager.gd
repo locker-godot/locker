@@ -1,16 +1,29 @@
 @tool
-## This class is registered as an autoload when the Locker plugin is active.
+## The [LokGlobalStorageManager] class serves as the manager of the data
+## saving and loading process.
 ## 
+## This class is registered as an autoload when the Locker plugin is active,
+## so that it can do its tasks. [br]
 ## It's this class that's responsible for keeping track of all the
-## [StorageAccessor]s that need saving and loading.
+## [LokStorageAccessor]s that need saving and loading.
 extends LokStorageManager
 
+## The [const DEBUG_ICON_PATH] const is a [String] that points to the path of
+## an icon used for debugging.
 const DEBUG_ICON_PATH: String = "res://addons/locker/assets/icon.svg"
 
+## The [member accessors] property is an [Array] responsible for storing all the
+## [LokStorageAccessor]s that are currently in the scene tree. [br]
+## This [Array] shouldn't be manipulated directly, only through the
+## [method add_accessor] and [method remove_accessor] methods.
 var accessors: Array[LokStorageAccessor] = []:
 	set = set_accessors,
 	get = get_accessors
 
+## The [member access_strategy] property stores a [LokAccessStrategy] that
+## dictates how the data is saved and loaded. [br]
+## This property shouldn't be altered by other classes, since it's a
+## needed object for performing data manipulation.
 var access_strategy: LokAccessStrategy:
 	set = set_access_strategy,
 	get = get_access_strategy
@@ -23,79 +36,15 @@ func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
 func get_accessors() -> Array[LokStorageAccessor]:
 	return accessors
 
-func add_accessor(accessor: LokStorageAccessor) -> bool:
-	accessors.append(accessor)
-	
-	if not accessor.id_changed.is_connected(_on_accessor_id_changed):
-		accessor.id_changed.connect(_on_accessor_id_changed)
-	
-	if not Engine.is_editor_hint():
-		if get_debug_mode():
-			verify_accessors()
-	
-	return true
-
-func remove_accessor(accessor: LokStorageAccessor) -> bool:
-	var accessor_index: int = accessors.find(accessor)
-	
-	if accessor_index == -1:
-		return false
-	
-	accessors.remove_at(accessor_index)
-	
-	if accessor.id_changed.is_connected(_on_accessor_id_changed):
-		accessor.id_changed.disconnect(_on_accessor_id_changed)
-	
-	return true
-
-func get_accessor_by_id(
-	id: String, version_number: String = ""
-) -> LokStorageAccessor:
-	for accessor: LokStorageAccessor in accessors:
-		accessor.set_version_number(version_number)
-		
-		if accessor.get_id() == id:
-			return accessor
-	
-	return null
-
-func get_accessors_grouped_by_id() -> Dictionary:
-	var grouped_accessors: Dictionary = {}
-	
-	for accessor: LokStorageAccessor in accessors:
-		var accessor_id: String = accessor.get_id()
-		
-		if not grouped_accessors.has(accessor_id):
-			grouped_accessors[accessor_id] = []
-		
-		grouped_accessors[accessor_id].append(accessor)
-	
-	return grouped_accessors
-
-func get_repeated_accessors_grouped_by_id() -> Dictionary:
-	var repeated_accessors: Dictionary = {}
-	
-	var accessor_groups: Dictionary = get_accessors_grouped_by_id()
-	
-	for accessor_id: String in accessor_groups.keys():
-		if accessor_groups[accessor_id].size() <= 1:
-			continue
-		
-		repeated_accessors[accessor_id] = accessor_groups[accessor_id]
-	
-	return repeated_accessors
-
 func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
 	access_strategy = new_strategy
 
 func get_access_strategy() -> LokAccessStrategy:
 	return access_strategy
 
-func select_access_strategy() -> void:
-	if get_use_encryption():
-		access_strategy = LokEncryptedAccessStrategy.new()
-	else:
-		access_strategy = LokJSONAccessStrategy.new()
+#endregion
+
+#region Configuration Getters
 
 func get_saves_directory() -> String:
 	return LockerPlugin.get_saves_directory()
@@ -133,40 +82,285 @@ func get_save_path(file_id: int) -> String:
 
 #endregion
 
-func warn_repeated_accessors(repeated_accessors: Dictionary) -> void:
+#region Debug Methods
+
+## The [method push_warning_repeated_accessors] method prints to the
+## output log a warning saying that [LokStorageAccessor]s with repeated
+## ids were found in a [param version_number]. [br]
+## If the [param version_number] passed to this method is an empty [String],
+## nothing is done, since it doesn't matter if [LokStorageAccessor]s with
+## different [member [LokStorageAccessorVersion.number]s
+## have repeated [member [LokStorageAccessorVersion.id]s.
+func push_warning_repeated_accessors(
+	repeated_accessors: Dictionary,
+	version_number: String
+) -> void:
+	if version_number == "":
+		return
+	
 	var warning_color: Color = get_debug_warning_color()
 	
-	var warning: String = "[img]%s[/img] " % [ DEBUG_ICON_PATH ]
+	var warning: String = "[img]%s[/img] " % DEBUG_ICON_PATH
 	warning += "[color=#%s]" % warning_color.to_html()
 	warning += name
-	warning += " detected repeated accessor ids, which may cause loss of data:"
+	warning += " detected repeated accessor ids in version %s" % version_number
+	warning += ", which may cause loss of data:"
 	warning += "[/color]\n"
 	
 	for accessor_id: String in repeated_accessors.keys():
-		warning += "- ID '%s':\n" % [ accessor_id ]
+		warning += "- ID '%s':\n" % accessor_id
 		
 		for accessor: LokStorageAccessor in repeated_accessors[accessor_id]:
-			var accessor_name: Variant
+			var accessor_name: String = accessor.get_readable_name()
 			
-			if accessor.is_inside_tree():
-				accessor_name = accessor.get_path()
-			elif not accessor.name == "":
-				accessor_name = accessor.name
-			else:
-				accessor_name = str(accessor)
-			
-			warning += " - %s;\n" % [ accessor_name ]
+			warning += " - %s;\n" % accessor_name
 	
 	print_rich(warning)
 
-func verify_accessors() -> void:
-	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id()
+## The [method verify_accessors] method looks through all current
+## [member accessors], setting their version to the [param version_number]
+## and checking if they have repeated ids. If they do, this method
+## prints a warning using the [method push_warning_repeated_accessors]
+## method. [br]
+## If the [param version_number] passed to this method is an empty [String],
+## nothing is done, since it doesn't matter if [LokStorageAccessor]s with
+## different [member [LokStorageAccessorVersion.number]s
+## have repeated [member [LokStorageAccessorVersion.id]s.
+func verify_accessors(version_number: String) -> void:
+	if version_number == "":
+		return
+	
+	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id(
+		version_number
+	)
 	
 	if repeated_accessors.is_empty():
 		return
 	
-	warn_repeated_accessors(repeated_accessors)
+	push_warning_repeated_accessors(repeated_accessors, version_number)
 
+#endregion
+
+## The [method add_accessor] method is responsible for adding a new
+## [LokStorageAccessor] to the [member accessors] list, so that
+## it can have its data saved and loadded, together with the other ones. [br]
+## This method is called automatically by [LokStorageAccessor]s when they
+## enter the scene tree, so there's no need to using it yourself.
+func add_accessor(accessor: LokStorageAccessor) -> bool:
+	accessors.append(accessor)
+	
+	#if not accessor.id_changed.is_connected(_on_accessor_id_changed):
+		#accessor.id_changed.connect(_on_accessor_id_changed)
+	#
+	#if not Engine.is_editor_hint():
+		#if get_debug_mode():
+			#verify_accessors()
+	
+	return true
+
+## The [method remove_accessor] method is responsible for removing a
+## [LokStorageAccessor] from the [member accessors] list, so that
+## it doesn't have its data saved and loaded anymore. [br]
+## This makes sense when such [LokStorageAccessor] exits from the tree,
+## and hence doesn't have the ability to do anything with the data. [br]
+## This method is called automatically by [LokStorageAccessor]s when they
+## exit the scene tree, so there's no need to using it yourself.
+func remove_accessor(accessor: LokStorageAccessor) -> bool:
+	var accessor_index: int = accessors.find(accessor)
+	
+	if accessor_index == -1:
+		return false
+	
+	accessors.remove_at(accessor_index)
+	
+	#if accessor.id_changed.is_connected(_on_accessor_id_changed):
+		#accessor.id_changed.disconnect(_on_accessor_id_changed)
+	
+	return true
+
+## The [method get_accessors_by_id] method looks through all currently
+## registered [LokStorageAccessor]s and returns the ones that match the
+## [param id] passed. [br]
+## Before comparing the ids, the [LokStorageAccessor]'s version is set
+## to the [param version_number] passed in the parameter, so that the
+## comparison takes that version specifically into account. [br]
+## If the version number is an empty [String], as default, it means the
+## latest version of the [LokStorageAccessor] is used in the comparison.
+func get_accessors_by_id(
+	id: String,
+	version_number: String = ""
+) -> Array[LokStorageAccessor]:
+	var result: Array[LokStorageAccessor] = []
+	
+	for accessor: LokStorageAccessor in accessors:
+		accessor.set_version_number(version_number)
+		
+		if accessor.get_id() == id:
+			result.append(accessor)
+	
+	return result
+
+## The [method get_accessor_by_id] method looks through all currently
+## registered [LokStorageAccessor]s and returns the first one that matches the
+## [param id] passed. [br]
+## Before comparing the ids, the [LokStorageAccessor]'s version is set
+## to the [param version_number] passed in the parameter, so that the
+## comparison takes that version specifically into account. [br]
+## If the version number is an empty [String], as default, it means the
+## latest version of the [LokStorageAccessor] is used in the comparison.
+func get_accessor_by_id(
+	id: String, version_number: String = ""
+) -> LokStorageAccessor:
+	for accessor: LokStorageAccessor in accessors:
+		accessor.set_version_number(version_number)
+		
+		if accessor.get_id() == id:
+			return accessor
+	
+	return null
+
+## The [method get_accessors_grouped_by_id] method looks through all currently
+## registered [LokStorageAccessor]s and returns a [Dictionary] that groups
+## together the [LokStorageAccessor]s with same
+## [member LokStorageAccessorVersion.id]. [br]
+## Before looking the ids, the [LokStorageAccessor]'s version is set
+## to the [param version_number] passed in the parameter, so that the
+## comparison takes that version specifically into account. [br]
+## If the version number is an empty [String], as default, it means the
+## latest version of the [LokStorageAccessor] is used in the comparison. [br]
+## The format of the [Dictionary] returned is as follows:[br]
+## [code]{
+##   <id_1>: String: [
+##     <accessor_1>: LokStorageAccessor,
+##     <accessor_n>: LokStorageAccessor
+##   ],
+##   <id_n>: String: [
+##     <accessor_1>: LokStorageAccessor,
+##     <accessor_n>: LokStorageAccessor
+##   ]
+## }[/code]
+func get_accessors_grouped_by_id(version_number: String = "") -> Dictionary:
+	var result: Dictionary = {}
+	
+	for accessor: LokStorageAccessor in accessors:
+		accessor.set_version_number(version_number)
+		var accessor_id: String = accessor.get_id()
+		
+		if not result.has(accessor_id):
+			result[accessor_id] = []
+		
+		result[accessor_id].append(accessor)
+	
+	return result
+
+## The [method get_repeated_accessors_grouped_by_id] method
+## does the same as the [method get_accessors_grouped_by_id] method,
+## with the difference that this method filters out the groups that
+## have one or less [LokStorageAccessor]s. [br]
+## In other words, this method returns the [LokStorageAccessor]s that
+## have repeated ids grouped by id.
+## The format of the [Dictionary] returned is as follows:[br]
+## [code]{
+##   <id_1>: String: [
+##     <accessor_1>: LokStorageAccessor,
+##     <accessor_n>: LokStorageAccessor
+##   ],
+##   <id_n>: String: [
+##     <accessor_1>: LokStorageAccessor,
+##     <accessor_n>: LokStorageAccessor
+##   ]
+## }[/code]
+func get_repeated_accessors_grouped_by_id(version_number: String = "") -> Dictionary:
+	var result: Dictionary = {}
+	
+	var accessor_groups: Dictionary = get_accessors_grouped_by_id(
+		version_number
+	)
+	
+	for accessor_id: String in accessor_groups.keys():
+		if accessor_groups[accessor_id].size() <= 1:
+			continue
+		
+		result[accessor_id] = accessor_groups[accessor_id]
+	
+	return result
+
+## The [method select_access_strategy] method uses the
+## [code]"addons/locker/use_encryption"[/code] Project Setting to
+## select whether the [member access_strategy] should be the
+## [LokEncryptedAccessStrategy] or the [LokJSONAccessStrategy].
+func select_access_strategy() -> void:
+	if get_use_encryption():
+		access_strategy = LokEncryptedAccessStrategy.new()
+	else:
+		access_strategy = LokJSONAccessStrategy.new()
+
+## The [method collect_data] method is used to get and organize the data
+## from an [param accessor]. [br]
+## Optionally, a [param version_number] can be passed to dictate from which
+## version of the [param accessor] the data should be got. If left undefined,
+## this parameter defaults to the version [code]"1.0.0"[/code]. If forced
+## to be an empty [String], the data is collected from the latest version of
+## the [param accessor]. [br]
+## At the end, this method returns a [Dictionary] with all the data obtained
+## from the [param accessor]. It's structure is the following:[br]
+## [code]{
+##   <accessor_version>: String = String,
+##   <accessor_data_1>: String = String,
+##   <accessor_data_n>: String = String
+## }[/code]
+func collect_data(
+	accessor: LokStorageAccessor,
+	version_number: String = "1.0.0"
+) -> Dictionary:
+	if accessor == null:
+		return {}
+	
+	accessor.set_version_number(version_number)
+	
+	var accessor_id: String = accessor.get_id()
+	var accessor_version: String = accessor.get_version_number()
+	var accessor_data: Dictionary = accessor.retrieve_data()
+	
+	if accessor_id == "":
+		return {}
+	if accessor_data.is_empty():
+		return {}
+	
+	if get_save_versions():
+		if accessor_version != "":
+			accessor_data["version"] = accessor_version
+	
+	return accessor_data
+
+## The [method gather_data] method is the central point where the data
+## from all [member accessors] is collected using the
+## [method collect_data] method. [br]
+## If the [param accessor_ids] parameter is not empty, this method only
+## gathers data from the [LokStorageAccessor]s that match those ids. [br]
+## The [param version_number] parameter is used as the version of the
+## [LokStorageAccessor]s from which the data is collected. If left undefined,
+## this parameter defaults to the version [code]"1.0.0"[/code]. If forced
+## to be an empty [String], the data is collected from the latest version of
+## the [LokStorageAccessor]s. [br]
+## In the case there's [member LokStorageAccessorVersion.id] conflicts,
+## the id of the first accessor encountered is prioritized. It is often
+## unknown, though, which accessor is the first one, so it's always better
+## to avoid repeated ids. [br]
+## At the end, this method returns a [Dictionary] with all the data obtained
+## from the [LokStorageAccessor]s. It's structure is the following:[br]
+## [code]{
+##   <accessor_1_id>: String = {
+##     <accessor_1_version>: String = String,
+##     <accessor_1_data_1>: String = String,
+##     <accessor_1_data_n>: String = String
+##   },
+##   <accessor_n_id>: String = {
+##     <accessor_n_version>: String = String,
+##     <accessor_n_data_1>: String = String,
+##     <accessor_n_data_n>: String = String
+##   }
+## }[/code]
 func gather_data(
 	accessor_ids: Array[String] = [],
 	version_number: String = "1.0.0"
@@ -175,50 +369,59 @@ func gather_data(
 	
 	for accessor: LokStorageAccessor in accessors:
 		accessor.set_version_number(version_number)
-		
 		var accessor_id: String = accessor.get_id()
-		var accessor_version: String = accessor.get_version_number()
-		var accessor_data: Dictionary = accessor.retrieve_data()
 		
-		if accessor_id == "":
-			continue
-		if accessor_data.is_empty():
-			continue
-		if (
-			not accessor_ids.is_empty() and
-			not accessor_id in accessor_ids
-		):
+		if not accessor_ids.is_empty() and not accessor_id in accessor_ids:
 			continue
 		
-		if get_save_versions() and accessor_version != "":
-			accessor_data["version"] = accessor_version
+		var accessor_data: Dictionary = collect_data(accessor, version_number)
+		
+		if accessor_data == {}:
+			continue
 		
 		data[accessor_id] = accessor_data
 	
 	return data
 
+## The [method distribute_data] method is the central point where the data
+## can be distributed to all [member accessors]. [br]
+## If the [param accessor_ids] parameter is not empty, this method only
+## distributes data to the [LokStorageAccessor]s that match those ids. [br]
+## The version of the [LokStorageAccessor]s that receives the data is
+## determined by the [code]"version"[/code] key of its data in the [param data]
+## [Dictionary]. If there's no such entry, the version that receives the
+## data is latest available. [br]
+## If there are more than one [LokStorageAccessor]s with the same id found,
+## the data with that id is distributed to all of these [LokStorageAccessor]s.
+## [br]
+## The [param data] [Dictionary] that this method expects follows the same
+## pattern as the one returned by the [method gather_data] method.
 func distribute_data(
 	data: Dictionary,
 	accessor_ids: Array[String] = []
 ) -> void:
 	for accessor_id: String in data.keys():
-		if (
-			not accessor_ids.is_empty() and
-			not accessor_id in accessor_ids
-		):
+		if not accessor_ids.is_empty() and not accessor_id in accessor_ids:
 			continue
 		
 		var accessor_data: Dictionary = data[accessor_id]
 		var accessor_version: String = accessor_data.get("version", "")
 		
-		var accessor: LokStorageAccessor = get_accessor_by_id(
+		var accessors_found: Array[LokStorageAccessor] = get_accessors_by_id(
 			accessor_id, accessor_version
 		)
 		
-		if accessor == null:
-			continue
+		for accessor: LokStorageAccessor in accessors_found:
+			accessor.consume_data(accessor_data)
 		
-		accessor.consume_data(accessor_data)
+		#var accessor: LokStorageAccessor = get_accessor_by_id(
+			#accessor_id, accessor_version
+		#)
+		#
+		#if accessor == null:
+			#continue
+		#
+		#accessor.consume_data(accessor_data)
 
 ## Another optional parameter this method accept is the [param accessor_ids],
 ## which is a list that enumerates the ids of the [LokStorageAccessor]
@@ -245,14 +448,29 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
+	var data: Dictionary = read_data(
+		file_id,
+		accessor_ids,
+		partition_ids,
+		version_numbers
+	)
+	
+	distribute_data(data, accessor_ids)
+	
+	return data
+
+func read_data(
+	file_id: int,
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
+) -> Dictionary:
 	var saves_directory: String = get_saves_directory()
 	
 	if LokAccessStrategy.check_directory(saves_directory) == false:
 		return {}
 	
 	var data: Dictionary = access_strategy.load_data(file_id)
-	
-	distribute_data(data, accessor_ids)
 	
 	return data
 
@@ -264,4 +482,4 @@ func _on_accessor_id_changed(old_id: String, new_id: String) -> void:
 	if Engine.is_editor_hint():
 		return
 	
-	verify_accessors()
+	#verify_accessors()

@@ -288,18 +288,14 @@ func test_save_data_delegates_to_global_manager() -> void:
 	
 	accessor.storage_manager = DoubledManager.new()
 	
-	var remove_version_callable: Callable = (
-		func(_version_number: String) -> bool: return false
-	)
-	
 	accessor.save_data(
-		1, "1.0.0", remove_version_callable
+		1, "1.0.0"
 	)
 	
 	assert_called(
 		accessor.storage_manager,
 		"save_data",
-		[ 1, "1.0.0", [ accessor.get_id() ], remove_version_callable ]
+		[ 1, "1.0.0", [ accessor.get_id() ], false ]
 	)
 
 #endregion
@@ -316,7 +312,7 @@ func test_load_data_delegates_to_global_manager() -> void:
 	assert_called(
 		accessor.storage_manager,
 		"load_data",
-		[ 1, [ accessor.get_id() ] ]
+		[ 1, [ accessor.get_id() ], [], [] ]
 	)
 
 #endregion
