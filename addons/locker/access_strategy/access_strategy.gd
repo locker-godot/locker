@@ -43,11 +43,133 @@ static func check_directory(
 ## The [method check_and_create_directory] method uses the
 ## [method check_directory] and [method create_directory] methods
 ## to create a directory only if it doesn't already exist.
-static func check_and_create_directory(directory: String) -> bool:
-	if not check_directory(directory, true):
-		return create_directory(directory)
+static func check_and_create_directory(path: String) -> bool:
+	if not check_directory(path, true):
+		return create_directory(path)
 	
 	return true
+
+## The [method create_file] method creates a new file in the
+## path specified by the [param path] parameter. [br]
+## Optionally, this method can receive a [param content] parameter
+## that defines what should be written in the new file. [br]
+## Besides that, a [param encryption_pass] parameter can also be passed.
+## Such parameter represents the password to be used in the file creation
+## if it is desired to create it in encrypted mode.
+## If an error occurs, this method pushes it and returns [code]false[/code],
+## otherwise, it returns [code]true[/code].
+static func write_or_create_file(
+	path: String,
+	content: String = "",
+	encryption_pass: String = "",
+	suppress_errors: bool = false
+) -> bool:
+	var file: FileAccess = null
+	
+	if encryption_pass != "":
+		file = FileAccess.open_encrypted_with_pass(
+			path, FileAccess.WRITE, encryption_pass
+		)
+	else:
+		file = FileAccess.open(path, FileAccess.WRITE)
+	
+	if file == null:
+		var error: Error = FileAccess.get_open_error()
+		
+		push_error(
+			"Error on writing or creating file %s: %s(%s)" % [
+				path,
+				error_string(error),
+				error
+			]
+		)
+		
+		return false
+	
+	file.store_string(content)
+	
+	file.close()
+	
+	return true
+
+## The [method check_file] method checks if a file exists in the
+## path specified by the [param path] parameter. [br]
+## If the file doesn't exist, this method pushes an error and returns
+## [code]false[/code], otherwise, it returns [code]true[/code]. [br]
+## If the [param suppress_error] is [code]true[/code], though,
+## no errors are, thrown.
+static func check_file(
+	path: String, suppress_error: bool = false
+) -> bool:
+	if not FileAccess.file_exists(path):
+		if not suppress_error:
+			push_error("File not found: '%s'" % path)
+		
+		return false
+	
+	return true
+
+## The [method check_and_create_file] method uses the
+## [method check_file] and [method create_file] methods
+## to create a file only if it doesn't already exist. [br]
+## See [method create_file] for more informations about the parameters.
+static func check_and_create_file(
+	path: String, content: String = "", encryption_pass: String = ""
+) -> bool:
+	if not check_file(path, true):
+		return write_or_create_file(path, content, encryption_pass)
+	
+	return true
+
+## The [method read_file] method reads from a file in the
+## path specified by the [param path] parameter. [br]
+## Optionally, an [param encryption_pass] parameter can also be passed.
+## Such parameter represents the password to be used when reading the file
+## if it is desired to read it in encrypted mode.
+## If an error occurs, this method pushes it and returns [code]""[/code],
+## otherwise, it returns the [String] read from the file.
+static func read_file(
+	path: String, encryption_pass: String = ""
+) -> String:
+	var file: FileAccess = null
+	
+	if encryption_pass != "":
+		file = FileAccess.open_encrypted_with_pass(
+			path, FileAccess.READ, encryption_pass
+		)
+	else:
+		file = FileAccess.open(path, FileAccess.READ)
+	
+	if file == null:
+		var error: Error = FileAccess.get_open_error()
+		
+		push_error(
+			"Error on reading file %s: %s(%s)" % [
+				path,
+				error_string(error),
+				error
+			]
+		)
+		
+		return ""
+	
+	var result: String = file.get_as_text()
+	
+	file.close()
+	
+	return result
+
+func save_partition(
+	_partition_path: String,
+	_data: Dictionary,
+	_replace: bool = false,
+	_suppress_errors: bool = false
+) -> Dictionary: return {}
+
+func load_partition(
+	_partition_path: String,
+	_suppress_errors: bool = false
+) -> Dictionary: return {}
 
 ## The [method save_data] method should be overwritten so that it saves
 ## the given [param data] in the file specified by the [param file_id]. [br]
@@ -58,7 +180,8 @@ static func check_and_create_directory(directory: String) -> bool:
 ## At the end, this method should return a [Dictionary] with the data
 ## saved.
 func save_data(
-	_file_id: String,
+	_file_path: String,
+	_file_format: String,
 	_data: Dictionary,
 	_replace: bool = false,
 	_suppress_errors: bool = false
@@ -71,6 +194,7 @@ func save_data(
 ## At the end, this method should return a [Dictionary] with the data
 ## obtained.
 func load_data(
-	_file_id: String,
+	_file_path: String,
+	_partitions: Array[String] = [],
 	_suppress_errors: bool = false
 ) -> Dictionary: return {}
