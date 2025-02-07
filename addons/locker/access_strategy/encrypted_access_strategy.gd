@@ -1,9 +1,35 @@
-
+## The [LokEncryptedAccessStrategy] class is responsible for
+## implementing encrypted data accessing.
+## 
+## This class inherits from the [LokAccessStrategy] in order to implement
+## its [method save_partition] and [method load_partition] methods and
+## with that provide saving and loading functionalities for
+## encrypted data.
+## [br]
+## [b]Version[/b]: 1.0.0[br]
+## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokEncryptedAccessStrategy
 extends LokAccessStrategy
 
-var password: String = ""
+## The [member password] property is used when encrypting/ decrypting data,
+## so it must be set to a password intended before starting using this class.
+var password: String = "":
+	set = set_password,
+	get = get_password
 
+func set_password(new_password: String) -> void:
+	password = new_password
+
+func get_password() -> String:
+	return password
+
+## The [method save_partition] method overrides its super counterpart
+## [method LokAccessStrategy.save_partition] in order to provide [param data]
+## saving in a encrypted format. [br]
+## When finished, this method returns a [Dictionary] with the data it
+## saved. [br]
+## To read more about the parameters of this method, see
+## [method LokAccessStrategy.save_partition].
 func save_partition(
 	partition_path: String,
 	data: Dictionary,
@@ -34,6 +60,13 @@ func save_partition(
 	
 	return result
 
+## The [method load_partition] method overrides its super counterpart
+## [method LokAccessStrategy.load_partition] in order to provide encrypted data
+## loading. [br]
+## When finished, this method returns a [Dictionary] with the data it
+## loaded. [br]
+## To read more about the parameters of this method and the format of
+## its return, see [method LokAccessStrategy.load_partition].
 func load_partition(
 	partition_path: String,
 	suppress_errors: bool = false
@@ -48,91 +81,15 @@ func load_partition(
 	
 	if data == null:
 		if not suppress_errors:
-			push_error(
-				"Couldn't parse JSON data from partition '%s'" % partition_path
-			)
+			push_error_unrecognized_partition(partition_path)
 		
 		return {}
 	
+	var partition_name: String = get_file_prefix(get_file_name(partition_path))
+	
+	for accessor_id: String in data:
+		var accessor: Dictionary = data[accessor_id]
+		
+		accessor["partition"] = partition_name
+	
 	return data
-
-#func save_data(
-	#file_path: String,
-	#file_format: String,
-	#data: Dictionary,
-	#replace: bool = false,
-	#suppress_errors: bool = false
-#) -> Dictionary:
-	#var file: FileAccess
-	#
-	#if not FileAccess.file_exists(file_path):
-		#file = FileAccess.open_encrypted_with_pass(
-			#file_path, FileAccess.WRITE, LockerPlugin.get_encryption_password()
-		#)
-		#file.store_string(JSON.stringify({}))
-		#file.close()
-	#
-	#file = FileAccess.open_encrypted_with_pass(
-		#file_path,
-		#FileAccess.READ,
-		#LockerPlugin.get_encryption_password()
-	#)
-	#
-	#if file == null:
-		#push_error("Error on saving data: %s" % [ FileAccess.get_open_error() ])
-		#return {}
-	#
-	#var file_content: String = file.get_as_text()
-	#
-	#file.close()
-	#
-	#var file_data: Variant = JSON.parse_string(file_content)
-	#
-	#if file_data == null:
-		#file_data = {}
-	#
-	#var merged_data: Dictionary = data.merged(file_data)
-	#
-	#file = FileAccess.open_encrypted_with_pass(
-		#file_path,
-		#FileAccess.WRITE,
-		#LockerPlugin.get_encryption_password()
-	#)
-	#
-	#file.store_string(JSON.stringify(merged_data, "\t"))
-	#
-	#file.close()
-	#
-	#return data
-
-#func load_data(
-	#file_path: String,
-	#file_format
-	#partitions: Array[String] = [],
-	#suppress_errors: bool = false
-#) -> Dictionary:
-	#if not FileAccess.file_exists(file_path):
-		#push_error("File not found in path %s" % file_path)
-		#return {}
-	#
-	#var file := FileAccess.open_encrypted_with_pass(
-		#file_path,
-		#FileAccess.READ,
-		#LockerPlugin.get_encryption_password()
-	#)
-	#
-	#if file == null:
-		#push_error("Error on loading data: %s" % [ FileAccess.get_open_error() ])
-		#return {}
-	#
-	#var file_content: String = file.get_as_text()
-	#
-	#file.close()
-	#
-	#var data: Dictionary = JSON.parse_string(file_content)
-	#
-	#if data == null:
-		#push_error("Couldn't parse JSON data")
-		#return {}
-	#
-	#return data
