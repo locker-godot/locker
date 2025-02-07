@@ -36,14 +36,10 @@ func get_number() -> String:
 ## [LokStorageAccessorVersion] with its properties already
 ## set to the desired values.
 static func create(
-	_id: String,
-	_number: String = "1.0.0",
-	_partition: String = ""
+	_number: String = "1.0.0"
 ) -> LokStorageAccessorVersion:
 	var result := LokStorageAccessorVersion.new()
-	result.id = _id
 	result.number = _number
-	result.partition = _partition
 	
 	return result
 
