@@ -1,3 +1,4 @@
+@icon("res://addons/locker/icons/storage_accessor.svg")
 @tool
 ## The [LokStorageAccessor] is a node specialized in saving and loading data.
 ## 
@@ -23,6 +24,26 @@ var storage_manager := LokGlobalStorageManager:
 	set = set_storage_manager,
 	get = get_storage_manager
 
+## The [member id] property specifies what is the unique id of a
+## [LokStorageAccessor] in this [LokStorageAccessorVersion]. [br]
+## You should always plan your save system to make sure your
+## [LokStorageAccessor]'s ids don't crash. [br]
+## If they do, some data may get lost.
+@export var id: String:
+	set = set_id,
+	get = get_id
+
+## The [member partition] property specifies in what partition the
+## data of this [LokStorageAccessorVersion] should be stored. [br]
+## If left empty, it means it is stored in the default partition. [br]
+## The separation in partitions is useful when a [LokStorageAccessor] or
+## group of [LokStorageAccessor]s have data that has to be loaded often
+## by itself, like the data from a player that needs to be loaded whenever
+## it logs in the game.
+@export var partition: String = "":
+	set = set_partition,
+	get = get_partition
+
 @export var versions: Array[LokStorageAccessorVersion] = []:
 	set = set_versions,
 	get = get_versions
@@ -40,6 +61,23 @@ var version: LokStorageAccessorVersion:
 	get = get_version
 
 #region Setters & Getters
+
+func set_id(new_id: String) -> void:
+	#var old_id: String = id
+	
+	id = new_id
+	
+	#if old_id != new_id:
+		#id_changed.emit(old_id, new_id)
+
+func get_id() -> String:
+	return id
+
+func set_partition(new_partition: String) -> void:
+	partition = new_partition
+
+func get_partition() -> String:
+	return partition
 
 func set_storage_manager(new_manager: LokGlobalStorageManager) -> void:
 	storage_manager = new_manager
@@ -100,17 +138,17 @@ func set_version(new_version: LokStorageAccessorVersion) -> void:
 func get_version() -> LokStorageAccessorVersion:
 	return version
 
-func set_id(new_id: String) -> void:
-	if version == null:
-		return
-	
-	version.id = new_id
-
-func get_id() -> String:
-	if version == null:
-		return ""
-	
-	return version.id
+#func set_id(new_id: String) -> void:
+	#if version == null:
+		#return
+	#
+	#version.id = new_id
+#
+#func get_id() -> String:
+	#if version == null:
+		#return ""
+	#
+	#return version.id
 
 func get_dependencies() -> Dictionary:
 	var result: Dictionary = {}
@@ -178,7 +216,7 @@ func get_readable_name() -> String:
 	return str(self)
 
 func save_data(
-	file_id: int,
+	file_id: String,
 	version_number: String = "1.0.0"
 ) -> Dictionary:
 	if storage_manager == null:
@@ -188,7 +226,7 @@ func save_data(
 		file_id, version_number, [ get_id() ], false
 	)
 
-func load_data(file_id: int) -> Dictionary:
+func load_data(file_id: String) -> Dictionary:
 	if storage_manager == null:
 		return {}
 	

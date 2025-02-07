@@ -15,8 +15,6 @@
 class_name LokStorageAccessorVersion
 extends Resource
 
-signal id_changed(from: String, to: String)
-
 ## The [member number] property specifies what version of
 ## [LokStorageAccessor] this [LokStorageAccessorVersion]
 ## corresponds to. [br]
@@ -28,48 +26,11 @@ signal id_changed(from: String, to: String)
 	set = set_number,
 	get = get_number
 
-## The [member id] property specifies what is the unique id of a
-## [LokStorageAccessor] in this [LokStorageAccessorVersion]. [br]
-## You should always plan your save system to make sure your
-## [LokStorageAccessor]'s ids don't crash. [br]
-## If they do, some data may get lost.
-@export var id: String:
-	set = set_id,
-	get = get_id
-
-## The [member partition] property specifies in what partition the
-## data of this [LokStorageAccessorVersion] should be stored. [br]
-## If left empty, it means it is stored in the default partition. [br]
-## The separation in partitions is useful when a [LokStorageAccessor] or
-## group of [LokStorageAccessor]s have data that has to be loaded often
-## by itself, like the data from a player that needs to be loaded whenever
-## it logs in the game.
-@export var partition: String = "":
-	set = set_partition,
-	get = get_partition
-
 func set_number(new_number: String) -> void:
 	number = new_number
 
 func get_number() -> String:
 	return number
-
-func set_id(new_id: String) -> void:
-	#var old_id: String = id
-	
-	id = new_id
-	
-	#if old_id != new_id:
-		#id_changed.emit(old_id, new_id)
-
-func get_id() -> String:
-	return id
-
-func set_partition(new_partition: String) -> void:
-	partition = new_partition
-
-func get_partition() -> String:
-	return partition
 
 ## The [method create] method is a utility to create a new
 ## [LokStorageAccessorVersion] with its properties already
@@ -186,8 +147,7 @@ func retrieve_data(
 ## they can be easily referenced by this [LokStorageAccessorVersion]. [br]
 ## The [param data] [Dictionary] this method receives is [String] based,
 ## so it is recommended that you use methods like
-## [method @GlobalScope.var_to_str] and [method @GlobalScope.str_to_var]
-## to parse this data.
+## [method @GlobalScope.str_to_var] to parse this data.
 func consume_data(
 	_data: Dictionary,
 	_dependencies: Dictionary
