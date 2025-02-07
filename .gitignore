@@ -17,3 +17,4 @@ mono_crash.*.json
 
 # Locker ignores
 /addons/locker/config.cfg
+/saves/
