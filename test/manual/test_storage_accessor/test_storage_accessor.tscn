@@ -8,3 +8,4 @@ script = ExtResource("1_wywfo")
 
 [node name="Accessor" type="Node" parent="."]
 script = ExtResource("2_f0d3d")
+active = null
