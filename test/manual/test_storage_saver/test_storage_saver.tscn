@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://l6k3two8orht"]
+
+[ext_resource type="Script" path="res://test/manual/test_storage_saver/test_storage_saver.gd" id="1_cjq0p"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_saver.gd" id="2_ade8a"]
+
+[node name="TestStorageSaver" type="Node2D"]
+script = ExtResource("1_cjq0p")
+
+[node name="Saver" type="Node" parent="."]
+script = ExtResource("2_ade8a")
