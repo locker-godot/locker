@@ -27,6 +27,15 @@ static func push_error_directory_creation_failed(
 		error_code
 	])
 
+static func push_error_directory_or_file_removal_failed(
+	path: String, error_code: Error
+) -> void:
+	push_error("Error on file or directory removal in path '%s': %s(%s)" % [
+		path,
+		error_string(error_code),
+		error_code
+	])
+
 static func push_error_directory_not_found(path: String) -> void:
 	push_error("Directory not found in path '%s'" % path)
 
@@ -65,6 +74,22 @@ static func create_directory(path: String) -> bool:
 	
 	return true
 
+## The [method remove_directory_or_file] method removes a directory or file
+## from the path specified by the [param path] parameter. [br]
+## If [param path] points to a directory and it isn't empty this method
+## won't succed, so make sure to empty it first. [br]
+## If an error occurs, this method pushes it and returns [code]false[/code],
+## otherwise, it returns [code]true[/code].
+static func remove_directory_or_file(path: String) -> bool:
+	var err: Error = DirAccess.remove_absolute(path)
+	
+	if err != OK:
+		push_error_directory_or_file_removal_failed(path, err)
+		
+		return false
+	
+	return true
+
 ## The [method check_directory] method checks if a directory exists in the
 ## path specified by the [param path] parameter. [br]
 ## If the directory doesn't exist, this method pushes an error and returns
@@ -91,14 +116,27 @@ static func check_and_create_directory(path: String) -> bool:
 	
 	return true
 
-## The [method read_directory] method scans the files of a directory
+## The [method check_and_remove_directory] method uses the
+## [method check_directory] and [method is_directory_empty] methods
+## to check if the directory in the [param path] can be removed.[br]
+## If it can, this method uses the [method remove_directory_or_file]
+## method to remove it. [br]
+## On success this method returns [code]true[/code] and on failure
+## it returns [code]false[/code].
+static func check_and_remove_directory(path: String) -> bool:
+	if check_directory(path, true) and is_directory_empty(path):
+		return remove_directory_or_file(path)
+	
+	return false
+
+## The [method get_file_names] method scans the files of a directory
 ## in a given [param path] and returns their names in a [PackedStringArray].
 ## [br]
 ## The [param formats] parameter is used to filter what file formats should
 ## be included in the final result (without the "."). [br]
 ## If this parameter is left as default, that means all file formats are
 ## included.
-static func read_directory(
+static func get_file_names(
 	path: String, formats: Array[String] = []
 ) -> PackedStringArray:
 	var file_names: PackedStringArray = DirAccess.get_files_at(path)
@@ -115,6 +153,21 @@ static func read_directory(
 			result.append(file_name)
 	
 	return result
+
+## The [method get_directory_names] method returns the names of the
+## subdirectories of a directory in a given [param path] in a
+## [PackedStringArray].
+static func get_directory_names(path: String) -> PackedStringArray:
+	return DirAccess.get_directories_at(path)
+
+## The [method is_directory_empty] method looks for the files and subdirectories
+## in the directory in the [param path] and tells whether that directory
+## is empty or not.
+static func is_directory_empty(path: String) -> bool:
+	return (
+		get_file_names(path).is_empty() and
+		get_directory_names(path).is_empty()
+	)
 
 ## The [method write_or_create_file] method creates a new file in the
 ## path specified by the [param path] parameter, if it doesn't already
@@ -197,6 +250,19 @@ static func check_file(
 		return false
 	
 	return true
+
+## The [method check_and_remove_file] method uses the
+## [method check_file] method to check if there is a file in the
+## [param path] to be removed.[br]
+## If there is, this method uses the [method remove_directory_or_file]
+## method to remove it.[br]
+## On success this method returns [code]true[/code] and on failure
+## it returns [code]false[/code].
+static func check_and_remove_file(path: String) -> bool:
+	if check_file(path, true):
+		return remove_directory_or_file(path)
+	
+	return false
 
 ## The [method check_and_create_file] method uses the
 ## [method check_file] and [method write_or_create_file] methods
@@ -398,7 +464,7 @@ func load_data(
 ) -> Dictionary:
 	var result: Dictionary = {}
 	
-	var all_partitions: PackedStringArray = read_directory(
+	var all_partitions: PackedStringArray = get_file_names(
 		file_path,
 		[ file_format ]
 	)
