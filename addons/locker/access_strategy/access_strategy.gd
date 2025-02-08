@@ -383,7 +383,7 @@ func save_data(
 ## {
 ##   "accessor_id_1": {
 ##     "version": "version_number",
-##     "partition": "parition_name",
+##     "partition": "partition_name",
 ##     "data_1": "data",
 ##     "data_n": "data"
 ##   },
