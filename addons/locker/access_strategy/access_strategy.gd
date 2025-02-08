@@ -90,6 +90,24 @@ static func remove_directory_or_file(path: String) -> bool:
 	
 	return true
 
+static func remove_directory_recursive(path: String) -> bool:
+	var result: bool = true
+	
+	for file_name: String in get_file_names(path):
+		if result == false:
+			return result
+		
+		result = result and remove_directory_or_file(path.path_join(file_name))
+	for directory_name: String in get_directory_names(path):
+		if result == false:
+			return result
+		
+		result = result and remove_directory_recursive(
+			path.path_join(directory_name)
+		)
+	
+	return remove_directory_or_file(path)
+
 ## The [method check_directory] method checks if a directory exists in the
 ## path specified by the [param path] parameter. [br]
 ## If the directory doesn't exist, this method pushes an error and returns
