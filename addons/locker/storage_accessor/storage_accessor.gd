@@ -57,7 +57,12 @@ var storage_manager := LokGlobalStorageManager:
 ## organization accross different versions, with the addition of features,
 ## for example. [br]
 ## To actually do something, this [LokStorageAccessor] needs at least one
-## [LokStorageAccessorVersion] to save and load data.
+## [LokStorageAccessorVersion] to save and load data. [br]
+## In order for this [LokStorageAccessor] to correctly find new versions,
+## they should be added to this [Array] through a new [Array], so that
+## this property's setter gets triggered. Alternatively, you can use
+## a method like [method Array.append], but make sure to call
+## [method 
 @export var versions: Array[LokStorageAccessorVersion] = []:
 	set = set_versions,
 	get = get_versions
@@ -85,6 +90,15 @@ var storage_manager := LokGlobalStorageManager:
 @export var dependency_paths: Dictionary = {}:
 	set = set_dependency_paths,
 	get = get_dependency_paths
+
+## The [member active] property is a flag that tells whether this
+## [LokStorageAccessor] should save and load its data when its
+## [method save_data] and [method load_data] methods try so. [br]
+## By default it is set to [code]true[/code] so that this
+## [LokStorageAccessor] can do its tasks as expected.
+@export var active: bool = true:
+	set = set_active,
+	get = is_active
 
 ## The [member version] property stores the current [LokStorageAccessorVersion]
 ## selected by the [member version_number]. [br]
@@ -122,8 +136,7 @@ func get_partition() -> String:
 func set_versions(new_versions: Array[LokStorageAccessorVersion]) -> void:
 	versions = new_versions
 	
-	# Look for a version in the new versions
-	version = find_version(version_number)
+	update_version()
 
 func get_versions() -> Array[LokStorageAccessorVersion]:
 	return versions
@@ -136,16 +149,7 @@ func set_version_number(new_number: String) -> void:
 	
 	version_number = new_number
 	
-	# Updates the current version
-	if new_number == "":
-		version = find_latest_version()
-	else:
-		version = find_version(new_number)
-	
-	# Conforms version_number to current version
-	# (in case its latest)
-	if version != null:
-		version_number = version.number
+	update_version()
 
 func get_version_number() -> String:
 	return version_number
@@ -155,6 +159,12 @@ func set_dependency_paths(new_paths: Dictionary) -> void:
 
 func get_dependency_paths() -> Dictionary:
 	return dependency_paths
+
+func set_active(new_state: bool) -> void:
+	active = new_state
+
+func is_active() -> bool:
+	return active
 
 func set_version(new_version: LokStorageAccessorVersion) -> void:
 	var old_version: LokStorageAccessorVersion = version
@@ -182,6 +192,11 @@ func get_readable_name() -> String:
 func push_error_no_manager() -> void:
 	push_error(
 		"No StorageManager found in Accessor '%s'" % get_readable_name()
+	)
+
+func push_error_unactive_accessor() -> void:
+	push_error(
+		"Tried saving or loading unactive Accessor '%s'" % get_readable_name()
 	)
 
 #endregion
@@ -248,6 +263,22 @@ func find_latest_version() -> LokStorageAccessorVersion:
 	
 	return versions.reduce(reducer)
 
+## The [method update_version] method serves to make the [member version]
+## property properly store the current version that the [member version_number]
+## points to.
+func update_version() -> void:
+	# Uses latest version for empty version_numbers
+	if version_number == "":
+		version = find_latest_version()
+	# Searches corresponding version for other version_numbers
+	else:
+		version = find_version(version_number)
+	
+	# Conforms version_number to current version
+	# (in case its latest)
+	if version != null:
+		version_number = version.number
+
 ## The [method select_version] method looks through all the
 ## [member versions] and sets the current [member version] to be
 ## the one with number matching the [param number] parameter. [br]
@@ -271,6 +302,9 @@ func save_data(
 	file_id: String,
 	version_number: String = ""
 ) -> Dictionary:
+	if not is_active():
+		push_error_unactive_accessor()
+		return {}
 	if storage_manager == null:
 		push_error_no_manager()
 		return {}
@@ -283,6 +317,9 @@ func save_data(
 ## [LokGlobalStorageManager] to load the data of this
 ## [LokStorageAccessor].
 func load_data(file_id: String) -> Dictionary:
+	if not is_active():
+		push_error_unactive_accessor()
+		return {}
 	if storage_manager == null:
 		push_error_no_manager()
 		return {}
@@ -298,6 +335,8 @@ func load_data(file_id: String) -> Dictionary:
 func retrieve_data() -> Dictionary:
 	if version == null:
 		return {}
+	if not is_active():
+		return {}
 	
 	return version.retrieve_data(get_dependencies())
 
@@ -308,11 +347,10 @@ func retrieve_data() -> Dictionary:
 func consume_data(data: Dictionary) -> void:
 	if version == null:
 		return
+	if not is_active():
+		return
 	
 	version.consume_data(data, get_dependencies())
-
-func _init() -> void:
-	version = find_version(version_number)
 
 # Adds this StorageAccessor to the GlobalStorageManager
 func _enter_tree() -> void:
