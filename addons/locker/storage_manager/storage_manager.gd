@@ -1,9 +1,13 @@
+@icon("res://addons/locker/icons/storage_manager.svg")
 ## The [LokStorageManager] is the super class of the [LokGlobalStorageManager]
 ## and [LokSceneStorageManager] classes.
 ## 
 ## This super class serves as an interface for the [method save_data],
 ## [method load_data], [method read_data] and [method remove_data] methods,
-## so that its sub classes can override them.
+## so that its sub classes can override them. [br]
+## [br]
+## [b]Version[/b]: 1.0.0[br]
+## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokStorageManager
 extends Node
 
@@ -26,15 +30,15 @@ static func default_remover(
 ## that should determine in what file the game should be saved. [br]
 ## The [param version_number] parameter is supposed to specify what version
 ## of the registered [LokStorageAccessor]s should be used to save the game.
-## By default, it is set to [code]"1.0.0"[/code], which is the initial version
-## when [LokStorageAccessor]s are created. [br]
+## By default, it is set to [code]""[/code], which converts to the latest
+## version available. [br]
 ## The [param accessor_ids] parameter is an [Array] that represents what
 ## is the subset of [LokStorageAccessor]s that should be involved in this
 ## saving process. If left empty, as default, it means that all
 ## [LokStorageAccessor]s currently registered would have their informations
 ## saved. [br]
 ## The [param replace] parameter is a flag that tells whether the previous
-## data saved, if any, should be completly overwritten by the new one.
+## data saved, if any, should be overwritten by the new one.
 ## It's not recommended setting this flag to [code]true[/code] since
 ## [LokStorageAccessor]s from unloaded scenes may need that overwritten data.
 ## This flag should only be used if you know the previous data and
@@ -42,8 +46,8 @@ static func default_remover(
 ## At the end, this method should return the data that was saved via
 ## a [Dictionary].
 func save_data(
-	file_id: int,
-	version_number: String = "1.0.0",
+	file_id: String,
+	version_number: String = "",
 	accessor_ids: Array[String] = [],
 	replace: bool = false
 ) -> Dictionary: return {}
@@ -60,13 +64,16 @@ func save_data(
 ## To provide yet more control over what data is loaded, the
 ## [param partition_ids] and [param version_numbers] parameters can be passed,
 ## serving to filter what information is applied in the game. [br]
+## If you have sure about in what partitions is the data you want to load,
+## passing their [param partition_ids] is more efficient since the loading
+## only needs to check those partitions. [br]
 ## If the optional parameters are left empty, as default, it means that all
 ## [param accessor_ids], [param partition_ids] and [param version_numbers]
 ## are used when loading. [br]
 ## When finished, this method should return the data it gathered loading the
 ## save file in a [Dictionary].
 func load_data(
-	file_id: int,
+	file_id: String,
 	accessor_ids: Array[String] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
@@ -80,13 +87,13 @@ func load_data(
 ## Besides that, there's the [param accessor_ids], [param partition_ids]
 ## and [param version_numbers] parameters, which respectively serve to filter
 ## the [b]data id[/b], [b]partition id[/b], and [b]version number[/b]
-## of the data obtained. ([i]See [member LokStorageAccessorVersion.id],
-## [member LokStorageAccessorVersion.partition_id] and
+## of the data obtained. ([i]See [member LokStorageAccessor.id],
+## [member LokStorageAccessor.partition] and
 ## [member LokStorageAccessorVersion.number][/i]) [br]
 ## On finish, this method should return the data read filtered by the passed
 ## parameters in a [Dictionary].
 func read_data(
-	file_id: int,
+	file_id: String,
 	accessor_ids: Array[String] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
@@ -105,8 +112,10 @@ func read_data(
 ## [param version_number] with which that data was saved. [br]
 ## Finally, this [Callable] should return a
 ## [code]bool[/code], with [code]true[/code] meaning a data should be removed
-## and [code]false[/code] meaning it shouldn't.
+## and [code]false[/code] meaning it shouldn't. [br]
+## [i]See [method default_remover] if you want a concrete example of how
+## should be the signature of the [param remover][/i].
 func remove_data(
-	file_id: int,
+	file_id: String,
 	remover: Callable = default_remover
 ) -> Dictionary: return {}
