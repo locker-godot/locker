@@ -503,6 +503,51 @@ func read_data(
 	
 	return filtered_data
 
+func remove_data(
+	file_id: String,
+	remover: Callable = default_remover
+) -> Dictionary:
+	var file_path: String = get_save_file_path(file_id)
+	
+	var data: Dictionary = {}
+	
+	if remover == default_remover:
+		data = read_data(file_id)
+		
+		LokAccessStrategy.remove_directory_recursive(file_path)
+		
+		return data
+	
+	# Declare "removed" Dict
+	# Iterate over partitions
+	# Declare "result" Dict
+	# Read from each partition
+	# Iterate over file_ids
+	# Test with remover with (accessor_id, partition_id and version_number)
+	# - If true, add to "removed" Dict and not to "result" Dict
+	# - Else, just add to "result" Dict
+	# (When adding to "result" remove "partition" entry)
+	# Save the "result" Dict in the respective partition (with replace true)
+	
+	var removed_data: Dictionary = {}
+	
+	for accessor_id: String in data:
+		var accessor_data: Dictionary = data[accessor_id]
+		var accessor_version: String = accessor_data.get("version", "")
+		var accessor_partition: String = accessor_data.get("partition", "")
+		
+		var should_remove: bool = remover.call(
+			accessor_id, accessor_partition, accessor_version
+		)
+		
+		if not should_remove:
+			continue
+		
+		data.erase(accessor_id)
+		removed_data[accessor_id] = accessor_data
+	
+	return {}
+
 func _init() -> void:
 	if not Engine.is_editor_hint():
 		select_access_strategy()
