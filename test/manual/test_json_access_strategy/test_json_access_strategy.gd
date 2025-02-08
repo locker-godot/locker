@@ -3,10 +3,9 @@ extends Node2D
 
 var access_strategy: LokAccessStrategy = LokJSONAccessStrategy.new()
 
-func read_directory() -> void:
-	var result: PackedStringArray = LokAccessStrategy.read_directory(
-		"res://saves/file1",
-		[""]
+func get_file_names() -> void:
+	var result: PackedStringArray = LokAccessStrategy.get_file_names(
+		"res://saves/file1/junk.test", [""]
 	)
 	
 	print(result)
@@ -97,5 +96,21 @@ func load_data() -> void:
 	
 	print(result)
 
+func remove_directory_or_file() -> void:
+	print(LokAccessStrategy.remove_directory_or_file("res://saves/file1/test"))
+
+func check_and_remove_directory() -> void:
+	print(LokAccessStrategy.check_and_remove_directory("res://saves/file1/"))
+
+func check_directory() -> void:
+	print(LokAccessStrategy.check_directory("res://saves/file1/junk.test"))
+
+func check_and_remove_file() -> void:
+	print(LokAccessStrategy.check_and_remove_file("res://saves/file1/"))
+
+func is_directory_empty() -> void:
+	print(LokAccessStrategy.is_directory_empty("res://saves/"))
+
 func _ready() -> void:
-	load_data()
+	is_directory_empty()
+	pass
