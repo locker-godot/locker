@@ -111,6 +111,19 @@ func check_and_remove_file() -> void:
 func is_directory_empty() -> void:
 	print(LokAccessStrategy.is_directory_empty("res://saves/"))
 
+func remove_directory_recursive() -> void:
+	print(LokAccessStrategy.remove_directory_recursive("res://saves/"))
+
+func remove_partition() -> void:
+	var result: Dictionary = access_strategy.remove_partition(
+		"res://saves/file_shapes/2d.sav",
+		[ "square" ],
+		[ "1.0.0" ],
+		false
+	)
+	
+	print(result)
+
 func _ready() -> void:
-	is_directory_empty()
+	remove_partition()
 	pass

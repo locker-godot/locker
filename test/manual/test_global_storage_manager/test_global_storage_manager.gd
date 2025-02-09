@@ -17,8 +17,89 @@ class VersionTest extends LokStorageAccessorVersion:
 		data["version"] = number
 	
 
+class SquareVersion1Test extends LokStorageAccessorVersion:
+	
+	var data: Dictionary = {}
+	
+	func _init() -> void:
+		number = "1.0.0"
+	
+	func retrieve_data(_dep: Dictionary) -> Dictionary:
+		return {
+			"points": 4,
+			"faces": 1,
+			"lines": 4
+		}
+	
+	func consume_data(_data: Dictionary, _dep: Dictionary) -> void:
+		data = _data
+		data["version"] = number
+	
+
+class CircleVersion1Test extends LokStorageAccessorVersion:
+	
+	var data: Dictionary = {}
+	
+	func _init() -> void:
+		number = "1.2.0"
+	
+	func retrieve_data(_dep: Dictionary) -> Dictionary:
+		return {
+			"points": 0,
+			"faces": 1,
+			"lines": 1
+		}
+	
+	func consume_data(_data: Dictionary, _dep: Dictionary) -> void:
+		data = _data
+		data["version"] = number
+	
+
+class CubeVersion1Test extends LokStorageAccessorVersion:
+	
+	var data: Dictionary = {}
+	
+	func _init() -> void:
+		number = "1.0.2"
+	
+	func retrieve_data(_dep: Dictionary) -> Dictionary:
+		return {
+			"points": 8,
+			"faces": 6,
+			"lines": 12
+		}
+	
+	func consume_data(_data: Dictionary, _dep: Dictionary) -> void:
+		data = _data
+		data["version"] = number
+	
+
+class CillinderVersion1Test extends LokStorageAccessorVersion:
+	
+	var data: Dictionary = {}
+	
+	func _init() -> void:
+		number = "3.0.0"
+	
+	func retrieve_data(_dep: Dictionary) -> Dictionary:
+		return {
+			"points": 0,
+			"faces": 3,
+			"lines": 2
+		}
+	
+	func consume_data(_data: Dictionary, _dep: Dictionary) -> void:
+		data = _data
+		data["version"] = number
+	
+
 @onready var accessor1: LokStorageAccessor = $Accessor1
 @onready var accessor2: LokStorageAccessor = $Accessor2
+
+@onready var square_accessor: LokStorageAccessor = $SquareAccessor
+@onready var circle_accessor: LokStorageAccessor = $CircleAccessor
+@onready var cube_accessor: LokStorageAccessor = $CubeAccessor
+@onready var cillinder_accessor: LokStorageAccessor = $CillinderAccessor
 
 func accessors() -> void:
 	print(LokGlobalStorageManager.accessors)
@@ -109,5 +190,35 @@ func read_data() -> void:
 	
 	print(result)
 
+func save_data_shapes() -> void:
+	accessor1.active = false
+	accessor2.active = false
+	
+	square_accessor.id = "square"
+	square_accessor.partition = "2d"
+	square_accessor.versions = [ SquareVersion1Test.new() ]
+	square_accessor.version_number = "1.0.0"
+	
+	circle_accessor.id = "circle"
+	circle_accessor.partition = "2d"
+	circle_accessor.versions = [ CircleVersion1Test.new() ]
+	circle_accessor.version_number = "1.2.0"
+	
+	cube_accessor.id = "cube"
+	cube_accessor.partition = "3d"
+	cube_accessor.versions = [ CubeVersion1Test.new() ]
+	cube_accessor.version_number = "1.0.2"
+	
+	cillinder_accessor.id = "cillinder"
+	cillinder_accessor.partition = "3d"
+	cillinder_accessor.versions = [ CillinderVersion1Test.new() ]
+	cillinder_accessor.version_number = "3.0.0"
+	
+	var result: Dictionary = LokGlobalStorageManager.save_data(
+		"shapes"
+	)
+	
+	print(result)
+
 func _ready() -> void:
-	read_data()
+	save_data_shapes()

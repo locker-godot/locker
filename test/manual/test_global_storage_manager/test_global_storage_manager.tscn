@@ -11,3 +11,15 @@ script = ExtResource("2_3mi4k")
 
 [node name="Accessor2" type="Node" parent="."]
 script = ExtResource("2_3mi4k")
+
+[node name="SquareAccessor" type="Node" parent="."]
+script = ExtResource("2_3mi4k")
+
+[node name="CircleAccessor" type="Node" parent="."]
+script = ExtResource("2_3mi4k")
+
+[node name="CubeAccessor" type="Node" parent="."]
+script = ExtResource("2_3mi4k")
+
+[node name="CillinderAccessor" type="Node" parent="."]
+script = ExtResource("2_3mi4k")
