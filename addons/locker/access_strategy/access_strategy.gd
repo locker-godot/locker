@@ -507,6 +507,49 @@ func load_data(
 	
 	return result
 
+func remove_partition(
+	partition_path: String,
+	accessor_ids: Array[String] = [],
+	version_numbers: Array[String] = [],
+	suppress_errors: bool = false
+) -> Dictionary:
+	if not check_file(partition_path, suppress_errors):
+		return {}
+	
+	var data: Dictionary = load_partition(partition_path, suppress_errors)
+	
+	if accessor_ids.is_empty() and version_numbers.is_empty():
+		remove_directory_or_file(partition_path)
+		
+		return data
+	
+	var new_data: Dictionary = {}
+	var removed_data: Dictionary = {}
+	
+	for accessor_id: String in data:
+		var accessor_data: Dictionary = data[accessor_id]
+		var accessor_version: String = accessor_data.get("version", "")
+		
+		if (
+			LokUtil.filter_value(accessor_ids, accessor_id) and
+			LokUtil.filter_value(version_numbers, accessor_version)
+		):
+			removed_data[accessor_id] = accessor_data
+			
+			continue
+		
+		accessor_data.erase("partition")
+		new_data[accessor_id] = accessor_data
+	
+	if new_data.is_empty():
+		remove_directory_or_file(partition_path)
+		
+		return removed_data
+	
+	save_partition(partition_path, new_data, true, suppress_errors)
+	
+	return removed_data
+
 ## The [method save_partition] method should be overwritten so that it saves
 ## [param data] in the partition specified by the
 ## [param partition_path] parameter.
