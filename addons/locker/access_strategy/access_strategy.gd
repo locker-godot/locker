@@ -507,6 +507,43 @@ func load_data(
 	
 	return result
 
+func remove_data(
+	file_path: String,
+	file_format: String,
+	partition_ids: Array[String] = [],
+	accessor_ids: Array[String] = [],
+	version_numbers: Array[String] = [],
+	suppress_errors: bool = false
+) -> Dictionary:
+	if not check_directory(file_path):
+		return {}
+	
+	var removed_data: Dictionary = {}
+	
+	var all_partitions: PackedStringArray = get_file_names(
+		file_path,
+		[ file_format ]
+	)
+	
+	for partition_name: String in all_partitions:
+		var partition_id: String = get_file_prefix(partition_name)
+		
+		if not LokUtil.filter_value(partition_ids, partition_id):
+			continue
+		
+		var partition_path: String = file_path.path_join(partition_name)
+		
+		var removed_partition_data: Dictionary = remove_partition(
+			partition_path, accessor_ids, version_numbers, suppress_errors
+		)
+		
+		removed_data.merge(removed_partition_data)
+	
+	if is_directory_empty(file_path):
+		remove_directory_or_file(file_path)
+	
+	return removed_data
+
 func remove_partition(
 	partition_path: String,
 	accessor_ids: Array[String] = [],

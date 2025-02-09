@@ -124,6 +124,18 @@ func remove_partition() -> void:
 	
 	print(result)
 
+func remove_data() -> void:
+	var result: Dictionary = access_strategy.remove_data(
+		"res://saves/file_shapes/",
+		"sav",
+		[ "2d" ],
+		[  ],
+		[  ],
+		false
+	)
+	
+	print(result)
+
 func _ready() -> void:
-	remove_partition()
+	remove_data()
 	pass
