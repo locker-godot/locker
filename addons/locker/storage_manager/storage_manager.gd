@@ -11,18 +11,6 @@
 class_name LokStorageManager
 extends Node
 
-## The [method default_remover] is a static method that is used as the default
-## [param remover] parameter in the [method remove_data] method. [br]
-## As expected by that parameter, this method receives an [param accessor_id],
-## a [param partition_id] and a [param version_number]. [br]
-## As of its implementation, this method simply returns [code]false[/code],
-## indicating that no data should be removed.
-static func default_remover(
-	accessor_id: String,
-	partition_id: String,
-	version_number: String
-) -> bool: return false
-
 ## The [method save_data] method should work as the main way of saving the
 ## game, gathering together information from all active [LokStorageAccessor]s
 ## and saving them in a desired file. [br]
@@ -117,5 +105,7 @@ func read_data(
 ## should be the signature of the [param remover][/i].
 func remove_data(
 	file_id: String,
-	remover: Callable = default_remover
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
 ) -> Dictionary: return {}

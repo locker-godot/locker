@@ -505,18 +505,22 @@ func read_data(
 
 func remove_data(
 	file_id: String,
-	remover: Callable = default_remover
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	var file_path: String = get_save_file_path(file_id)
 	
-	var data: Dictionary = {}
+	var removed_data: Dictionary = {}
 	
-	if remover == default_remover:
-		data = read_data(file_id)
-		
-		LokAccessStrategy.remove_directory_recursive(file_path)
-		
-		return data
+	return {}
+	
+	#if remover == default_remover:
+		#data = read_data(file_id)
+		#
+		#LokAccessStrategy.remove_directory_recursive(file_path)
+		#
+		#return data
 	
 	# Declare "removed" Dict
 	# Iterate over partitions
@@ -529,24 +533,24 @@ func remove_data(
 	# (When adding to "result" remove "partition" entry)
 	# Save the "result" Dict in the respective partition (with replace true)
 	
-	var removed_data: Dictionary = {}
-	
-	for accessor_id: String in data:
-		var accessor_data: Dictionary = data[accessor_id]
-		var accessor_version: String = accessor_data.get("version", "")
-		var accessor_partition: String = accessor_data.get("partition", "")
-		
-		var should_remove: bool = remover.call(
-			accessor_id, accessor_partition, accessor_version
-		)
-		
-		if not should_remove:
-			continue
-		
-		data.erase(accessor_id)
-		removed_data[accessor_id] = accessor_data
-	
-	return {}
+	#var removed_data: Dictionary = {}
+	#
+	#for accessor_id: String in data:
+		#var accessor_data: Dictionary = data[accessor_id]
+		#var accessor_version: String = accessor_data.get("version", "")
+		#var accessor_partition: String = accessor_data.get("partition", "")
+		#
+		##var should_remove: bool = remover.call(
+			##accessor_id, accessor_partition, accessor_version
+		##)
+		##
+		##if not should_remove:
+			##continue
+		#
+		#data.erase(accessor_id)
+		#removed_data[accessor_id] = accessor_data
+	#
+	#return {}
 
 func _init() -> void:
 	if not Engine.is_editor_hint():

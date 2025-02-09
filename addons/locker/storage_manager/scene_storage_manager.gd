@@ -158,7 +158,9 @@ func read_data(
 ## can be found here: [member LokGlobalStorageManager.remove_data].
 func remove_data(
 	file_id: String,
-	remover: Callable = default_remover
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	if global_manager == null:
 		push_error_no_manager()
@@ -166,7 +168,9 @@ func remove_data(
 	
 	return global_manager.remove_data(
 		file_id,
-		remover
+		accessor_ids,
+		partition_ids,
+		version_numbers
 	)
 
 #endregion
