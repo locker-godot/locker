@@ -220,5 +220,8 @@ func save_data_shapes() -> void:
 	
 	print(result)
 
+func remove_data() -> void:
+	print(LokGlobalStorageManager.remove_data("shapes"))
+
 func _ready() -> void:
-	save_data_shapes()
+	remove_data()

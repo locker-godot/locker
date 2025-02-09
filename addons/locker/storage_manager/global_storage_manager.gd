@@ -510,47 +510,11 @@ func remove_data(
 	version_numbers: Array[String] = []
 ) -> Dictionary:
 	var file_path: String = get_save_file_path(file_id)
+	var file_format: String = get_config_save_files_format()
 	
-	var removed_data: Dictionary = {}
-	
-	return {}
-	
-	#if remover == default_remover:
-		#data = read_data(file_id)
-		#
-		#LokAccessStrategy.remove_directory_recursive(file_path)
-		#
-		#return data
-	
-	# Declare "removed" Dict
-	# Iterate over partitions
-	# Declare "result" Dict
-	# Read from each partition
-	# Iterate over file_ids
-	# Test with remover with (accessor_id, partition_id and version_number)
-	# - If true, add to "removed" Dict and not to "result" Dict
-	# - Else, just add to "result" Dict
-	# (When adding to "result" remove "partition" entry)
-	# Save the "result" Dict in the respective partition (with replace true)
-	
-	#var removed_data: Dictionary = {}
-	#
-	#for accessor_id: String in data:
-		#var accessor_data: Dictionary = data[accessor_id]
-		#var accessor_version: String = accessor_data.get("version", "")
-		#var accessor_partition: String = accessor_data.get("partition", "")
-		#
-		##var should_remove: bool = remover.call(
-			##accessor_id, accessor_partition, accessor_version
-		##)
-		##
-		##if not should_remove:
-			##continue
-		#
-		#data.erase(accessor_id)
-		#removed_data[accessor_id] = accessor_data
-	#
-	#return {}
+	return access_strategy.remove_data(
+		file_path, file_format, partition_ids, accessor_ids, version_numbers
+	)
 
 func _init() -> void:
 	if not Engine.is_editor_hint():
