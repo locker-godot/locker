@@ -439,6 +439,9 @@ func save_data(
 ) -> Dictionary:
 	var result: Dictionary = {}
 	
+	if check_and_create_directory(file_path) == false:
+		return {}
+	
 	for partition: String in data:
 		var partition_path: String = "%s/%s.%s" % [
 			file_path, partition, file_format
@@ -481,6 +484,9 @@ func load_data(
 	suppress_errors: bool = false
 ) -> Dictionary:
 	var result: Dictionary = {}
+	
+	if check_directory(file_path) == false:
+		return {}
 	
 	var all_partitions: PackedStringArray = get_file_names(
 		file_path,

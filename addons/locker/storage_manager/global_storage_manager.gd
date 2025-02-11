@@ -442,9 +442,6 @@ func save_data(
 	var file_path: String = get_save_file_path(file_id)
 	var file_format: String = get_config_save_files_format()
 	
-	if LokAccessStrategy.check_and_create_directory(file_path) == false:
-		return {}
-	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
 	return access_strategy.save_data(file_path, file_format, data, replace)
@@ -474,9 +471,6 @@ func read_data(
 ) -> Dictionary:
 	var file_path: String = get_save_file_path(file_id)
 	var file_format: String = get_config_save_files_format()
-	
-	if LokAccessStrategy.check_directory(file_path) == false:
-		return {}
 	
 	var data: Dictionary = access_strategy.load_data(
 		file_path, file_format, partition_ids
