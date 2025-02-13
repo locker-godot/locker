@@ -277,18 +277,16 @@ func remove_partition(
 	version_numbers: Array[String] = [],
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var result: Dictionary = create_result()
+	# Load so that removed data can be returned
+	var result: Dictionary = load_partition(
+		partition_path, true, suppress_errors
+	)
 	
-	# Cancel if file doesn't exist
-	if not LokFileSystemUtil.file_exists(partition_path):
-		LokFileSystemUtil.push_error_file_not_found(partition_path)
-		
-		result["status"] = Error.ERR_FILE_NOT_FOUND
+	result["updated_data"] = {}
+	
+	# If an error occurred, abort
+	if result.get("status", Error.OK) != Error.OK:
 		return result
-	
-	result = load_partition(partition_path, suppress_errors)
-	
-	var data: Dictionary = result.get("data", {})
 	
 	# If nothing is to stay, remove everything
 	if accessor_ids.is_empty() and version_numbers.is_empty():
@@ -296,8 +294,9 @@ func remove_partition(
 		
 		return result
 	
+	# Separate data to be removed and data to stay
 	var split_data: Array[Dictionary] = LokUtil.split_dictionary(
-		data,
+		result.get("data", {}),
 		func(accessor_id: String, accessor_data: Dictionary) -> bool:
 			var accessor_version: String = accessor_data.get("version", "")
 			
@@ -307,56 +306,32 @@ func remove_partition(
 			)
 	)
 	
-	var removed_data: Dictionary = split_data[0]
-	var updated_data: Dictionary = split_data[1]
+	result["data"] = split_data[0]
+	result["updated_data"] = split_data[1]
 	
-	result["data"] = removed_data
-	result["updated_data"] = updated_data
-	
-	if updated_data.is_empty():
+	# If nothing is to stay, remove everything
+	if result["updated_data"].is_empty():
 		LokFileSystemUtil.remove_directory_or_file(partition_path)
 		
 		return result
 	
-	save_partition(partition_path, updated_data, true, suppress_errors)
+	# Remove key "partition" before saving updated data
+	var updated_data_to_save: Dictionary = LokUtil.map_dictionary(
+		result["updated_data"],
+		func(accessor_id: String, accessor_data: Dictionary) -> Dictionary:
+			var new_accessor_data: Dictionary = accessor_data.duplicate()
+			
+			new_accessor_data.erase("partition")
+			
+			return new_accessor_data
+	)
+	
+	# Update data with only what should stay
+	save_partition(
+		partition_path, updated_data_to_save, true, suppress_errors
+	)
 	
 	return result
-	
-	
-	
-	#var data: Dictionary = load_partition(partition_path, suppress_errors)
-	#
-	#if accessor_ids.is_empty() and version_numbers.is_empty():
-		#LokFileSystemUtil.remove_directory_or_file(partition_path)
-		#
-		#return data
-	#
-	#var new_data: Dictionary = {}
-	#var removed_data: Dictionary = {}
-	#
-	#for accessor_id: String in data:
-		#var accessor_data: Dictionary = data[accessor_id]
-		#var accessor_version: String = accessor_data.get("version", "")
-		#
-		#if (
-			#LokUtil.filter_value(accessor_ids, accessor_id) and
-			#LokUtil.filter_value(version_numbers, accessor_version)
-		#):
-			#removed_data[accessor_id] = accessor_data
-			#
-			#continue
-		#
-		#accessor_data.erase("partition")
-		#new_data[accessor_id] = accessor_data
-	#
-	#if new_data.is_empty():
-		#LokFileSystemUtil.remove_directory_or_file(partition_path)
-		#
-		#return removed_data
-	#
-	#save_partition(partition_path, new_data, true, suppress_errors)
-	#
-	#return removed_data
 
 ## The [method save_partition] method should be overwritten so that it saves
 ## [param data] in the partition specified by the

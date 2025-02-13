@@ -118,7 +118,7 @@ func test_load_partition_returns_error_unrecognized() -> void:
 	
 	assert_eq(result, expected_result, "Returned data didn't match expected")
 
-func test_load_partition_returns_saved_result_with_partition_id() -> void:
+func test_load_partition_returns_result_with_partition_id() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
 	strategy.save_partition(partition_path, data_to_save)
@@ -135,7 +135,7 @@ func test_load_partition_returns_saved_result_with_partition_id() -> void:
 	
 	assert_eq(result, expected_result, "Returned data didn't match expected")
 
-func test_load_partition_returns_saved_result_without_partition_id() -> void:
+func test_load_partition_returns_result_without_partition_id() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
 	strategy.save_partition(partition_path, data_to_save)
@@ -150,5 +150,137 @@ func test_load_partition_returns_saved_result_without_partition_id() -> void:
 	}
 	
 	assert_eq(result, expected_result, "Returned data didn't match expected")
+
+#endregion
+
+#region Method remove_partition
+
+func test_remove_partition_returns_removed_result() -> void:
+	var data_to_save1: Dictionary = default_accessor1_data
+	var data_to_save2: Dictionary = default_accessor2_data
+	
+	strategy.save_partition(partition_path, data_to_save1)
+	strategy.save_partition(partition_path, data_to_save2)
+	
+	var result: Dictionary = strategy.remove_partition(partition_path)
+	
+	var expected_removed_data: Dictionary = data_to_save1.merged(data_to_save2)
+	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
+	expected_removed_data["accessor_id_2"]["partition"] = "partition1"
+	
+	var expected_result: Dictionary = {
+		"status": Error.OK,
+		"data": expected_removed_data,
+		"updated_data": {}
+	}
+	
+	assert_eq(result, expected_result, "Returned data didn't match expected")
+
+func test_remove_partition_removes_from_files() -> void:
+	var data_to_save: Dictionary = default_accessor1_data
+	
+	strategy.save_partition(partition_path, data_to_save)
+	
+	strategy.remove_partition(partition_path)
+	
+	assert_false(
+		LokFileSystemUtil.file_exists(partition_path),
+		"Partition wasn't deleted from files"
+	)
+
+func test_remove_partition_filters_accessor_ids() -> void:
+	var data_to_save1: Dictionary = default_accessor1_data
+	var data_to_save2: Dictionary = default_accessor2_data
+	
+	strategy.save_partition(partition_path, data_to_save1)
+	strategy.save_partition(partition_path, data_to_save2)
+	
+	var result: Dictionary = strategy.remove_partition(
+		partition_path, [ "accessor_id_1" ]
+	)
+	
+	var expected_removed_data: Dictionary = data_to_save1
+	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
+	
+	var expected_updated_data: Dictionary = data_to_save2
+	expected_updated_data["accessor_id_2"]["partition"] = "partition1"
+	
+	var expected_result: Dictionary = {
+		"status": Error.OK,
+		"data": expected_removed_data,
+		"updated_data": expected_updated_data
+	}
+	
+	assert_eq(result, expected_result, "Returned data didn't match expected")
+
+func test_remove_partition_filters_version_numbers() -> void:
+	var data_to_save1: Dictionary = default_accessor1_data
+	var data_to_save2: Dictionary = default_accessor2_data
+	
+	strategy.save_partition(partition_path, data_to_save1)
+	strategy.save_partition(partition_path, data_to_save2)
+	
+	var result: Dictionary = strategy.remove_partition(
+		partition_path, [], [ "1.0.0" ]
+	)
+	
+	var expected_removed_data: Dictionary = data_to_save1
+	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
+	
+	var expected_updated_data: Dictionary = data_to_save2
+	expected_updated_data["accessor_id_2"]["partition"] = "partition1"
+	
+	var expected_result: Dictionary = {
+		"status": Error.OK,
+		"data": expected_removed_data,
+		"updated_data": expected_updated_data
+	}
+	
+	assert_eq(result, expected_result, "Returned data didn't match expected")
+
+func test_remove_partition_filters_accessor_ids_and_version_numbers() -> void:
+	var data_to_save1: Dictionary = default_accessor1_data
+	var data_to_save2: Dictionary = default_accessor2_data
+	
+	strategy.save_partition(partition_path, data_to_save1)
+	strategy.save_partition(partition_path, data_to_save2)
+	
+	var result: Dictionary = strategy.remove_partition(
+		partition_path, [ "accessor_id_2" ], [ "1.0.0" ]
+	)
+	
+	var expected_removed_data: Dictionary = {}
+	
+	var expected_updated_data: Dictionary = data_to_save1.merged(data_to_save2)
+	expected_updated_data["accessor_id_1"]["partition"] = "partition1"
+	expected_updated_data["accessor_id_2"]["partition"] = "partition1"
+	
+	var expected_result: Dictionary = {
+		"status": Error.OK,
+		"data": expected_removed_data,
+		"updated_data": expected_updated_data
+	}
+	
+	assert_eq(result, expected_result, "Returned data didn't match expected")
+
+func test_remove_partition_updates_in_file_system() -> void:
+	var data_to_save1: Dictionary = default_accessor1_data
+	var data_to_save2: Dictionary = default_accessor2_data
+	
+	strategy.save_partition(partition_path, data_to_save1)
+	strategy.save_partition(partition_path, data_to_save2)
+	
+	strategy.remove_partition(partition_path, [ "accessor_id_1" ])
+	
+	var expected_updated_data: Dictionary = data_to_save2
+	
+	var load_result: Dictionary = strategy.load_partition(partition_path, false)
+	
+	var expected_result: Dictionary = {
+		"status": Error.OK,
+		"data": expected_updated_data
+	}
+	
+	assert_eq(load_result, expected_result, "Updated data didn't match expected")
 
 #endregion
