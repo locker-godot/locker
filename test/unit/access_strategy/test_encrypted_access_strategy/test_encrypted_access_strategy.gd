@@ -1,11 +1,12 @@
 
 extends GutTest
 
-var JSONAccessStrategy: GDScript = preload("res://addons/locker/access_strategy/json_access_strategy.gd")
+var EncryptedAccessStrategy: GDScript = preload("res://addons/locker/access_strategy/encrypted_access_strategy.gd")
 
 var strategy: LokAccessStrategy
 
-var file_path: String = "res://test/saves/file_json_access_strategy"
+var password: String = "password"
+var file_path: String = "res://test/saves/file_encrypted_access_strategy"
 var partition_path: String = file_path.path_join("partition1.sav")
 var default_accessor1_data: Dictionary = {
 	"accessor_id_1": {
@@ -26,7 +27,8 @@ func before_each() -> void:
 	LokFileSystemUtil.remove_directory_recursive_if_exists(file_path)
 	LokFileSystemUtil.create_directory_if_not_exists(file_path)
 	
-	strategy = JSONAccessStrategy.new()
+	strategy = EncryptedAccessStrategy.new()
+	strategy.password = password
 
 func after_all() -> void:
 	LokFileSystemUtil.remove_directory_recursive_if_exists(file_path)
