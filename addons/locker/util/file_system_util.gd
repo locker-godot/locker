@@ -4,7 +4,7 @@
 ## The objective of this class is to help with boilerplate code
 ## when manipulating files or directories in the file system. [br]
 ## [br]
-## [b]Version[/b]: 1.0.0[br]
+## [b]Version[/b]: 1.0.0 [br]
 ## [b]Author[/b]: Daniel Sousa ([url]github.com/nadjiel[/url])
 class_name LokFileSystemUtil
 extends Node
@@ -68,6 +68,15 @@ static func push_error_file_reading_failed(
 		path
 	])
 
+static func push_error_json_parse_failed(
+	json: JSON, error_code: Error
+) -> void:
+	push_error("%s: Error on parsing JSON (%s) at line %d" % [
+		error_string(error_code),
+		json.get_error_message(),
+		json.get_error_line()
+	])
+
 ## The [method push_error_directory_or_file_removal_failed] method is used to
 ## push an error when a directory or file removal fails. [br]
 ## The [param path] where the removal was tried is expected in the
@@ -107,7 +116,7 @@ static func create_directory_if_not_exists(path: String) -> Error:
 	if not directory_exists(path):
 		return create_directory(path)
 	
-	return Error.ERR_ALREADY_EXISTS
+	return Error.OK
 
 ## The [method directory_exists] method checks if a directory exists in the
 ## path specified by the [param path] parameter and returns a [code]bool[/code]
@@ -212,22 +221,23 @@ static func remove_directory_recursive(path: String) -> Error:
 	
 	return remove_directory_or_file(path)
 
-## The [method remove_directory_if_not_exists] method uses the
+## The [method remove_directory_if_exists] method uses the
 ## [method directory_exists] and [method remove_directory_or_file] methods
 ## to remove a directory only if exists. [br]
 ## If it doesn't exist, this method returns the
 ## [code]ERR_DOES_NOT_EXIST[/code] error.
-static func remove_directory_if_not_exists(path: String) -> Error:
+static func remove_directory_if_exists(path: String) -> Error:
 	if directory_exists(path):
 		return remove_directory_or_file(path)
 	
-	return Error.ERR_DOES_NOT_EXIST
-## The [method remove_directory_if_not_exists] method uses the
+	return Error.OK
+
+## The [method remove_directory_recursive_if_exists] method uses the
 ## [method directory_exists] and [method remove_directory_or_file] methods
 ## to remove a directory only if exists. [br]
 ## If it doesn't exist, this method returns the
 ## [code]ERR_DOES_NOT_EXIST[/code] error.
-static func remove_directory_recursive_if_not_exists(path: String) -> Error:
+static func remove_directory_recursive_if_exists(path: String) -> Error:
 	if directory_exists(path):
 		return remove_directory_recursive(path)
 	
@@ -304,7 +314,7 @@ static func create_file_if_not_exists(path: String) -> Error:
 	if not file_exists(path):
 		return write_or_create_file(path)
 	
-	return Error.ERR_ALREADY_EXISTS
+	return Error.OK
 
 ## The [method create_encrypted_file_if_not_exists] method uses the
 ## [method file_exists] and [method write_or_create_encrypted_file] methods
@@ -321,7 +331,7 @@ static func create_encrypted_file_if_not_exists(
 			path, encryption_pass, content
 		)
 	
-	return Error.ERR_ALREADY_EXISTS
+	return Error.OK
 
 ## The [method file_exists] method checks if a file exists in the
 ## path specified by the [param path] parameter and returns a [code]bool[/code]
@@ -375,16 +385,34 @@ static func read_encrypted_file(
 	
 	return result
 
-## The [method remove_file_if_not_exists] method uses the
+static func parse_json_from_string(
+	string: String, suppress_errors: bool
+) -> Variant:
+	var json := JSON.new()
+	
+	var error: Error = json.parse(string)
+	
+	if error != Error.OK:
+		if not suppress_errors:
+			push_error_json_parse_failed(json, error)
+		
+		return {}
+	
+	return json.data
+
+## The [method remove_file_if_exists] method uses the
 ## [method file_exists] and [method remove_directory_or_file] methods
 ## to remove a file only if exists. [br]
 ## If it doesn't exist, this method returns the
 ## [code]ERR_DOES_NOT_EXIST[/code] error.
-static func remove_file_if_not_exists(path: String) -> Error:
+static func remove_file_if_exists(path: String) -> Error:
 	if file_exists(path):
 		return remove_directory_or_file(path)
 	
-	return Error.ERR_DOES_NOT_EXIST
+	return Error.OK
+
+static func join_file_name(file_prefix: String, file_format: String) -> String:
+	return "%s.%s" % [ file_prefix, file_format ]
 
 ## The [method get_file_name] method is a utility method that grabs
 ## the name of a file from a [param file_path], including its format.

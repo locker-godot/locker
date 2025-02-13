@@ -36,27 +36,31 @@ func save_partition(
 	replace: bool = false,
 	suppress_errors: bool = false
 ) -> Dictionary:
-	var creation_succeded: bool = check_and_create_encrypted_file(
-		partition_path, password, JSON.stringify({}, "\t"), suppress_errors
+	var result: Dictionary = create_result()
+	
+	var error: Error = LokFileSystemUtil.create_encrypted_file_if_not_exists(
+		partition_path, password
 	)
 	
-	if not creation_succeded:
-		return {}
+	# If partition wasn't created, cancel
+	if error != Error.OK:
+		result["status"] = error
+		return result
 	
-	var result: Dictionary = data
-	var previous_data: Dictionary = {}
+	var load_result: Dictionary = {}
 	
 	if not replace:
-		previous_data = load_partition(partition_path, true)
+		load_result = load_partition(partition_path, false, true)
 	
-	result = data.merged(previous_data)
+	# Merge previous and new datas
+	result["data"] = data.merged(load_result.get("data", {}))
 	
-	var writing_succeded: bool = write_or_create_encrypted_file(
-		partition_path, password, JSON.stringify(result, "\t"), suppress_errors
+	error = LokFileSystemUtil.write_or_create_encrypted_file(
+		partition_path, password, JSON.stringify(result["data"], "\t")
 	)
 	
-	if not writing_succeded:
-		return {}
+	if error != Error.OK:
+		result["status"] = error
 	
 	return result
 
@@ -69,27 +73,45 @@ func save_partition(
 ## its return, see [method LokAccessStrategy.load_partition].
 func load_partition(
 	partition_path: String,
+	bring_partition: bool = true,
 	suppress_errors: bool = false
 ) -> Dictionary:
-	if not check_file(partition_path, suppress_errors):
-		return {}
+	var result: Dictionary = create_result()
 	
-	var partition_content: String = read_encrypted_file(
-		partition_path, password, suppress_errors
-	)
-	var data: Variant = JSON.parse_string(partition_content)
-	
-	if data == null:
+	# Abort if partition doesn't exist
+	if not LokFileSystemUtil.file_exists(partition_path):
 		if not suppress_errors:
-			push_error_unrecognized_partition(partition_path)
+			LokFileSystemUtil.push_error_file_not_found(partition_path)
 		
-		return {}
+		result["status"] = Error.ERR_FILE_NOT_FOUND
+		return result
 	
-	var partition_name: String = get_file_prefix(get_file_name(partition_path))
+	var loaded_content: String = LokFileSystemUtil.read_encrypted_file(
+		partition_path, password
+	)
+	var loaded_data: Variant = LokFileSystemUtil.parse_json_from_string(
+		loaded_content, suppress_errors
+	)
 	
-	for accessor_id: String in data:
-		var accessor: Dictionary = data[accessor_id]
+	# Cancel if no data could be parsed
+	if loaded_data == {}:
+		result["status"] = Error.ERR_FILE_UNRECOGNIZED
+		return result
+	
+	# Append the partition ID to each accessor data
+	if bring_partition:
+		var partition_name: String = LokFileSystemUtil.get_file_name(
+			partition_path
+		)
+		var partition_id: String = LokFileSystemUtil.get_file_prefix(
+			partition_name
+		)
 		
-		accessor["partition"] = partition_name
+		for accessor_id: String in loaded_data:
+			var accessor_data: Dictionary = loaded_data[accessor_id]
+			
+			accessor_data["partition"] = partition_id
 	
-	return data
+	result["data"] = loaded_data
+	
+	return result
