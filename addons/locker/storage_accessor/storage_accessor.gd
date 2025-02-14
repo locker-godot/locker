@@ -309,7 +309,7 @@ func save_data(
 		push_error_no_manager()
 		return {}
 	
-	return storage_manager.save_data(
+	return await storage_manager.save_data(
 		file_id, version_number, [ id ], false
 	)
 
@@ -324,7 +324,7 @@ func load_data(file_id: String) -> Dictionary:
 		push_error_no_manager()
 		return {}
 	
-	return storage_manager.load_data(
+	return await storage_manager.load_data(
 		file_id, [ id ], [ partition ]
 	)
 
