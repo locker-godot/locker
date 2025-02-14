@@ -61,9 +61,6 @@ func save_partition(
 ## its return, see [method LokAccessStrategy.load_partition].
 func load_partition(
 	partition_path: String,
-	#accessor_ids: Array[String] = [],
-	#version_numbers: Array[String] = [],
-	#bring_partition: bool = true,
 	suppress_errors: bool = false
 ) -> Dictionary:
 	var result: Dictionary = create_result()
@@ -90,37 +87,3 @@ func load_partition(
 	result["data"] = loaded_data
 	
 	return result
-	
-	# Append the partition ID to each accessor data
-	#if bring_partition:
-		#var partition_name: String = LokFileSystemUtil.get_file_name(
-			#partition_path
-		#)
-		#var partition_id: String = LokFileSystemUtil.get_file_prefix(
-			#partition_name
-		#)
-		#
-		#for accessor_id: String in loaded_data:
-			#var accessor_data: Dictionary = loaded_data[accessor_id]
-			#
-			#accessor_data["partition"] = partition_id
-	#
-	#result["data"] = loaded_data
-	#
-	## If there's nothing to filter, end here
-	#if accessor_ids.is_empty() and version_numbers.is_empty():
-		#return result
-	#
-	## Filter out unwanted accessor data
-	#var filtered_data: Dictionary = LokUtil.filter_dictionary(
-		#loaded_data,
-		#func(accessor_id: String, accessor_data: Dictionary) -> bool:
-			#var accessor_version: String = accessor_data.get("version", "")
-			#
-			#return (
-				#LokUtil.filter_value(accessor_ids, accessor_id) and
-				#LokUtil.filter_value(version_numbers, accessor_version)
-			#)
-	#)
-	#
-	#result["data"] = filtered_data
