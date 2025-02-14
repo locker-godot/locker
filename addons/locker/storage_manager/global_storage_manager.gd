@@ -27,9 +27,26 @@ var accessors: Array[LokStorageAccessor] = []:
 ## dictates how the data is saved and loaded. [br]
 ## This property shouldn't be altered by other classes, since it's a
 ## needed object for performing data manipulation.
-var access_strategy: LokAccessStrategy:
-	set = set_access_strategy,
-	get = get_access_strategy
+#var access_strategy: LokAccessStrategy:
+	#set = set_access_strategy,
+	#get = get_access_strategy
+
+var access_executor: LokAccessExecutor:
+	set = set_access_executor,
+	get = get_access_executor
+
+var access_executor_connections: Array[Dictionary] = [
+	{ "name": &"operation_started", "callable": _on_executor_operation_started },
+	{ "name": &"saving_started", "callable": _on_executor_saving_started },
+	{ "name": &"loading_started", "callable": _on_executor_loading_started },
+	{ "name": &"reading_started", "callable": _on_executor_reading_started },
+	{ "name": &"removing_started", "callable": _on_executor_removing_started },
+	{ "name": &"operation_finished", "callable": _on_executor_operation_finished },
+	{ "name": &"saving_finished", "callable": _on_executor_saving_finished },
+	{ "name": &"loading_finished", "callable": _on_executor_loading_finished },
+	{ "name": &"reading_finished", "callable": _on_executor_reading_finished },
+	{ "name": &"removing_finished", "callable": _on_executor_removing_finished },
+]
 
 #endregion
 
@@ -41,11 +58,31 @@ func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
 func get_accessors() -> Array[LokStorageAccessor]:
 	return accessors
 
-func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
-	access_strategy = new_strategy
+#func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
+	#access_strategy = new_strategy
+#
+#func get_access_strategy() -> LokAccessStrategy:
+	#return access_strategy
 
-func get_access_strategy() -> LokAccessStrategy:
-	return access_strategy
+func set_access_executor(new_executor: LokAccessExecutor) -> void:
+	var old_executor: LokAccessExecutor = access_executor
+	
+	access_executor = new_executor
+	
+	if old_executor == new_executor:
+		return
+	
+	LokUtil.check_and_disconnect_signals(
+		old_executor,
+		access_executor_connections
+	)
+	LokUtil.check_and_connect_signals(
+		new_executor,
+		access_executor_connections
+	)
+
+func get_access_executor() -> LokAccessExecutor:
+	return access_executor
 
 #endregion
 
@@ -106,60 +143,11 @@ func get_config_save_path(file_id: int) -> String:
 
 #region Debug Methods
 
-## The [method push_warning_repeated_accessors] method prints to the
-## output log a warning saying that [LokStorageAccessor]s with repeated
-## ids were found in a [param version_number]. [br]
-## If the [param version_number] passed to this method is an empty [String],
-## nothing is done, since it doesn't matter if [LokStorageAccessor]s with
-## different [member [LokStorageAccessorVersion.number]s
-## have repeated [member [LokStorageAccessorVersion.id]s.
-func push_warning_repeated_accessors(
-	repeated_accessors: Dictionary,
-	version_number: String
-) -> void:
-	if version_number == "":
-		return
-	
-	var warning_color: Color = get_config_debug_warning_color()
-	
-	var warning: String = "[img]%s[/img] " % DEBUG_ICON_PATH
-	warning += "[color=#%s]" % warning_color.to_html()
-	warning += name
-	warning += " detected repeated accessor ids in version %s" % version_number
-	warning += ", which may cause loss of data:"
-	warning += "[/color]\n"
-	
-	for accessor_id: String in repeated_accessors.keys():
-		warning += "- ID '%s':\n" % accessor_id
-		
-		for accessor: LokStorageAccessor in repeated_accessors[accessor_id]:
-			var accessor_name: String = accessor.get_readable_name()
-			
-			warning += " - %s;\n" % accessor_name
-	
-	print_rich(warning)
-
-## The [method verify_accessors] method looks through all current
-## [member accessors], setting their version to the [param version_number]
-## and checking if they have repeated ids. If they do, this method
-## prints a warning using the [method push_warning_repeated_accessors]
-## method. [br]
-## If the [param version_number] passed to this method is an empty [String],
-## nothing is done, since it doesn't matter if [LokStorageAccessor]s with
-## different [member [LokStorageAccessorVersion.number]s
-## have repeated [member [LokStorageAccessorVersion.id]s.
-func verify_accessors(version_number: String) -> void:
-	if version_number == "":
-		return
-	
-	var repeated_accessors: Dictionary = get_repeated_accessors_grouped_by_id(
-		version_number
-	)
-	
-	if repeated_accessors.is_empty():
-		return
-	
-	push_warning_repeated_accessors(repeated_accessors, version_number)
+func push_warning_no_executor() -> void:
+	push_error("%s: No AccessExecutor found in %s" % [
+		error_string(Error.ERR_UNCONFIGURED),
+		get_readable_name()
+	])
 
 #endregion
 
@@ -172,13 +160,6 @@ func verify_accessors(version_number: String) -> void:
 ## enter the scene tree, so there's no need to use it yourself.
 func add_accessor(accessor: LokStorageAccessor) -> bool:
 	accessors.append(accessor)
-	
-	#if not accessor.id_changed.is_connected(_on_accessor_id_changed):
-		#accessor.id_changed.connect(_on_accessor_id_changed)
-	#
-	#if not Engine.is_editor_hint():
-		#if get_config_debug_mode():
-			#verify_accessors()
 	
 	return true
 
@@ -196,9 +177,6 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 		return false
 	
 	accessors.remove_at(accessor_index)
-	
-	#if accessor.id_changed.is_connected(_on_accessor_id_changed):
-		#accessor.id_changed.disconnect(_on_accessor_id_changed)
 	
 	return true
 
@@ -224,81 +202,15 @@ func get_accessor_by_id(id: String) -> LokStorageAccessor:
 	
 	return null
 
-## The [method get_accessors_grouped_by_id] method looks through all currently
-## registered [LokStorageAccessor]s and returns a [Dictionary] that groups
-## together the [LokStorageAccessor]s with same
-## [member LokStorageAccessorVersion.id]. [br]
-## Before looking the ids, the [LokStorageAccessor]'s version is set
-## to the [param version_number] passed in the parameter, so that the
-## comparison takes that version specifically into account. [br]
-## If the version number is an empty [String], as default, it means the
-## latest version of the [LokStorageAccessor] is used in the comparison. [br]
-## The format of the [Dictionary] returned is as follows:[br]
-## [code]{
-##   <id_1>: String: [
-##     <accessor_1>: LokStorageAccessor,
-##     <accessor_n>: LokStorageAccessor
-##   ],
-##   <id_n>: String: [
-##     <accessor_1>: LokStorageAccessor,
-##     <accessor_n>: LokStorageAccessor
-##   ]
-## }[/code]
-func get_accessors_grouped_by_id(version_number: String = "") -> Dictionary:
-	var result: Dictionary = {}
-	
-	for accessor: LokStorageAccessor in accessors:
-		accessor.set_version_number(version_number)
-		var accessor_id: String = accessor.get_id()
-		
-		if not result.has(accessor_id):
-			result[accessor_id] = []
-		
-		result[accessor_id].append(accessor)
-	
-	return result
-
-## The [method get_repeated_accessors_grouped_by_id] method
-## does the same as the [method get_accessors_grouped_by_id] method,
-## with the difference that this method filters out the groups that
-## have one or less [LokStorageAccessor]s. [br]
-## In other words, this method returns the [LokStorageAccessor]s that
-## have repeated ids grouped by id.
-## The format of the [Dictionary] returned is as follows:[br]
-## [code]{
-##   <id_1>: String: [
-##     <accessor_1>: LokStorageAccessor,
-##     <accessor_n>: LokStorageAccessor
-##   ],
-##   <id_n>: String: [
-##     <accessor_1>: LokStorageAccessor,
-##     <accessor_n>: LokStorageAccessor
-##   ]
-## }[/code]
-func get_repeated_accessors_grouped_by_id(version_number: String = "") -> Dictionary:
-	var result: Dictionary = {}
-	
-	var accessor_groups: Dictionary = get_accessors_grouped_by_id(
-		version_number
-	)
-	
-	for accessor_id: String in accessor_groups.keys():
-		if accessor_groups[accessor_id].size() <= 1:
-			continue
-		
-		result[accessor_id] = accessor_groups[accessor_id]
-	
-	return result
-
 ## The [method select_access_strategy] method uses the
 ## [method get_config_use_encryption] method to
 ## select whether the [member access_strategy] should be the
 ## [LokEncryptedAccessStrategy] or the [LokJSONAccessStrategy].
-func select_access_strategy() -> void:
+func select_access_strategy() -> LokAccessStrategy:
 	if get_config_use_encryption():
-		access_strategy = LokEncryptedAccessStrategy.new()
+		return LokEncryptedAccessStrategy.new()
 	else:
-		access_strategy = LokJSONAccessStrategy.new()
+		return LokJSONAccessStrategy.new()
 
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor].[br]
@@ -444,7 +356,21 @@ func save_data(
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
-	return access_strategy.save_data(file_path, file_format, data, replace)
+	print("%s: Started saving file %s;" % [
+		Time.get_ticks_msec(),
+		file_id
+	])
+	
+	var saving_result: Dictionary = await access_executor.request_saving(
+		file_path, file_format, data, replace
+	)
+	
+	print("%s: Finished saving file %s;" % [
+		Time.get_ticks_msec(),
+		file_id
+	])
+	
+	return saving_result
 
 func load_data(
 	file_id: String,
@@ -452,16 +378,20 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var data: Dictionary = read_data(
-		file_id,
-		accessor_ids,
+	var file_path: String = get_save_file_path(file_id)
+	var file_format: String = get_config_save_files_format()
+	
+	var loaded_data: Dictionary = await access_executor.load_data(
+		file_path,
+		file_format,
 		partition_ids,
+		accessor_ids,
 		version_numbers
 	)
 	
-	distribute_data(data, accessor_ids)
+	distribute_data(loaded_data, accessor_ids)
 	
-	return data
+	return loaded_data
 
 func read_data(
 	file_id: String,
@@ -472,30 +402,11 @@ func read_data(
 	var file_path: String = get_save_file_path(file_id)
 	var file_format: String = get_config_save_files_format()
 	
-	var data: Dictionary = access_strategy.load_data(
-		file_path, file_format, partition_ids
+	var reading_result: Dictionary = await access_executor.request_reading(
+		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	
-	if accessor_ids.is_empty() and version_numbers.is_empty():
-		return data
-	
-	var filtered_data: Dictionary = {}
-	
-	for accessor_id: String in data:
-		var accessor_data: Dictionary = data[accessor_id]
-		var accessor_version: String = accessor_data.get("version", "")
-		
-		if not accessor_ids.is_empty() and not accessor_id in accessor_ids:
-			continue
-		if(
-			not version_numbers.is_empty() and
-			not accessor_version in version_numbers
-		):
-			continue
-		
-		filtered_data[accessor_id] = accessor_data
-	
-	return filtered_data
+	return reading_result
 
 func remove_data(
 	file_id: String,
@@ -506,18 +417,44 @@ func remove_data(
 	var file_path: String = get_save_file_path(file_id)
 	var file_format: String = get_config_save_files_format()
 	
-	return access_strategy.remove_data(
+	var removing_result: Dictionary = await access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
+	
+	return removing_result
 
 func _init() -> void:
 	if not Engine.is_editor_hint():
-		select_access_strategy()
+		access_executor = LokAccessExecutor.new(select_access_strategy())
 
-func _on_accessor_id_changed(old_id: String, new_id: String) -> void:
-	if Engine.is_editor_hint():
-		return
-	
-	#verify_accessors()
+func _on_executor_operation_started(operation_name: StringName) -> void:
+	operation_started.emit(operation_name)
+
+func _on_executor_saving_started() -> void:
+	saving_started.emit()
+
+func _on_executor_loading_started() -> void:
+	loading_started.emit()
+
+func _on_executor_reading_started() -> void:
+	reading_started.emit()
+
+func _on_executor_removing_started() -> void:
+	removing_started.emit()
+
+func _on_executor_operation_finished(result: Dictionary, operation: StringName) -> void:
+	operation_finished.emit(result, operation)
+
+func _on_executor_saving_finished(result: Dictionary) -> void:
+	saving_finished.emit(result)
+
+func _on_executor_loading_finished(result: Dictionary) -> void:
+	loading_finished.emit(result)
+
+func _on_executor_reading_finished(result: Dictionary) -> void:
+	reading_finished.emit(result)
+
+func _on_executor_removing_finished(result: Dictionary) -> void:
+	removing_finished.emit(result)
 
 #endregion

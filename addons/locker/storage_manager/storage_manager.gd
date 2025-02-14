@@ -11,6 +11,45 @@
 class_name LokStorageManager
 extends Node
 
+#region Signals
+
+signal operation_started(operation: StringName)
+
+signal saving_started()
+
+signal loading_started()
+
+signal reading_started()
+
+signal removing_started()
+
+signal operation_finished(result: Dictionary, operation: StringName)
+
+signal saving_finished(result: Dictionary)
+
+signal loading_finished(result: Dictionary)
+
+signal reading_finished(result: Dictionary)
+
+signal removing_finished(result: Dictionary)
+
+#endregion
+
+#region Debug Methods
+
+## The [method get_readable_name] method is a utility for debugging. [br]
+## It returns a more user friendly name for this node, so that errors
+## can use it to be clearer.
+func get_readable_name() -> String:
+	if is_inside_tree():
+		return str(get_path())
+	if name != "":
+		return name
+	
+	return str(self)
+
+#endregion
+
 ## The [method save_data] method should work as the main way of saving the
 ## game, gathering together information from all active [LokStorageAccessor]s
 ## and saving them in a desired file. [br]

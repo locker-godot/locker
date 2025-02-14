@@ -51,17 +51,6 @@ func get_current_version() -> String:
 
 #region Debug methods
 
-## The [method get_readable_name] method is a utility for debugging. [br]
-## It returns a more user friendly name for this node, so that errors
-## can use it to be clearer.
-func get_readable_name() -> String:
-	if is_inside_tree():
-		return str(get_path())
-	if name != "":
-		return name
-	
-	return str(self)
-
 ## The [method push_error_no_manager] method pushes an error indicating
 ## that no [LokGlobalStorageManager] was found in the [member global_manager]
 ## property, which shouldn't happen if that property wasn't altered, as
@@ -94,7 +83,7 @@ func save_data(
 		push_error_no_manager()
 		return {}
 	
-	return global_manager.save_data(
+	return await global_manager.save_data(
 		file_id,
 		version_number,
 		accessor_ids,
@@ -126,7 +115,7 @@ func load_data(
 		push_error_no_manager()
 		return {}
 	
-	return global_manager.load_data(
+	return await global_manager.load_data(
 		file_id,
 		accessor_ids,
 		partition_ids,
@@ -146,7 +135,7 @@ func read_data(
 		push_error_no_manager()
 		return {}
 	
-	return global_manager.read_data(
+	return await global_manager.read_data(
 		file_id,
 		accessor_ids,
 		partition_ids,
@@ -166,7 +155,7 @@ func remove_data(
 		push_error_no_manager()
 		return {}
 	
-	return global_manager.remove_data(
+	return await global_manager.remove_data(
 		file_id,
 		accessor_ids,
 		partition_ids,
