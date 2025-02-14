@@ -50,7 +50,7 @@ func save_partition(
 	var load_result: Dictionary = {}
 	
 	if not replace:
-		load_result = load_partition(partition_path, false, true)
+		load_result = load_partition(partition_path, true)
 	
 	# Merge previous and new datas
 	result["data"] = data.merged(load_result.get("data", {}))
@@ -73,7 +73,9 @@ func save_partition(
 ## its return, see [method LokAccessStrategy.load_partition].
 func load_partition(
 	partition_path: String,
-	bring_partition: bool = true,
+	#accessor_ids: Array[String] = [],
+	#version_numbers: Array[String] = [],
+	#bring_partition: bool = true,
 	suppress_errors: bool = false
 ) -> Dictionary:
 	var result: Dictionary = create_result()
@@ -99,18 +101,18 @@ func load_partition(
 		return result
 	
 	# Append the partition ID to each accessor data
-	if bring_partition:
-		var partition_name: String = LokFileSystemUtil.get_file_name(
-			partition_path
-		)
-		var partition_id: String = LokFileSystemUtil.get_file_prefix(
-			partition_name
-		)
-		
-		for accessor_id: String in loaded_data:
-			var accessor_data: Dictionary = loaded_data[accessor_id]
-			
-			accessor_data["partition"] = partition_id
+	#if bring_partition:
+		#var partition_name: String = LokFileSystemUtil.get_file_name(
+			#partition_path
+		#)
+		#var partition_id: String = LokFileSystemUtil.get_file_prefix(
+			#partition_name
+		#)
+		#
+		#for accessor_id: String in loaded_data:
+			#var accessor_data: Dictionary = loaded_data[accessor_id]
+			#
+			#accessor_data["partition"] = partition_id
 	
 	result["data"] = loaded_data
 	

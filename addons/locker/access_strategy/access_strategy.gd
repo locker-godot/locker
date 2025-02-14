@@ -35,6 +35,39 @@ func create_result(
 	
 	return result
 
+func filter_data(
+	data: Dictionary,
+	accessor_ids: Array[String] = [],
+	partition_ids: Array[String] = [],
+	version_numbers: Array[String] = []
+) -> Dictionary:
+	var filtered_data: Dictionary = LokUtil.filter_dictionary(
+		data,
+		func(accessor_id: String, accessor_data: Dictionary) -> bool:
+			var accessor_partition: String = accessor_data.get("partition", "")
+			var accessor_version: String = accessor_data.get("version", "")
+			
+			return (
+				LokUtil.filter_value(accessor_ids, accessor_id) and
+				LokUtil.filter_value(partition_ids, accessor_partition) and
+				LokUtil.filter_value(version_numbers, accessor_version)
+			)
+	)
+	
+	return filtered_data
+
+func append_partition_to_data(
+	data: Dictionary,
+	partition_id: String
+) -> Dictionary:
+	return LokUtil.map_dictionary(
+		data,
+		func(accessor_id: String, accessor_data: Dictionary) -> Dictionary:
+			accessor_data["partition"] = partition_id
+			
+			return accessor_data
+	)
+
 ## The [method save_data] method uses the [method save_partition] to
 ## save the information provided through the [param data] [Dictionary] in
 ## their respective partitions. [br]
@@ -279,7 +312,7 @@ func remove_partition(
 ) -> Dictionary:
 	# Load so that removed data can be returned
 	var result: Dictionary = load_partition(
-		partition_path, true, suppress_errors
+		partition_path, suppress_errors
 	)
 	
 	result["updated_data"] = {}
@@ -288,48 +321,45 @@ func remove_partition(
 	if result.get("status", Error.OK) != Error.OK:
 		return result
 	
+	var split_data: Array[Dictionary] = [
+		result.get("data", {}),
+		result.get("updated_data", {})
+	]
+	
 	# If nothing is to stay, remove everything
 	if accessor_ids.is_empty() and version_numbers.is_empty():
 		LokFileSystemUtil.remove_directory_or_file(partition_path)
-		
-		return result
-	
 	# Separate data to be removed and data to stay
-	var split_data: Array[Dictionary] = LokUtil.split_dictionary(
-		result.get("data", {}),
-		func(accessor_id: String, accessor_data: Dictionary) -> bool:
-			var accessor_version: String = accessor_data.get("version", "")
-			
-			return (
-				LokUtil.filter_value(accessor_ids, accessor_id) and
-				LokUtil.filter_value(version_numbers, accessor_version)
-			)
-	)
+	else:
+		split_data = LokUtil.split_dictionary(
+			result.get("data", {}),
+			func(accessor_id: String, accessor_data: Dictionary) -> bool:
+				var accessor_version: String = accessor_data.get("version", "")
+				
+				return (
+					LokUtil.filter_value(accessor_ids, accessor_id) and
+					LokUtil.filter_value(version_numbers, accessor_version)
+				)
+		)
 	
 	result["data"] = split_data[0]
 	result["updated_data"] = split_data[1]
 	
 	# If nothing is to stay, remove everything
 	if result["updated_data"].is_empty():
-		LokFileSystemUtil.remove_directory_or_file(partition_path)
-		
-		return result
-	
-	# Remove key "partition" before saving updated data
-	var updated_data_to_save: Dictionary = LokUtil.map_dictionary(
-		result["updated_data"],
-		func(accessor_id: String, accessor_data: Dictionary) -> Dictionary:
-			var new_accessor_data: Dictionary = accessor_data.duplicate()
-			
-			new_accessor_data.erase("partition")
-			
-			return new_accessor_data
-	)
-	
+		LokFileSystemUtil.remove_file_if_exists(partition_path)
 	# Update data with only what should stay
-	save_partition(
-		partition_path, updated_data_to_save, true, suppress_errors
-	)
+	else:
+		save_partition(
+			partition_path, result["updated_data"], true, suppress_errors
+		)
+	
+	var partition_name: String = LokFileSystemUtil.get_file_name(partition_path)
+	var partition_id: String = LokFileSystemUtil.get_file_prefix(partition_name)
+	
+	# Append partition ids to resultant data
+	append_partition_to_data(result["data"], partition_id)
+	append_partition_to_data(result["updated_data"], partition_id)
 	
 	return result
 
@@ -379,6 +409,5 @@ func save_partition(
 ## [/codeblock]
 func load_partition(
 	_partition_path: String,
-	_bring_partition: bool = true,
 	_suppress_errors: bool = false
 ) -> Dictionary: return {}

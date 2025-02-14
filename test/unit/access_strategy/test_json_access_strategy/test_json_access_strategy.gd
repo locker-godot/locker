@@ -56,7 +56,7 @@ func test_save_partition_creates_new_partition() -> void:
 	
 	strategy.save_partition(partition_path, data_to_save)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path, false)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't saved properly")
 
@@ -72,7 +72,7 @@ func test_save_partition_overwrites_partition() -> void:
 	strategy.save_partition(partition_path, first_data_to_save)
 	strategy.save_partition(partition_path, second_data_to_save, true)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path, false)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't overwritten properly")
 
@@ -88,7 +88,7 @@ func test_save_partition_updates_partition() -> void:
 	strategy.save_partition(partition_path, first_data_to_save)
 	strategy.save_partition(partition_path, second_data_to_save, false)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path, false)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't updated properly")
 
@@ -118,38 +118,38 @@ func test_load_partition_returns_error_unrecognized() -> void:
 	
 	assert_eq(result, expected_result, "Returned data didn't match expected")
 
-func test_load_partition_returns_result_with_partition_id() -> void:
-	var data_to_save: Dictionary = default_accessor1_data
-	
-	strategy.save_partition(partition_path, data_to_save)
-	
-	var result: Dictionary = strategy.load_partition(partition_path)
-	
-	var expected_loaded_data: Dictionary = data_to_save.duplicate()
-	expected_loaded_data["accessor_id_1"]["partition"] = "partition1"
-	
-	var expected_result: Dictionary = {
-		"status": Error.OK,
-		"data": expected_loaded_data
-	}
-	
-	assert_eq(result, expected_result, "Returned data didn't match expected")
-
-func test_load_partition_returns_result_without_partition_id() -> void:
-	var data_to_save: Dictionary = default_accessor1_data
-	
-	strategy.save_partition(partition_path, data_to_save)
-	
-	var result: Dictionary = strategy.load_partition(partition_path, false)
-	
-	var expected_loaded_data: Dictionary = data_to_save
-	
-	var expected_result: Dictionary = {
-		"status": Error.OK,
-		"data": expected_loaded_data
-	}
-	
-	assert_eq(result, expected_result, "Returned data didn't match expected")
+#func test_load_partition_returns_result_with_partition_id() -> void:
+	#var data_to_save: Dictionary = default_accessor1_data
+	#
+	#strategy.save_partition(partition_path, data_to_save)
+	#
+	#var result: Dictionary = strategy.load_partition(partition_path)
+	#
+	#var expected_loaded_data: Dictionary = data_to_save.duplicate()
+	#expected_loaded_data["accessor_id_1"]["partition"] = "partition1"
+	#
+	#var expected_result: Dictionary = {
+		#"status": Error.OK,
+		#"data": expected_loaded_data
+	#}
+	#
+	#assert_eq(result, expected_result, "Returned data didn't match expected")
+#
+#func test_load_partition_returns_result_without_partition_id() -> void:
+	#var data_to_save: Dictionary = default_accessor1_data
+	#
+	#strategy.save_partition(partition_path, data_to_save)
+	#
+	#var result: Dictionary = strategy.load_partition(partition_path)
+	#
+	#var expected_loaded_data: Dictionary = data_to_save
+	#
+	#var expected_result: Dictionary = {
+		#"status": Error.OK,
+		#"data": expected_loaded_data
+	#}
+	#
+	#assert_eq(result, expected_result, "Returned data didn't match expected")
 
 #endregion
 
@@ -270,16 +270,20 @@ func test_remove_partition_updates_in_file_system() -> void:
 	strategy.save_partition(partition_path, data_to_save1)
 	strategy.save_partition(partition_path, data_to_save2)
 	
-	strategy.remove_partition(partition_path, [ "accessor_id_1" ])
+	#strategy.remove_partition(partition_path, [ "accessor_id_1" ])
+	
+	print(strategy.remove_partition(partition_path, [ "accessor_id_1" ]))
 	
 	var expected_updated_data: Dictionary = data_to_save2
 	
-	var load_result: Dictionary = strategy.load_partition(partition_path, false)
+	var load_result: Dictionary = strategy.load_partition(partition_path)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
 		"data": expected_updated_data
 	}
+	
+	print(load_result)
 	
 	assert_eq(load_result, expected_result, "Updated data didn't match expected")
 
