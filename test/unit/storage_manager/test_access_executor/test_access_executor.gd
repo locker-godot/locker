@@ -24,7 +24,9 @@ func slow_saver(
 func slow_loader(
 	_file_path: String,
 	_file_format: String,
-	_included_partitions: Array[String] = [],
+	_partition_ids: Array[String] = [],
+	_accessor_ids: Array[String] = [],
+	_version_numbers: Array[String] = [],
 	_suppress_errors: bool = false
 ) -> Dictionary:
 	for i: int in 5_000_000:
@@ -86,7 +88,7 @@ func test_operations_can_be_queued() -> void:
 	stub(executor.access_strategy.load_data).to_call(slow_loader)
 	
 	executor.request_saving("", "", {})
-	var result: Dictionary = await executor.request_loading("", "")
+	var result: Dictionary = await executor.request_loading("", "", [], [], [])
 	
 	assert_eq(result, expected_result, "Execution didn't return loaded data")
 
@@ -482,7 +484,7 @@ func test_request_loading_passes_arguments_to_access_strategy() -> void:
 	assert_called(
 		executor.access_strategy,
 		"load_data",
-		[ "file1", "sav", [], false ]
+		[ "file1", "sav", [], [], [], false ]
 	)
 
 #endregion
@@ -499,7 +501,7 @@ func test_request_reading_passes_arguments_to_access_strategy() -> void:
 	assert_called(
 		executor.access_strategy,
 		"load_data",
-		[ "file1", "sav", [], false ]
+		[ "file1", "sav", [], [], [], false ]
 	)
 
 #endregion

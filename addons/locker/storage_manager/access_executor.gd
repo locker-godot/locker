@@ -49,7 +49,9 @@ var operations: Dictionary = {
 		&"start_signal": removing_started,
 		&"finish_signal": removing_finished,
 	}
-}
+}:
+	set = set_operations,
+	get = get_operations
 
 var mutex: Mutex = Mutex.new():
 	set = set_mutex,
@@ -86,6 +88,12 @@ var access_strategy: LokAccessStrategy = null:
 #endregion
 
 #region Setters & getters
+
+func set_operations(new_operations: Dictionary) -> void:
+	operations = new_operations
+
+func get_operations() -> Dictionary:
+	return operations
 
 func set_mutex(new_mutex: Mutex) -> void:
 	mutex = new_mutex
@@ -141,7 +149,7 @@ func get_access_strategy() -> LokAccessStrategy:
 
 func push_error_no_access_strategy() -> void:
 	push_error(
-		"No Access Strategy found: %s", error_string(Error.ERR_UNCONFIGURED)
+		"%s: No Access Strategy found" % error_string(Error.ERR_UNCONFIGURED)
 	)
 
 #endregion
@@ -195,12 +203,6 @@ func dequeue_operation() -> Dictionary:
 	
 	return queued_operations.pop_back()
 
-func get_next_operation() -> Dictionary:
-	if queued_operations.is_empty():
-		return {}
-	
-	return queued_operations.back()
-
 func create_operation(
 	operation_name: StringName,
 	callable_args: Array
@@ -249,32 +251,42 @@ func is_busy() -> bool:
 	return has_queued_operations() or has_current_operation()
 
 func is_saving() -> bool:
-	mutex.lock()
 	var current_operation_name: StringName = get_operation_name(current_operation)
-	mutex.unlock()
 	
-	return current_operation_name == &"save_data"
+	return current_operation_name == &"save"
 
 func is_loading() -> bool:
-	mutex.lock()
 	var current_operation_name: StringName = get_operation_name(current_operation)
-	mutex.unlock()
 	
-	return current_operation_name == &"load_data"
+	return current_operation_name == &"load"
 
 func is_reading() -> bool:
-	mutex.lock()
 	var current_operation_name: StringName = get_operation_name(current_operation)
-	mutex.unlock()
 	
-	return current_operation_name == &"read_data"
+	return current_operation_name == &"read"
 
 func is_removing() -> bool:
-	mutex.lock()
 	var current_operation_name: StringName = get_operation_name(current_operation)
+	
+	return current_operation_name == &"remove"
+
+func start_operation(operation_name: StringName) -> void:
+	var operation: Dictionary = get_operation_by_name(operation_name)
+	
+	operation_started.emit(operation_name)
+	get_operation_start_signal(operation).emit()
+
+func finish_operation(result: Dictionary, operation_name: StringName) -> Dictionary:
+	mutex.lock()
+	last_result = result
 	mutex.unlock()
 	
-	return current_operation_name == &"remove_data"
+	var operation: Dictionary = get_operation_by_name(operation_name)
+	
+	get_operation_finish_signal(operation).emit(result)
+	operation_finished.emit(result, operation_name)
+	
+	return result
 
 func request_saving(
 	file_path: String,
@@ -296,7 +308,7 @@ func request_loading(
 ) -> Dictionary:
 	return await operate(
 		&"load",
-		[ file_path, file_format, partition_ids ]
+		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
 	)
 
 func request_reading(
@@ -308,7 +320,7 @@ func request_reading(
 ) -> Dictionary:
 	return await operate(
 		&"read",
-		[]
+		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
 	)
 	
 func request_removing(
@@ -320,26 +332,8 @@ func request_removing(
 ) -> Dictionary:
 	return await operate(
 		&"remove",
-		[]
+		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
 	)
-
-func start_operation(operation_name: StringName) -> void:
-	var operation: Dictionary = get_operation_by_name(operation_name)
-	
-	operation_started.emit(operation_name)
-	get_operation_start_signal(operation).emit()
-
-func finish_operation(result: Dictionary, operation_name: StringName) -> Dictionary:
-	mutex.lock()
-	last_result = result
-	mutex.unlock()
-	
-	var operation: Dictionary = get_operation_by_name(operation_name)
-	
-	operation_finished.emit(result, operation_name)
-	get_operation_finish_signal(operation).emit(result)
-	
-	return result
 
 func operate(operation_name: StringName, args: Array) -> Dictionary:
 	var new_operation: Dictionary = create_operation(operation_name, args)
@@ -399,7 +393,12 @@ func load_data(
 		return finish_operation(result, &"load")
 	
 	result = access_strategy.load_data(
-		file_path, file_format, partition_ids, false
+		file_path,
+		file_format,
+		partition_ids,
+		accessor_ids,
+		version_numbers,
+		false
 	)
 	
 	return finish_operation(result, &"load")
@@ -421,7 +420,12 @@ func read_data(
 		return finish_operation(result, &"read")
 	
 	result = access_strategy.load_data(
-		file_path, file_format, partition_ids, false
+		file_path,
+		file_format,
+		partition_ids,
+		accessor_ids,
+		version_numbers,
+		false
 	)
 	
 	return finish_operation(result, &"read")
