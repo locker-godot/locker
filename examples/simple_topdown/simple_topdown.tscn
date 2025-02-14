@@ -1,0 +1,27 @@
+[gd_scene load_steps=7 format=3 uid="uid://1lorc06jn4sg"]
+
+[ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_36edx"]
+[ext_resource type="Script" path="res://examples/simple_topdown/simple_topdown.gd" id="1_c2pfy"]
+[ext_resource type="Script" path="res://addons/locker/storage_manager/scene_storage_manager.gd" id="1_smdcc"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_aiit2"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="3_u6py0"]
+[ext_resource type="Resource" uid="uid://bblqqn5kl8i47" path="res://examples/simple_topdown/player_accessor_v1.tres" id="4_b4w5b"]
+
+[node name="SimpleTopdown" type="Node2D"]
+script = ExtResource("1_c2pfy")
+
+[node name="StorageManager" type="Node" parent="."]
+script = ExtResource("1_smdcc")
+
+[node name="Player" type="Sprite2D" parent="."]
+position = Vector2(600, 322)
+texture = ExtResource("1_36edx")
+
+[node name="StorageAccessor" type="Node" parent="Player"]
+script = ExtResource("2_aiit2")
+id = "player"
+partition = "player"
+versions = Array[ExtResource("3_u6py0")]([ExtResource("4_b4w5b")])
+dependency_paths = {
+"player": NodePath("..")
+}
