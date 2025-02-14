@@ -115,16 +115,12 @@ func save_data(
 		return result
 	
 	# Save each partition
-	for partition: String in data:
+	for partition_id: String in data:
 		var partition_name: String = LokFileSystemUtil.join_file_name(
-			partition, file_format
+			partition_id, file_format
 		)
-		#var partition_name: String = "%s.%s" % [ partition, file_format ]
 		var partition_path: String = file_path.path_join(partition_name)
-		#var partition_path: String = "%s/%s.%s" % [
-			#file_path, partition, file_format
-		#]
-		var partition_data: Dictionary = data[partition]
+		var partition_data: Dictionary = data[partition_id]
 		
 		#print("%s: Started saving partition %s;" % [
 			#Time.get_ticks_msec(),
@@ -141,12 +137,18 @@ func save_data(
 		if result["status"] != Error.OK:
 			return result
 		
+		append_partition_to_data(partition_result["data"], partition_id)
+		
 		result["data"].merge(partition_result["data"])
 		
 		#print("%s: Finished saving partition %s;" % [
 			#Time.get_ticks_msec(),
 			#partition_path
 		#])
+	
+	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
+		file_path, [ file_format ]
+	)
 	
 	return result
 
@@ -222,9 +224,14 @@ func load_data(
 		
 		result["status"] = partition_result["status"]
 		
-		# Cancel loading if error appears
+		# Don't load this partition if error appears
 		if result["status"] != Error.OK:
-			break
+			continue
+		
+		append_partition_to_data(
+			partition_result.get("data", {}),
+			partition_id
+		)
 		
 		result["data"].merge(partition_result["data"])
 	
@@ -232,20 +239,9 @@ func load_data(
 	if accessor_ids.is_empty() and version_numbers.is_empty():
 		return result
 	
-	var filtered_data: Dictionary = {}
-	
-	# For each accessor loaded
-	for accessor_id: String in result["data"]:
-		var accessor_data: Dictionary = result["data"][accessor_id]
-		var accessor_version: String = accessor_data.get("version", "")
-		
-		# Filter out unwanted accessors and versions
-		if not LokUtil.filter_value(accessor_ids, accessor_id):
-			continue
-		if not LokUtil.filter_value(version_numbers, accessor_version):
-			continue
-		
-		filtered_data[accessor_id] = accessor_data
+	var filtered_data: Dictionary = filter_data(
+		result["data"], accessor_ids, partition_ids, version_numbers
+	)
 	
 	result["data"] = filtered_data
 	
@@ -261,12 +257,12 @@ func remove_data(
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
+	result["updated_data"] = {}
+	
 	# Cancel if file doesn't exist
 	if not LokFileSystemUtil.directory_exists(file_path):
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
-	
-	var removed_data: Dictionary = {}
 	
 	# Get all partitions stored (with file format)
 	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
@@ -297,12 +293,13 @@ func remove_data(
 			break
 		
 		result["data"].merge(partition_result["data"])
+		result["updated_data"].merge(partition_result["updated_data"])
 	
 	# Remove file directory, if left empty
 	if LokFileSystemUtil.directory_is_empty(file_path):
 		LokFileSystemUtil.remove_directory_or_file(file_path)
 	
-	return removed_data
+	return result
 
 func remove_partition(
 	partition_path: String,
@@ -326,11 +323,8 @@ func remove_partition(
 		result.get("updated_data", {})
 	]
 	
-	# If nothing is to stay, remove everything
-	if accessor_ids.is_empty() and version_numbers.is_empty():
-		LokFileSystemUtil.remove_directory_or_file(partition_path)
-	# Separate data to be removed and data to stay
-	else:
+	if not accessor_ids.is_empty() or not version_numbers.is_empty():
+		# Separate data to be removed and data to stay
 		split_data = LokUtil.split_dictionary(
 			result.get("data", {}),
 			func(accessor_id: String, accessor_data: Dictionary) -> bool:
