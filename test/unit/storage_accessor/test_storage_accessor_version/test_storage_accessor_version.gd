@@ -50,8 +50,8 @@ func test_compare_versions_returns_minus_one_for_ascending_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_versions(
-			LokStorageAccessorVersion.create("00.0.1", ""),
-			LokStorageAccessorVersion.create("1.0.0", "")
+			LokStorageAccessorVersion.create("00.0.1"),
+			LokStorageAccessorVersion.create("1.0.0")
 		),
 		-1,
 		"Comparison didn't work"
@@ -64,8 +64,8 @@ func test_compare_versions_returns_one_for_descending_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_versions(
-			LokStorageAccessorVersion.create("1.0.0", ""),
-			LokStorageAccessorVersion.create("0.0.10", "")
+			LokStorageAccessorVersion.create("1.0.0"),
+			LokStorageAccessorVersion.create("0.0.10")
 		),
 		1,
 		"Comparison didn't work"
@@ -78,8 +78,8 @@ func test_compare_versions_returns_zero_for_equal_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_versions(
-			LokStorageAccessorVersion.create("1.0.0", ""),
-			LokStorageAccessorVersion.create("1.0.00", "")
+			LokStorageAccessorVersion.create("1.0.0"),
+			LokStorageAccessorVersion.create("1.0.00")
 		),
 		0,
 		"Comparison didn't work"
@@ -96,8 +96,8 @@ func test_compare_minor_versions_returns_minus_one_for_ascending_versions() -> v
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_minor_versions(
-			LokStorageAccessorVersion.create("03.0.1", ""),
-			LokStorageAccessorVersion.create("1.0.2", "")
+			LokStorageAccessorVersion.create("03.0.1"),
+			LokStorageAccessorVersion.create("1.0.2")
 		),
 		-1,
 		"Comparison didn't work"
@@ -110,8 +110,8 @@ func test_compare_minor_versions_returns_one_for_descending_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_minor_versions(
-			LokStorageAccessorVersion.create("1.0.10", ""),
-			LokStorageAccessorVersion.create("2.1.0", "")
+			LokStorageAccessorVersion.create("1.0.10"),
+			LokStorageAccessorVersion.create("2.1.0")
 		),
 		1,
 		"Comparison didn't work"
@@ -124,8 +124,8 @@ func test_compare_minor_versions_returns_zero_for_equal_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_minor_versions(
-			LokStorageAccessorVersion.create("1.0.0", ""),
-			LokStorageAccessorVersion.create("1.3.00", "")
+			LokStorageAccessorVersion.create("1.0.0"),
+			LokStorageAccessorVersion.create("1.3.00")
 		),
 		0,
 		"Comparison didn't work"
@@ -142,8 +142,8 @@ func test_compare_patch_versions_returns_minus_one_for_ascending_versions() -> v
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_patch_versions(
-			LokStorageAccessorVersion.create("03.0.1", ""),
-			LokStorageAccessorVersion.create("1.1.2", "")
+			LokStorageAccessorVersion.create("03.0.1"),
+			LokStorageAccessorVersion.create("1.1.2")
 		),
 		-1,
 		"Comparison didn't work"
@@ -156,8 +156,8 @@ func test_compare_patch_versions_returns_one_for_descending_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_patch_versions(
-			LokStorageAccessorVersion.create("1.2.10", ""),
-			LokStorageAccessorVersion.create("2.1.0", "")
+			LokStorageAccessorVersion.create("1.2.10"),
+			LokStorageAccessorVersion.create("2.1.0")
 		),
 		1,
 		"Comparison didn't work"
@@ -170,8 +170,8 @@ func test_compare_patch_versions_returns_zero_for_equal_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_patch_versions(
-			LokStorageAccessorVersion.create("1.03.0", ""),
-			LokStorageAccessorVersion.create("1.3.00", "")
+			LokStorageAccessorVersion.create("1.03.0"),
+			LokStorageAccessorVersion.create("1.3.00")
 		),
 		0,
 		"Comparison didn't work"
@@ -188,8 +188,8 @@ func test_compare_major_versions_returns_minus_one_for_ascending_versions() -> v
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_major_versions(
-			LokStorageAccessorVersion.create("03.0.1", ""),
-			LokStorageAccessorVersion.create("4.1.2", "")
+			LokStorageAccessorVersion.create("03.0.1"),
+			LokStorageAccessorVersion.create("4.1.2")
 		),
 		-1,
 		"Comparison didn't work"
@@ -202,8 +202,8 @@ func test_compare_major_versions_returns_one_for_descending_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_major_versions(
-			LokStorageAccessorVersion.create("3.2.10", ""),
-			LokStorageAccessorVersion.create("2.1.0", "")
+			LokStorageAccessorVersion.create("3.2.10"),
+			LokStorageAccessorVersion.create("2.1.0")
 		),
 		1,
 		"Comparison didn't work"
@@ -216,8 +216,8 @@ func test_compare_major_versions_returns_zero_for_equal_versions() -> void:
 	
 	assert_eq(
 		LokStorageAccessorVersion.compare_major_versions(
-			LokStorageAccessorVersion.create("1.03.0", ""),
-			LokStorageAccessorVersion.create("1.3.00", "")
+			LokStorageAccessorVersion.create("1.03.0"),
+			LokStorageAccessorVersion.create("1.3.00")
 		),
 		0,
 		"Comparison didn't work"

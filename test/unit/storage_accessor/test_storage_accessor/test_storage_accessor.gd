@@ -69,7 +69,7 @@ func test_versions_starts_empty() -> void:
 
 func test_versions_setter_updates_version() -> void:
 	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0", "id"
+		"1.0.0"
 	)
 	
 	accessor.versions = [ version ]
@@ -95,7 +95,7 @@ func test_version_number_setter_updates_version() -> void:
 	accessor.version_number = ""
 	
 	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0", "id"
+		"1.0.0"
 	)
 	
 	accessor.versions = [ version ]
@@ -110,7 +110,7 @@ func test_version_number_setter_updates_version() -> void:
 
 func test_version_number_setter_updates_version_only_on_change() -> void:
 	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0", "id"
+		"1.0.0"
 	)
 	
 	accessor.versions.append(version)
@@ -145,10 +145,10 @@ func test_version_starts_null() -> void:
 
 func test_version_setter_disconnects_previous_version() -> void:
 	var version1 := LokStorageAccessorVersion.create(
-		"1.0.0", "1"
+		"1.0.0"
 	)
 	var version2 := LokStorageAccessorVersion.create(
-		"2.0.0", "2"
+		"2.0.0"
 	)
 	
 	accessor.version = version1
@@ -160,7 +160,7 @@ func test_version_setter_disconnects_previous_version() -> void:
 
 func test_version_setter_connects_next_version() -> void:
 	var version := LokStorageAccessorVersion.create(
-		"1.0.0", "1"
+		"1.0.0"
 	)
 	
 	accessor.version = version
@@ -171,7 +171,7 @@ func test_version_setter_connects_next_version() -> void:
 
 func test_version_id_changes_propagate() -> void:
 	var version := LokStorageAccessorVersion.create(
-		"1.0.0", "1"
+		"1.0.0"
 	)
 	
 	watch_signals(accessor)
@@ -197,7 +197,7 @@ func test_get_id_returns_empty_string_without_version() -> void:
 
 func test_get_id_returns_version_id() -> void:
 	accessor.version = LokStorageAccessorVersion.create(
-		"1.0.0", "1"
+		"1.0.0"
 	)
 	
 	assert_eq(
@@ -211,7 +211,7 @@ func test_get_id_returns_version_id() -> void:
 #region Method find_version
 
 func test_find_version_returns_matching_version() -> void:
-	var version := LokStorageAccessorVersion.create("1.0.0", "1")
+	var version := LokStorageAccessorVersion.create("1.0.0")
 	
 	accessor.versions = [ version ]
 	
@@ -222,13 +222,13 @@ func test_find_version_returns_matching_version() -> void:
 	)
 
 func test_find_version_uses_version_number_by_default() -> void:
-	var version := LokStorageAccessorVersion.create("1.0.0", "1")
+	var version := LokStorageAccessorVersion.create("1.0.0")
 	
 	accessor.versions = [ version ]
 	accessor.version_number = "1.0.0"
 	
 	assert_eq(
-		accessor.find_version(),
+		accessor.find_version("1.0.0"),
 		version,
 		"Find_version didn't return expected value"
 	)
@@ -244,7 +244,7 @@ func test_find_version_returns_null_if_not_found() -> void:
 #region Method select_version
 
 func test_select_version_returns_true_on_success() -> void:
-	var version := LokStorageAccessorVersion.create("1.0.0", "1")
+	var version := LokStorageAccessorVersion.create("1.0.0")
 	
 	accessor.versions = [ version ]
 	
@@ -289,13 +289,13 @@ func test_save_data_delegates_to_global_manager() -> void:
 	accessor.storage_manager = DoubledManager.new()
 	
 	accessor.save_data(
-		1, "1.0.0"
+		"1", "1.0.0"
 	)
 	
 	assert_called(
 		accessor.storage_manager,
 		"save_data",
-		[ 1, "1.0.0", [ accessor.get_id() ], false ]
+		[ "1", "1.0.0", [ accessor.get_id() ], false ]
 	)
 
 #endregion
@@ -307,12 +307,12 @@ func test_load_data_delegates_to_global_manager() -> void:
 	
 	accessor.storage_manager = DoubledManager.new()
 	
-	accessor.load_data(1)
+	accessor.load_data("1")
 	
 	assert_called(
 		accessor.storage_manager,
 		"load_data",
-		[ 1, [ accessor.get_id() ], [], [] ]
+		[ "1", [ accessor.get_id() ], [], [] ]
 	)
 
 #endregion
