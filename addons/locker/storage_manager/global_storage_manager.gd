@@ -86,61 +86,6 @@ func get_access_executor() -> LokAccessExecutor:
 
 #endregion
 
-#region Configuration Getters
-
-func get_config_saves_directory() -> String:
-	return LockerPlugin.get_saves_directory()
-
-func get_config_save_files_prefix() -> String:
-	return LockerPlugin.get_save_files_prefix()
-
-func get_config_save_files_format() -> String:
-	return LockerPlugin.get_save_files_format()
-
-func get_config_save_versions() -> bool:
-	return LockerPlugin.get_save_versions()
-
-func get_config_use_encryption() -> bool:
-	return LockerPlugin.get_use_encryption()
-
-func get_config_encryption_password() -> String:
-	return LockerPlugin.get_encryption_password()
-
-func get_save_file_name(file_id: String) -> String:
-	var file_prefix: String = get_config_save_files_prefix()
-	
-	if file_prefix == "":
-		return file_id
-	
-	return "%s_%s" % [ file_prefix, file_id ]
-
-func get_save_file_path(file_id: String) -> String:
-	var file_directory: String = get_config_saves_directory()
-	var file_name: String = get_save_file_name(file_id)
-	
-	return "%s/%s" % [ file_directory, file_name ]
-
-#
-func get_config_debug_mode() -> bool:
-	return LockerPlugin.get_debug_mode()
-
-#
-func get_config_debug_warning_color() -> Color:
-	return LockerPlugin.get_debug_warning_color()
-
-#
-func get_config_save_path(file_id: int) -> String:
-	var result: String = ""
-	
-	result += get_config_saves_directory()
-	result += get_config_save_files_prefix()
-	result += str(file_id)
-	result += get_config_save_files_format()
-	
-	return result
-
-#endregion
-
 #region Debug Methods
 
 func push_warning_no_executor() -> void:
@@ -207,10 +152,7 @@ func get_accessor_by_id(id: String) -> LokStorageAccessor:
 ## select whether the [member access_strategy] should be the
 ## [LokEncryptedAccessStrategy] or the [LokJSONAccessStrategy].
 func select_access_strategy() -> LokAccessStrategy:
-	if get_config_use_encryption():
-		return LokEncryptedAccessStrategy.new()
-	else:
-		return LokJSONAccessStrategy.new()
+	return LockerPlugin.access_strategy
 
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor].[br]
@@ -242,7 +184,7 @@ func collect_data(
 	if accessor_data.is_empty():
 		return {}
 	
-	if get_config_save_versions():
+	if LockerPlugin.save_versions:
 		if accessor_version != "":
 			accessor_data["version"] = accessor_version
 	
@@ -351,8 +293,8 @@ func save_data(
 	accessor_ids: Array[String] = [],
 	replace: bool = false
 ) -> Dictionary:
-	var file_path: String = get_save_file_path(file_id)
-	var file_format: String = get_config_save_files_format()
+	var file_path: String = LockerPlugin.saves_directory
+	var file_format: String = LockerPlugin.save_files_format
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
@@ -378,8 +320,8 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = get_save_file_path(file_id)
-	var file_format: String = get_config_save_files_format()
+	var file_path: String = LockerPlugin.saves_directory
+	var file_format: String = LockerPlugin.save_files_format
 	
 	var loaded_data: Dictionary = await access_executor.load_data(
 		file_path,
@@ -399,8 +341,8 @@ func read_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = get_save_file_path(file_id)
-	var file_format: String = get_config_save_files_format()
+	var file_path: String = LockerPlugin.saves_directory
+	var file_format: String = LockerPlugin.save_files_format
 	
 	var reading_result: Dictionary = await access_executor.request_reading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
@@ -414,8 +356,8 @@ func remove_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = get_save_file_path(file_id)
-	var file_format: String = get_config_save_files_format()
+	var file_path: String = LockerPlugin.saves_directory
+	var file_format: String = LockerPlugin.save_files_format
 	
 	var removing_result: Dictionary = await access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
