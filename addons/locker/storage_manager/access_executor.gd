@@ -1,4 +1,4 @@
-
+@icon("res://addons/locker/icons/access_executor.svg")
 class_name LokAccessExecutor
 extends RefCounted
 
