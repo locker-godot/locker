@@ -86,7 +86,7 @@ func load_partition(
 		return result
 	
 	var loaded_content: String = LokFileSystemUtil.read_encrypted_file(
-		partition_path, password
+		partition_path, password, suppress_errors
 	)
 	var loaded_data: Variant = LokFileSystemUtil.parse_json_from_string(
 		loaded_content, suppress_errors

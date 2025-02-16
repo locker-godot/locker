@@ -381,18 +381,22 @@ static func read_file(path: String) -> String:
 ## The [param encryption_pass] parameter is used as the password to decrypt
 ## the contents of the file. [br]
 ## If an error occurs, this method pushes it and returns [code]""[/code],
-## otherwise, it returns the [String] read from the file.
+## otherwise, it returns the [String] read from the file. [br]
+## If the [param suppress_errors] is [code]true[/code], though,
+## no errors are pushed, except for errors that come from the
+## [method FileAccess.open_encrypted_with_pass] method.
 static func read_encrypted_file(
-	path: String, encryption_pass: String
+	path: String, encryption_pass: String, suppress_errors: bool = false
 ) -> String:
 	var file: FileAccess = FileAccess.open_encrypted_with_pass(
 		path, FileAccess.READ, encryption_pass
 	)
 	
 	if file == null:
-		var error: Error = FileAccess.get_open_error()
-		
-		push_error_file_reading_failed(path, error)
+		if not suppress_errors:
+			var error: Error = FileAccess.get_open_error()
+			
+			push_error_file_reading_failed(path, error)
 		
 		return ""
 	
