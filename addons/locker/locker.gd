@@ -1,15 +1,84 @@
+@icon("res://addons/locker/icons/locker_plugin.svg")
 @tool
+## The [LockerPlugin] class is the main manager of the Locker Plugin.
+## 
+## This class is responsible for managing the access of the Plugin
+## settings through the use of the [ProjectSettings]. [br]
+## The settings of this Plugin stay available in the
+## [code]addons/locker[/code] path of the [ProjectSettings]. [br]
+## They only become available if the [LockerPlugin] is active, though. [br]
+## When active, this Plugin also registers the [LokGlobalStorageManager]
+## as an autoload singleton.
 class_name LockerPlugin
 extends EditorPlugin
 
+#region Constants
+
+## The [constant CONFIG_PATH] constant stores the path where the
+## [LockerPlugin]'s configurations should be stored, so that they can be
+## persisted even when the Plugin is deactivated and activated.
 const CONFIG_PATH: String = "res://addons/locker/config.cfg"
+
+## The [constant AUTOLOAD_NAME] constant stores the name that should be
+## given to the [LockerPlugin]'s autoload, when registered.
 const AUTOLOAD_NAME := "LokGlobalStorageManager"
+
+## The [constant AUTOLOAD_PATH] constant stores the path to the script of
+## the [LokGlobalStorageManager] so that this [LockerPlugin] can register it
+## as an autoload when it is activated.
 const AUTOLOAD_PATH := "res://addons/locker/storage_manager/global_storage_manager.gd"
 
-signal setting_changed(setting: Dictionary)
+#endregion
 
 #region Settings
 
+## The [member plugin_settings] property stores a [Dictionary] that describes
+## all the settings that should be appended to the [ProjectSettings] when
+## the [LockerPlugin] is activated, so that they can be easily edited through
+## the editor. [br]
+## Each key of this [Dictionary] points to the setting path in the
+## [ProjectSettings] and each value describes information about the setting.
+## [br]
+## The structure of this property is as follows:
+## [codeblock]
+## {
+##   "setting_1_path": {
+##     "default_value": <Variant>,
+##     "current_value": <Variant>,
+##     "is_basic": <bool>,
+##     "property_info": {
+##       "name": "setting_1_path",
+##       "type": <@GlobalScope.Variant.Type>,
+##       "hint": <@GlobalScope.PropertyHint>,
+##       "hint_string": <String>
+##     },
+##     "config_section": <String>,
+##   },
+##   "setting_n_path": { ... }
+## }
+## [/codeblock]
+## The settings defined in this property are the following: [br]
+## - [code]"addons/locker/saves_directory"[/code]: This setting defines the
+## default directory where the [LokGlobalStorageManager] should save and load
+## the game data. [br]
+## - [code]"addons/locker/save_files_prefix"[/code]: This setting defines the
+## default prefix that should be given to the save files by the
+## [LokGlobalStorageManager]. [br]
+## - [code]"addons/locker/save_files_format"[/code]: This setting defines the
+## default file format that should be given to the save files by the
+## [LokGlobalStorageManager]. [br]
+## - [code]"addons/locker/save_versions"[/code]: This setting defines if,
+## by default, the [LokGlobalStorageManager] should store the save versions
+## when saving. [br]
+## - [code]"addons/locker/access_strategy"[/code]: This setting stores a
+## [String] that represents what [LokAccessStrategy] the
+## [LokGlobalStorageManager] should use to save and load data. To convert
+## from this [String] representation to an actual [LokAccessStrategy] instance,
+## the [method string_to_strategy] method can be used. [br]
+## - [code]"addons/locker/encrypted_strategy/password"[/code]: This setting
+## stores the default password that should be used by the
+## [LokGlobalStorageManager]'s strategy, if it is the
+## [LokEncryptedAccessStrategy].
 static var plugin_settings := {
 	"addons/locker/saves_directory": {
 		"default_value": "user://saves/",
@@ -86,59 +155,99 @@ static var plugin_settings := {
 
 #region Settings Setters & Getters
 
+## The [method set_setting_saves_directory] method is a shortcut to
+## defining the [code]"addons/locker/saves_directory"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param path].
 static func set_setting_saves_directory(path: String) -> void:
 	ProjectSettings.set_setting("addons/locker/saves_directory", path)
 
+## The [method get_setting_saves_directory] method is a getter to facilitate
+## obtaining the [code]"addons/locker/saves_directory"[/code] setting
+## from the [ProjectSettings].
 static func get_setting_saves_directory() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/saves_directory",
 		plugin_settings["addons/locker/saves_directory"]["default_value"]
 	)
 
+## The [method set_setting_save_files_prefix] method is a shortcut to
+## defining the [code]"addons/locker/save_files_prefix"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param prefix].
 static func set_setting_save_files_prefix(prefix: String) -> void:
 	ProjectSettings.set_setting("addons/locker/save_files_prefix", prefix)
 
+## The [method get_setting_save_files_prefix] method is a getter to facilitate
+## obtaining the [code]"addons/locker/save_files_prefix"[/code] setting
+## from the [ProjectSettings].
 static func get_setting_save_files_prefix() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_files_prefix",
 		plugin_settings["addons/locker/save_files_prefix"]["default_value"]
 	)
 
-static func set_setting_save_files_format(new_format: String) -> void:
-	ProjectSettings.set_setting("addons/locker/save_files_format", new_format)
+## The [method set_setting_save_files_format] method is a shortcut to
+## defining the [code]"addons/locker/save_files_format"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param format].
+static func set_setting_save_files_format(format: String) -> void:
+	ProjectSettings.set_setting("addons/locker/save_files_format", format)
 
+## The [method get_setting_save_files_format] method is a getter to facilitate
+## obtaining the [code]"addons/locker/save_files_format"[/code] setting
+## from the [ProjectSettings].
 static func get_setting_save_files_format() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_files_format",
 		plugin_settings["addons/locker/save_files_format"]["default_value"]
 	)
 
-static func set_setting_save_versions(new_state: bool) -> void:
-	ProjectSettings.set_setting("addons/locker/save_versions", new_state)
+## The [method set_setting_save_versions] method is a shortcut to
+## defining the [code]"addons/locker/save_versions"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param state].
+static func set_setting_save_versions(state: bool) -> void:
+	ProjectSettings.set_setting("addons/locker/save_versions", state)
 
+## The [method get_setting_save_versions] method is a getter to facilitate
+## obtaining the [code]"addons/locker/save_versions"[/code] setting
+## from the [ProjectSettings].
 static func get_setting_save_versions() -> bool:
 	return ProjectSettings.get_setting(
 		"addons/locker/save_versions",
 		plugin_settings["addons/locker/save_versions"]["default_value"]
 	)
 
-static func set_setting_access_strategy(new_strategy: String) -> void:
-	ProjectSettings.set_setting("addons/locker/access_strategy", new_strategy)
+## The [method set_setting_access_strategy] method is a shortcut to
+## defining the [code]"addons/locker/access_strategy"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param strategy].
+static func set_setting_access_strategy(strategy: String) -> void:
+	ProjectSettings.set_setting("addons/locker/access_strategy", strategy)
 
+## The [method get_setting_access_strategy] method is a getter to facilitate
+## obtaining the [code]"addons/locker/access_strategy"[/code] setting
+## from the [ProjectSettings].
 static func get_setting_access_strategy() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/access_strategy",
 		plugin_settings["addons/locker/access_strategy"]["default_value"]
 	)
 
+## The [method get_setting_access_strategy_parsed] method is a getter to
+## facilitate obtaining the [code]"addons/locker/access_strategy"[/code]
+## setting from the [ProjectSettings] already parsed as a [LokAccessStrategy].
 static func get_setting_access_strategy_parsed() -> LokAccessStrategy:
 	return string_to_strategy(get_setting_access_strategy())
 
-static func set_setting_encrypted_strategy_password(new_password: String) -> void:
+## The [method set_setting_encrypted_strategy_password] method is a shortcut to
+## defining the [code]"addons/locker/encrypted_strategy/password"[/code] setting
+## in the [ProjectSettings] to the value of the passed [param password].
+static func set_setting_encrypted_strategy_password(password: String) -> void:
 	ProjectSettings.set_setting(
-		"addons/locker/encrypted_strategy/password", new_password
+		"addons/locker/encrypted_strategy/password", password
 	)
 
+## The [method get_setting_encrypted_strategy_password] method is a getter
+## to facilitate obtaining the
+## [code]"addons/locker/encrypted_strategy/password"[/code]
+## setting from the [ProjectSettings].
 static func get_setting_encrypted_strategy_password() -> String:
 	return ProjectSettings.get_setting(
 		"addons/locker/encrypted_strategy/password",
@@ -159,23 +268,31 @@ static func get_plugin_settings() -> Dictionary:
 
 #region Methods
 
+## The [method string_to_strategy] method takes a [param string] and
+## returns a [LokAccessStrategy] that corresponds to that [param string]. [br]
+## If an invalid [param string] is passed, this method returns
+## [code]null[/code]
 static func string_to_strategy(string: String) -> LokAccessStrategy:
 	match(string):
 		"JSON": return LokJSONAccessStrategy.new()
 		"Encrypted": return LokEncryptedAccessStrategy.new()
 	
-	return LokAccessStrategy.new()
+	return null
 
-# Saves the settings in the settings_to_save dictionary
-func save_settings(settings_to_save: Dictionary) -> void:
-	if settings_to_save.is_empty():
+## The [method save_settings] method takes a [param settings] [Dictionary] and
+## takes the current value of each one of them from the [ProjectSettings],
+## saving them in a [ConfigFile] in the [constant CONFIG_PATH]. [br]
+## The [param settings] parameter has to conform to the structure explained in
+## the [member plugin_settings] description.
+func save_settings(settings: Dictionary) -> void:
+	if settings.is_empty():
 		return
 	
 	var config := ConfigFile.new()
 	var err: Error = config.load(CONFIG_PATH)
 	
-	for setting_path: String in settings_to_save:
-		var setting_data: Dictionary = settings_to_save[setting_path]
+	for setting_path: String in settings:
+		var setting_data: Dictionary = settings[setting_path]
 		var setting_section: String = setting_data["config_section"]
 		var setting_name: String = setting_path.get_slice("/locker/", 1)
 		var setting_value: Variant = ProjectSettings.get_setting(
@@ -186,6 +303,12 @@ func save_settings(settings_to_save: Dictionary) -> void:
 	
 	config.save(CONFIG_PATH)
 
+## The [method load_settings] method takes a [param settings] [Dictionary] and
+## loads the settings described by it from the [ConfigFile] in the
+## [constant CONFIG_PATH].
+## This method, then, sets the loaded settings in the [ProjectSettings]. [br]
+## The [param settings] parameter has to conform to the structure explained in
+## the [member plugin_settings] description.
 func load_settings(settings: Dictionary) -> void:
 	var config := ConfigFile.new()
 	var err: Error = config.load(CONFIG_PATH)
@@ -208,6 +331,12 @@ func load_settings(settings: Dictionary) -> void:
 		
 		ProjectSettings.set_setting(setting_path, new_value)
 
+## The [method get_changed_settings] method takes a [param settings]
+## [Dictionary] and looks for settings that had their values changed. [br]
+## When found, their values are updated and they are returned.
+## The [param settings] parameter as well as the returned [Dictionary]
+## conform to the structure explained in the [member plugin_settings]
+## description.
 func get_changed_settings(settings: Dictionary) -> Dictionary:
 	var settings_changed: Dictionary = {}
 	
@@ -225,6 +354,10 @@ func get_changed_settings(settings: Dictionary) -> Dictionary:
 	
 	return settings_changed
 
+## The [method add_settings] method takes a [param settings]
+## [Dictionary] and saves each of its settings in the [ProjectSettings]. [br]
+## The [param settings] parameter must conform to the structure explained
+## in the [member plugin_settings] description.
 func add_settings(settings: Dictionary) -> void:
 	for setting_path: String in settings.keys():
 		var setting: Dictionary = settings[setting_path]
@@ -234,22 +367,38 @@ func add_settings(settings: Dictionary) -> void:
 		ProjectSettings.set_as_basic(setting_path, setting["is_basic"])
 		ProjectSettings.add_property_info(setting["property_info"])
 
+## The [method remove_settings] method takes a [param settings]
+## [Dictionary] and removes each of its settings from the [ProjectSettings].
+## [br]
+## The [param settings] parameter must conform to the structure explained
+## in the [member plugin_settings] description.
 func remove_settings(settings: Dictionary) -> void:
 	for setting_path: String in settings.keys():
 		var setting: Dictionary = settings[setting_path]
 		
 		ProjectSettings.set_setting(setting_path, null)
 
+## The [method start_plugin] method registers the singleton needed by the
+## [LockerPlugin] as an autoload, so it isn't needed to do that manually. [br]
+## This method also registers the settings of this plugin in the
+## [ProjectSettings], making sure to load any settings used before deactivating
+## this plugin. [br]
+## Finally, this method makes sure that whenever a setting from this Plugin
+## is altered, it is saved in the [ConfigFile] in the [constant CONFIG_PATH].
 func start_plugin() -> void:
 	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
 	add_settings(plugin_settings)
 	load_settings(plugin_settings)
 	
-	
 	LokUtil.check_and_connect_signal(
 		ProjectSettings, &"settings_changed", _on_project_settings_changed
 	)
 
+## The [method finish_plugin] method unregisters the singleton needed by the
+## [LockerPlugin] from the autoloads, so it doesn't stay there without the
+## Plugin being active. [br]
+## This method also unregisters the settings of this plugin from the
+## [ProjectSettings].
 func finish_plugin() -> void:
 	remove_autoload_singleton(AUTOLOAD_NAME)
 	remove_settings(plugin_settings)
@@ -259,7 +408,6 @@ func finish_plugin() -> void:
 	)
 
 # Registers plugin's autoload and settings.
-# Initializes properties to settings' defaults
 func _enter_tree() -> void:
 	start_plugin()
 
