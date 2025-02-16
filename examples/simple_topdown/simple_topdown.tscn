@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://1lorc06jn4sg"]
+[gd_scene load_steps=14 format=3 uid="uid://1lorc06jn4sg"]
 
 [ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_36edx"]
 [ext_resource type="Script" path="res://examples/simple_topdown/simple_topdown.gd" id="1_c2pfy"]
@@ -6,6 +6,49 @@
 [ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_aiit2"]
 [ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="3_u6py0"]
 [ext_resource type="Resource" uid="uid://bblqqn5kl8i47" path="res://examples/simple_topdown/player_accessor_v1.tres" id="4_b4w5b"]
+[ext_resource type="Script" path="res://examples/simple_topdown/player.gd" id="4_qtr56"]
+[ext_resource type="Script" path="res://examples/simple_topdown/status_popup.gd" id="8_4xjs3"]
+[ext_resource type="Texture2D" uid="uid://ck45ywglfs561" path="res://examples/simple_topdown/assets/load_circle.svg" id="9_x2762"]
+[ext_resource type="Script" path="res://examples/simple_topdown/loader.gd" id="10_etgrd"]
+
+[sub_resource type="Animation" id="Animation_j6151"]
+resource_name = "spin"
+length = 0.5
+loop_mode = 1
+step = 0.1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.28319]
+}
+
+[sub_resource type="Animation" id="Animation_05ess"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_403np"]
+_data = {
+"RESET": SubResource("Animation_05ess"),
+"spin": SubResource("Animation_j6151")
+}
 
 [node name="SimpleTopdown" type="Node2D"]
 script = ExtResource("1_c2pfy")
@@ -14,14 +57,116 @@ script = ExtResource("1_c2pfy")
 script = ExtResource("1_smdcc")
 
 [node name="Player" type="Sprite2D" parent="."]
-position = Vector2(600, 322)
+position = Vector2(576, 324)
 texture = ExtResource("1_36edx")
+script = ExtResource("4_qtr56")
 
 [node name="StorageAccessor" type="Node" parent="Player"]
 script = ExtResource("2_aiit2")
 id = "player"
-partition = "player"
 versions = Array[ExtResource("3_u6py0")]([ExtResource("4_b4w5b")])
 dependency_paths = {
 "player": NodePath("..")
 }
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorSwapping" type="VBoxContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+theme_override_constants/separation = 0
+
+[node name="ColorPicker" type="ColorPickerButton" parent="UILayer/UI/ColorSwapping"]
+layout_mode = 2
+text = "Select a Color!"
+
+[node name="Title" type="Label" parent="UILayer/UI/ColorSwapping"]
+layout_mode = 2
+text = "Pick a Color!"
+horizontal_alignment = 1
+
+[node name="AccessContainer" type="Control" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -47.0
+offset_top = -93.0
+offset_right = 47.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="AccessOptions" type="VBoxContainer" parent="UILayer/UI/AccessContainer"]
+layout_mode = 2
+offset_right = 94.0
+offset_bottom = 93.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Status" type="Label" parent="UILayer/UI/AccessContainer/AccessOptions"]
+layout_mode = 2
+horizontal_alignment = 1
+script = ExtResource("8_4xjs3")
+
+[node name="FileSelector" type="LineEdit" parent="UILayer/UI/AccessContainer/AccessOptions"]
+layout_mode = 2
+placeholder_text = "File"
+
+[node name="Buttons" type="HBoxContainer" parent="UILayer/UI/AccessContainer/AccessOptions"]
+layout_mode = 2
+
+[node name="Save" type="Button" parent="UILayer/UI/AccessContainer/AccessOptions/Buttons"]
+layout_mode = 2
+text = "Save"
+
+[node name="Load" type="Button" parent="UILayer/UI/AccessContainer/AccessOptions/Buttons"]
+layout_mode = 2
+text = "Load"
+
+[node name="AccessLoader" type="TextureRect" parent="UILayer/UI/AccessContainer"]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -20.0
+offset_right = 32.0
+offset_bottom = -4.0
+grow_horizontal = 0
+grow_vertical = 0
+pivot_offset = Vector2(12, 12)
+texture = ExtResource("9_x2762")
+script = ExtResource("10_etgrd")
+
+[node name="Animator" type="AnimationPlayer" parent="UILayer/UI/AccessContainer/AccessLoader"]
+libraries = {
+"": SubResource("AnimationLibrary_403np")
+}
+autoplay = "spin"
+
+[connection signal="operation_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessOptions/Status" method="_on_storage_operation_finished"]
+[connection signal="operation_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_finished"]
+[connection signal="operation_started" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_started"]
+[connection signal="color_changed" from="UILayer/UI/ColorSwapping/ColorPicker" to="Player" method="set_modulate"]
+[connection signal="text_submitted" from="UILayer/UI/AccessContainer/AccessOptions/FileSelector" to="StorageManager" method="set_current_file"]
+[connection signal="pressed" from="UILayer/UI/AccessContainer/AccessOptions/Buttons/Save" to="StorageManager" method="save_data"]
+[connection signal="pressed" from="UILayer/UI/AccessContainer/AccessOptions/Buttons/Load" to="StorageManager" method="load_data"]
