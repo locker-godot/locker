@@ -1,4 +1,4 @@
-@tool
+
 ## The [LokGlobalStorageManager] class serves as the manager of the data
 ## saving and loading process.
 ## 
@@ -8,11 +8,23 @@
 ## [LokStorageAccessor]s that need saving and loading.
 extends LokStorageManager
 
-## The [const DEBUG_ICON_PATH] const is a [String] that points to the path of
-## an icon used for debugging.
-const DEBUG_ICON_PATH: String = "res://addons/locker/assets/icon.svg"
-
 #region Properties
+
+var saves_directory: String = LockerPlugin.get_setting_saves_directory():
+	set = set_saves_directory,
+	get = get_saves_directory
+
+var save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix():
+	set = set_save_files_prefix,
+	get = get_save_files_prefix
+
+var save_files_format: String = LockerPlugin.get_setting_save_files_format():
+	set = set_save_files_format,
+	get = get_save_files_format
+
+var save_versions: bool = LockerPlugin.get_setting_save_versions():
+	set = set_save_versions,
+	get = get_save_versions
 
 ## The [member accessors] property is an [Array] responsible for storing all the
 ## [LokStorageAccessor]s that are currently in the scene tree. [br]
@@ -52,17 +64,35 @@ var access_executor_connections: Array[Dictionary] = [
 
 #region Setters & Getters
 
+func set_saves_directory(new_directory: String) -> void:
+	saves_directory = new_directory
+
+func get_saves_directory() -> String:
+	return saves_directory
+
+func set_save_files_prefix(new_prefix: String) -> void:
+	save_files_prefix = new_prefix
+
+func get_save_files_prefix() -> String:
+	return save_files_prefix
+
+func set_save_files_format(new_format: String) -> void:
+	save_files_format = new_format
+
+func get_save_files_format() -> String:
+	return save_files_format
+
+func set_save_versions(new_value: bool) -> void:
+	save_versions = new_value
+
+func get_save_versions() -> bool:
+	return save_versions
+
 func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
 	accessors = new_accessors
 
 func get_accessors() -> Array[LokStorageAccessor]:
 	return accessors
-
-#func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
-	#access_strategy = new_strategy
-#
-#func get_access_strategy() -> LokAccessStrategy:
-	#return access_strategy
 
 func set_access_executor(new_executor: LokAccessExecutor) -> void:
 	var old_executor: LokAccessExecutor = access_executor
@@ -83,6 +113,20 @@ func set_access_executor(new_executor: LokAccessExecutor) -> void:
 
 func get_access_executor() -> LokAccessExecutor:
 	return access_executor
+
+func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
+	if access_executor == null:
+		push_warning_no_executor()
+		return
+	
+	access_executor.access_strategy = new_strategy
+
+func get_access_strategy() -> LokAccessStrategy:
+	if access_executor == null:
+		push_warning_no_executor()
+		return
+	
+	return access_executor.access_strategy
 
 #endregion
 
@@ -147,13 +191,6 @@ func get_accessor_by_id(id: String) -> LokStorageAccessor:
 	
 	return null
 
-## The [method select_access_strategy] method uses the
-## [method get_config_use_encryption] method to
-## select whether the [member access_strategy] should be the
-## [LokEncryptedAccessStrategy] or the [LokJSONAccessStrategy].
-func select_access_strategy() -> LokAccessStrategy:
-	return LockerPlugin.access_strategy
-
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor].[br]
 ## Optionally, a [param version_number] can be passed to dictate from which
@@ -184,7 +221,7 @@ func collect_data(
 	if accessor_data.is_empty():
 		return {}
 	
-	if LockerPlugin.save_versions:
+	if save_versions:
 		if accessor_version != "":
 			accessor_data["version"] = accessor_version
 	
@@ -293,8 +330,8 @@ func save_data(
 	accessor_ids: Array[String] = [],
 	replace: bool = false
 ) -> Dictionary:
-	var file_path: String = LockerPlugin.saves_directory
-	var file_format: String = LockerPlugin.save_files_format
+	var file_path: String = saves_directory
+	var file_format: String = save_files_format
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
 	
@@ -320,8 +357,8 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = LockerPlugin.saves_directory
-	var file_format: String = LockerPlugin.save_files_format
+	var file_path: String = saves_directory
+	var file_format: String = save_files_format
 	
 	var loaded_data: Dictionary = await access_executor.load_data(
 		file_path,
@@ -341,8 +378,8 @@ func read_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = LockerPlugin.saves_directory
-	var file_format: String = LockerPlugin.save_files_format
+	var file_path: String = saves_directory
+	var file_format: String = save_files_format
 	
 	var reading_result: Dictionary = await access_executor.request_reading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
@@ -356,8 +393,8 @@ func remove_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = LockerPlugin.saves_directory
-	var file_format: String = LockerPlugin.save_files_format
+	var file_path: String = saves_directory
+	var file_format: String = save_files_format
 	
 	var removing_result: Dictionary = await access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
@@ -365,9 +402,15 @@ func remove_data(
 	
 	return removing_result
 
+# Initializes values according to settings
 func _init() -> void:
-	if not Engine.is_editor_hint():
-		access_executor = LokAccessExecutor.new(select_access_strategy())
+	access_executor = LokAccessExecutor.new()
+	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
+	
+	var access_strategy: LokAccessStrategy = get_access_strategy()
+	
+	if access_strategy is LokEncryptedAccessStrategy:
+		access_strategy.password = LockerPlugin.get_setting_encrypted_strategy_password()
 
 func _on_executor_operation_started(operation_name: StringName) -> void:
 	operation_started.emit(operation_name)
