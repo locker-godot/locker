@@ -173,7 +173,7 @@ func get_file_path(file_id: String) -> String:
 	var file_path: String = saves_directory.path_join(save_files_prefix)
 	
 	if file_id != "":
-		file_path += file_id
+		file_path = "%s_%s" % [ file_path, file_id ]
 	
 	return file_path
 
