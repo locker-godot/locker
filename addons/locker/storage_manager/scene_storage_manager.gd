@@ -23,6 +23,10 @@ var global_manager := LokGlobalStorageManager:
 	set = set_global_manager,
 	get = get_global_manager
 
+var current_file: String = "":
+	set = set_current_file,
+	get = get_current_file
+
 ## The [member current_version] property is used as the version with which
 ## data is saved when using this [LokSceneStorageManager]. [br]
 ## By default, it is set to [code]""[/code], which is converted to the
@@ -40,6 +44,12 @@ func set_global_manager(new_manager: LokGlobalStorageManager) -> void:
 
 func get_global_manager() -> LokGlobalStorageManager:
 	return global_manager
+
+func set_current_file(new_file: String) -> void:
+	current_file = new_file
+
+func get_current_file() -> String:
+	return current_file
 
 func set_current_version(new_version: String) -> void:
 	current_version = new_version
@@ -74,7 +84,7 @@ func push_error_no_manager() -> void:
 ## The remaining parameters are better explained in the
 ## [method LokGlobalStorageManager.save_data] method.
 func save_data(
-	file_id: String,
+	file_id: String = current_file,
 	version_number: String = current_version,
 	accessor_ids: Array[String] = [],
 	replace: bool = false
@@ -106,7 +116,7 @@ func save_data(
 ## At the end, this method returns a [Dictionary] with the information obtained.
 ## [i]See also: [method LokGlobalStorageManager.load_data][/i]
 func load_data(
-	file_id: String,
+	file_id: String = current_file,
 	accessor_ids: Array[String] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
@@ -126,7 +136,7 @@ func load_data(
 ## in the [LokGlobalStorageManager] autoload. More information about it
 ## can be found here: [member LokGlobalStorageManager.read_data].
 func read_data(
-	file_id: String,
+	file_id: String = current_file,
 	accessor_ids: Array[String] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
@@ -146,7 +156,7 @@ func read_data(
 ## in the [LokGlobalStorageManager] autoload. More information about it
 ## can be found here: [member LokGlobalStorageManager.remove_data].
 func remove_data(
-	file_id: String,
+	file_id: String = current_file,
 	accessor_ids: Array[String] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
