@@ -367,7 +367,7 @@ func load_data(
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var loaded_data: Dictionary = await access_executor.load_data(
+	var loading_result: Dictionary = await access_executor.request_loading(
 		file_path,
 		file_format,
 		partition_ids,
@@ -375,9 +375,9 @@ func load_data(
 		version_numbers
 	)
 	
-	distribute_data(loaded_data, accessor_ids)
+	distribute_data(loading_result.get("data", {}), accessor_ids)
 	
-	return loaded_data
+	return loading_result
 
 func read_data(
 	file_id: String,
