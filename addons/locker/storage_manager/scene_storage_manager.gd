@@ -19,7 +19,7 @@ extends LokStorageManager
 ## mocking it with unit testing easier. [br]
 ## To guarantee that this property isn't altered, its setter doesn't allow
 ## modifications. That could be changed if this class is overridden, though.
-var global_manager := LokGlobalStorageManager:
+var global_manager: LokStorageManager:
 	set = set_global_manager,
 	get = get_global_manager
 
@@ -35,14 +35,41 @@ var current_version: String = "":
 	set = set_current_version,
 	get = get_current_version
 
+var global_manager_connections: Array[Dictionary] = [
+	{ "name": &"operation_started", "callable": _on_global_manager_operation_started },
+	{ "name": &"saving_started", "callable": _on_global_manager_saving_started },
+	{ "name": &"loading_started", "callable": _on_global_manager_loading_started },
+	{ "name": &"reading_started", "callable": _on_global_manager_reading_started },
+	{ "name": &"removing_started", "callable": _on_global_manager_removing_started },
+	{ "name": &"operation_finished", "callable": _on_global_manager_operation_finished },
+	{ "name": &"saving_finished", "callable": _on_global_manager_saving_finished },
+	{ "name": &"loading_finished", "callable": _on_global_manager_loading_finished },
+	{ "name": &"reading_finished", "callable": _on_global_manager_reading_finished },
+	{ "name": &"removing_finished", "callable": _on_global_manager_removing_finished },
+]
+
 #endregion
 
 #region Setters & Getters
 
-func set_global_manager(new_manager: LokGlobalStorageManager) -> void:
-	pass
+func set_global_manager(new_manager: LokStorageManager) -> void:
+	var old_manager: LokStorageManager = global_manager
+	
+	global_manager = new_manager
+	
+	if old_manager == new_manager:
+		return
+	
+	LokUtil.check_and_disconnect_signals(
+		old_manager,
+		global_manager_connections
+	)
+	LokUtil.check_and_connect_signals(
+		new_manager,
+		global_manager_connections
+	)
 
-func get_global_manager() -> LokGlobalStorageManager:
+func get_global_manager() -> LokStorageManager:
 	return global_manager
 
 func set_current_file(new_file: String) -> void:
@@ -171,5 +198,40 @@ func remove_data(
 		partition_ids,
 		version_numbers
 	)
+
+func _init() -> void:
+	global_manager = LokGlobalStorageManager
+
+func _on_global_manager_operation_started(operation_name: StringName) -> void:
+	operation_started.emit(operation_name)
+
+func _on_global_manager_saving_started() -> void:
+	saving_started.emit()
+
+func _on_global_manager_loading_started() -> void:
+	loading_started.emit()
+
+func _on_global_manager_reading_started() -> void:
+	reading_started.emit()
+
+func _on_global_manager_removing_started() -> void:
+	removing_started.emit()
+
+func _on_global_manager_operation_finished(
+	result: Dictionary, operation: StringName
+) -> void:
+	operation_finished.emit(result, operation)
+
+func _on_global_manager_saving_finished(result: Dictionary) -> void:
+	saving_finished.emit(result)
+
+func _on_global_manager_loading_finished(result: Dictionary) -> void:
+	loading_finished.emit(result)
+
+func _on_global_manager_reading_finished(result: Dictionary) -> void:
+	reading_finished.emit(result)
+
+func _on_global_manager_removing_finished(result: Dictionary) -> void:
+	removing_finished.emit(result)
 
 #endregion
