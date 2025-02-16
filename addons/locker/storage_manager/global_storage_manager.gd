@@ -272,7 +272,7 @@ func gather_data(
 	for accessor: LokStorageAccessor in accessors:
 		if accessor.id == "":
 			continue
-		if not accessor_ids.is_empty() and not accessor.id in accessor_ids:
+		if not LokUtil.filter_value(accessor_ids, accessor.id):
 			continue
 		
 		var accessor_data: Dictionary = collect_data(accessor, version_number)
@@ -313,20 +313,19 @@ func gather_data(
 func distribute_data(
 	data: Dictionary, accessor_ids: Array[String] = []
 ) -> void:
-	for accessor_id: String in data.keys():
-		if not accessor_ids.is_empty() and not accessor_id in accessor_ids:
+	for accessor: LokStorageAccessor in accessors:
+		if not LokUtil.filter_value(accessor_ids, accessor.id):
 			continue
 		
-		var accessor_data: Dictionary = data[accessor_id]
+		var accessor_data: Dictionary = data.get(accessor.id, {})
+		
+		if accessor_data.is_empty():
+			continue
+		
 		var accessor_version: String = accessor_data.get("version", "")
 		
-		var accessors_found: Array[LokStorageAccessor] = get_accessors_by_id(
-			accessor_id
-		)
-		
-		for accessor: LokStorageAccessor in accessors_found:
-			accessor.set_version_number(accessor_version)
-			accessor.consume_data(accessor_data.duplicate(true))
+		accessor.set_version_number(accessor_version)
+		accessor.consume_data(accessor_data.duplicate(true))
 
 ## Another optional parameter this method accept is the [param accessor_ids],
 ## which is a list that enumerates the ids of the [LokStorageAccessor]
