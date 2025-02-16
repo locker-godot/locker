@@ -273,8 +273,8 @@ func is_removing() -> bool:
 func start_operation(operation_name: StringName) -> void:
 	var operation: Dictionary = get_operation_by_name(operation_name)
 	
-	operation_started.emit(operation_name)
-	get_operation_start_signal(operation).emit()
+	operation_started.emit.call_deferred(operation_name)
+	get_operation_start_signal(operation).emit.call_deferred()
 
 func finish_operation(result: Dictionary, operation_name: StringName) -> Dictionary:
 	mutex.lock()
@@ -283,8 +283,8 @@ func finish_operation(result: Dictionary, operation_name: StringName) -> Diction
 	
 	var operation: Dictionary = get_operation_by_name(operation_name)
 	
-	get_operation_finish_signal(operation).emit(result)
-	operation_finished.emit(result, operation_name)
+	get_operation_finish_signal(operation).emit.call_deferred(result)
+	operation_finished.emit.call_deferred(result, operation_name)
 	
 	return result
 
