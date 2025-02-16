@@ -156,7 +156,7 @@ func push_error_no_access_strategy() -> void:
 
 #region Methods
 
-func _init(strategy: LokAccessStrategy) -> void:
+func _init(strategy: LokAccessStrategy = LokJSONAccessStrategy.new()) -> void:
 	access_strategy = strategy
 	start_execution()
 
