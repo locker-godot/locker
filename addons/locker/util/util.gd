@@ -1,7 +1,26 @@
-
+@icon("res://addons/locker/icons/util.svg")
+## The [LokUtil] class is a utility class that brings random useful
+## static methods that can be used wherever convenient.
+## 
+## The purpose of this class is helping with common repetitive code
+## that is needed in multiple places. [br]
+## Since the methods of this class are [code]static[/code] it
+## doesn't need to be instantiated. [br]
+## [br]
+## [b]Version[/b]: 1.0.0 [br]
+## [b]Author[/b]: Daniel Sousa ([url]github.com/nadjiel[/url])
 class_name LokUtil
 extends Node
 
+## The [method filter_value] method is a helper function that takes
+## a [param filter] [Array] and a [param value] to be filtered. [br]
+## This function, then, tests if the [param value] is present in the
+## [param filter] [Array] (using the [code]in[/code] operator). [br]
+## If present, [code]true[/code] is returned to indicate the filtering
+## passed, if absent, [code]false[/code] is returned to indicate
+## the filtering didn't pass. [br]
+## If the received [param filter] is an empty [Array], this function
+## considers the filtering as passed.
 static func filter_value(filter: Array, value: Variant) -> bool:
 	if filter.is_empty():
 		return true
@@ -10,6 +29,14 @@ static func filter_value(filter: Array, value: Variant) -> bool:
 	
 	return false
 
+## The [method filter_dictionary] method takes a [param dict] ([Dictionary])
+## and a [param filter] [Callable] and uses that [Callable] to test for
+## each key/ value pair of that [param dict] if such entry should be
+## kept or not in the resultant [Dictionary]. [br]
+## In order to realize the tests, the [param filter] [Callable] should
+## accept two values: a [param key] and a [param value]. That [Callable] should
+## then return a [code]bool[/code] indicating if that pair should be kept
+## in the result.
 static func filter_dictionary(dict: Dictionary, filter: Callable) -> Dictionary:
 	var result: Dictionary = {}
 	
@@ -21,6 +48,11 @@ static func filter_dictionary(dict: Dictionary, filter: Callable) -> Dictionary:
 	
 	return result
 
+## The [method split_dictionary] method works similarly to the
+## [method filter_dictionary] method, but instead of returning only a
+## [Dictionary] with the values that passed the filtering, this method
+## returns an [Array] with two [Dictionary]s: one with the entries that passed
+## the filtering, and the one with the entries that didn't.
 static func split_dictionary(dict: Dictionary, spliter: Callable) -> Array[Dictionary]:
 	var truthy_dict: Dictionary = {}
 	var falsy_dict: Dictionary = {}
@@ -35,6 +67,14 @@ static func split_dictionary(dict: Dictionary, spliter: Callable) -> Array[Dicti
 	
 	return [ truthy_dict, falsy_dict ]
 
+## The [method map_dictionary] method takes a [param dict] ([Dictionary])
+## and a [param mapper] [Callable] and uses that [Callable] to transform
+## each key/ value pair of the original [Dictionary] into a new
+## value in a new [Dictionary]. [br]
+## In order to realize that mapping, the [param mapper] [Callable] should
+## accept two values: a [param key] and a [param value]. That [Callable] should
+## then return a value that will occupy the place of the received [param value]
+## in the new [Dictionary].
 static func map_dictionary(dict: Dictionary, mapper: Callable) -> Dictionary:
 	var result: Dictionary = {}
 	

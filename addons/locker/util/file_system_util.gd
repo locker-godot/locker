@@ -1,3 +1,4 @@
+@icon("res://addons/locker/icons/util.svg")
 ## The [LokFileSystemUtil] class provides utilities to
 ## deal with the file system.
 ## 
@@ -68,6 +69,11 @@ static func push_error_file_reading_failed(
 		path
 	])
 
+## The [method push_error_json_parse_failed] method is used to
+## push an error when a [JSON] parsing fails. [br]
+## The [param json] argument is the [JSON] instance that failed
+## and the [param error_code] argument represents the [enum @GlobalScope.Error]
+## that occured.
 static func push_error_json_parse_failed(
 	json: JSON, error_code: Error
 ) -> void:
@@ -385,6 +391,12 @@ static func read_encrypted_file(
 	
 	return result
 
+## The [method parse_json_from_string] method can be used to parse a [String]
+## into a [Dictionary] using a [JSON] instance. [br]
+## If the parsing fails, an error is pushed and an empty [Dictionary] is
+## returned. [br]
+## If the [param suppress_errors] is [code]true[/code], though,
+## no errors are pushed.
 static func parse_json_from_string(
 	string: String, suppress_errors: bool
 ) -> Variant:
@@ -411,6 +423,9 @@ static func remove_file_if_exists(path: String) -> Error:
 	
 	return Error.OK
 
+## The [method join_file_name] method takes a [param file_prefix] [String] and
+## a [param file_format] [String] and joins them together with a
+## [code]"."[/code] in the middle, so that they form a complete file_name.
 static func join_file_name(file_prefix: String, file_format: String) -> String:
 	return "%s.%s" % [ file_prefix, file_format ]
 
