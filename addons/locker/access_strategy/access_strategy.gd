@@ -196,6 +196,9 @@ func load_data(
 	
 	# Cancel if file doesn't exist
 	if not LokFileSystemUtil.directory_exists(file_path):
+		if not suppress_errors:
+			LokFileSystemUtil.push_error_directory_not_found(file_path)
+		
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
 	
