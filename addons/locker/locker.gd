@@ -6,71 +6,73 @@ const CONFIG_PATH: String = "res://addons/locker/config.cfg"
 const AUTOLOAD_NAME := "LokGlobalStorageManager"
 const AUTOLOAD_PATH := "res://addons/locker/storage_manager/global_storage_manager.gd"
 
+signal setting_changed(setting: Dictionary)
+
 #region Settings
 
 static var plugin_settings := {
-	"addons/locker/defaults/saves_directory": {
+	"addons/locker/saves_directory": {
 		"default_value": "user://saves/",
 		"current_value": "user://saves/",
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/saves_directory",
+			"name": "addons/locker/saves_directory",
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_DIR
 		},
 		"config_section": "General"
 	},
-	"addons/locker/defaults/save_files_prefix": {
+	"addons/locker/save_files_prefix": {
 		"default_value": "file",
 		"current_value": "file",
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/save_files_prefix",
+			"name": "addons/locker/save_files_prefix",
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_NONE
 		},
 		"config_section": "General"
 	},
-	"addons/locker/defaults/save_files_format": {
+	"addons/locker/save_files_format": {
 		"default_value": "sav",
 		"current_value": "sav",
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/save_files_format",
+			"name": "addons/locker/save_files_format",
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_NONE
 		},
 		"config_section": "General"
 	},
-	"addons/locker/defaults/save_versions": {
+	"addons/locker/save_versions": {
 		"default_value": true,
 		"current_value": true,
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/save_versions",
+			"name": "addons/locker/save_versions",
 			"type": TYPE_BOOL,
 			"hint": PROPERTY_HINT_NONE
 		},
 		"config_section": "General"
 	},
-	"addons/locker/defaults/access_strategy": {
+	"addons/locker/access_strategy": {
 		"default_value": "Encrypted",
 		"current_value": "Encrypted",
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/access_strategy",
+			"name": "addons/locker/access_strategy",
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_ENUM,
 			"hint_string": "JSON,Encrypted"
 		},
 		"config_section": "General"
 	},
-	"addons/locker/defaults/encrypted_strategy/password": {
+	"addons/locker/encrypted_strategy/password": {
 		"default_value": "",
 		"current_value": "",
 		"is_basic": true,
 		"property_info": {
-			"name": "addons/locker/defaults/encrypted_strategy/password",
+			"name": "addons/locker/encrypted_strategy/password",
 			"type": TYPE_STRING,
 			"hint": PROPERTY_HINT_NONE
 		},
@@ -82,90 +84,65 @@ static var plugin_settings := {
 
 #endregion
 
-#region Properties
-
-static var saves_directory: String:
-	set = set_saves_directory,
-	get = get_saves_directory
-
-static var save_files_prefix: String:
-	set = set_save_files_prefix,
-	get = get_save_files_prefix
-
-static var save_files_format: String:
-	set = set_save_files_format,
-	get = get_save_files_format
-
-static var save_versions: bool:
-	set = set_save_versions,
-	get = get_save_versions
-
-static var access_strategy: LokAccessStrategy:
-	set = set_access_strategy,
-	get = get_access_strategy
-
-static var encryption_password: String:
-	set = set_encryption_password,
-	get = get_encryption_password
-
-#endregion
-
 #region Settings Setters & Getters
 
-static func set_default_saves_directory(path: String) -> void:
-	ProjectSettings.set_setting("addons/locker/defaults/saves_directory", path)
+static func set_setting_saves_directory(path: String) -> void:
+	ProjectSettings.set_setting("addons/locker/saves_directory", path)
 
-static func get_default_saves_directory() -> String:
+static func get_setting_saves_directory() -> String:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/saves_directory",
-		plugin_settings["addons/locker/defaults/saves_directory"]["default_value"]
+		"addons/locker/saves_directory",
+		plugin_settings["addons/locker/saves_directory"]["default_value"]
 	)
 
-static func set_default_save_files_prefix(prefix: String) -> void:
-	ProjectSettings.set_setting("addons/locker/defaults/save_files_prefix", prefix)
+static func set_setting_save_files_prefix(prefix: String) -> void:
+	ProjectSettings.set_setting("addons/locker/save_files_prefix", prefix)
 
-static func get_default_save_files_prefix() -> String:
+static func get_setting_save_files_prefix() -> String:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/save_files_prefix",
-		plugin_settings["addons/locker/defaults/save_files_prefix"]["default_value"]
+		"addons/locker/save_files_prefix",
+		plugin_settings["addons/locker/save_files_prefix"]["default_value"]
 	)
 
-static func set_default_save_files_format(new_format: String) -> void:
-	ProjectSettings.set_setting("addons/locker/defaults/save_files_format", new_format)
+static func set_setting_save_files_format(new_format: String) -> void:
+	ProjectSettings.set_setting("addons/locker/save_files_format", new_format)
 
-static func get_default_save_files_format() -> String:
+static func get_setting_save_files_format() -> String:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/save_files_format",
-		plugin_settings["addons/locker/defaults/save_files_format"]["default_value"]
+		"addons/locker/save_files_format",
+		plugin_settings["addons/locker/save_files_format"]["default_value"]
 	)
 
-static func set_default_save_versions(new_state: bool) -> void:
-	ProjectSettings.set_setting("addons/locker/defaults/save_versions", new_state)
+static func set_setting_save_versions(new_state: bool) -> void:
+	ProjectSettings.set_setting("addons/locker/save_versions", new_state)
 
-static func get_default_save_versions() -> bool:
+static func get_setting_save_versions() -> bool:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/save_versions",
-		plugin_settings["addons/locker/defaults/save_versions"]["default_value"]
+		"addons/locker/save_versions",
+		plugin_settings["addons/locker/save_versions"]["default_value"]
 	)
 
-static func set_default_access_strategy(new_strategy: String) -> void:
-	ProjectSettings.set_setting("addons/locker/defaults/access_strategy", new_strategy)
+static func set_setting_access_strategy(new_strategy: String) -> void:
+	ProjectSettings.set_setting("addons/locker/access_strategy", new_strategy)
 
-static func get_default_access_strategy() -> String:
+static func get_setting_access_strategy() -> String:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/access_strategy",
-		plugin_settings["addons/locker/defaults/access_strategy"]["default_value"]
+		"addons/locker/access_strategy",
+		plugin_settings["addons/locker/access_strategy"]["default_value"]
 	)
 
-static func set_default_encryption_password(new_password: String) -> void:
+static func get_setting_access_strategy_parsed() -> LokAccessStrategy:
+	return string_to_strategy(get_setting_access_strategy())
+
+static func set_setting_encrypted_strategy_password(new_password: String) -> void:
 	ProjectSettings.set_setting(
-		"addons/locker/defaults/encrypted_strategy/password", new_password
+		"addons/locker/encrypted_strategy/password", new_password
 	)
 
-static func get_default_encryption_password() -> String:
+static func get_setting_encrypted_strategy_password() -> String:
 	return ProjectSettings.get_setting(
-		"addons/locker/defaults/encrypted_strategy/password",
-		plugin_settings["addons/locker/defaults/encrypted_strategy/password"]["default_value"]
+		"addons/locker/encrypted_strategy/password",
+		plugin_settings["addons/locker/encrypted_strategy/password"]["default_value"]
 	)
 
 #endregion
@@ -178,47 +155,11 @@ static func set_plugin_settings(new_settings: Dictionary) -> void:
 static func get_plugin_settings() -> Dictionary:
 	return plugin_settings
 
-static func set_saves_directory(new_directory: String) -> void:
-	saves_directory = new_directory
-
-static func get_saves_directory() -> String:
-	return saves_directory
-
-static func set_save_files_prefix(new_prefix: String) -> void:
-	save_files_prefix = new_prefix
-
-static func get_save_files_prefix() -> String:
-	return save_files_prefix
-
-static func set_save_files_format(new_format: String) -> void:
-	save_files_format = new_format
-
-static func get_save_files_format() -> String:
-	return save_files_format
-
-static func set_save_versions(new_value: bool) -> void:
-	save_versions = new_value
-
-static func get_save_versions() -> bool:
-	return save_versions
-
-static func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
-	access_strategy = new_strategy
-
-static func get_access_strategy() -> LokAccessStrategy:
-	return access_strategy
-
-static func set_encryption_password(new_password: String) -> void:
-	encryption_password = new_password
-
-static func get_encryption_password() -> String:
-	return encryption_password
-
 #endregion
 
 #region Methods
 
-func string_to_strategy(string: String) -> LokAccessStrategy:
+static func string_to_strategy(string: String) -> LokAccessStrategy:
 	match(string):
 		"JSON": return LokJSONAccessStrategy.new()
 		"Encrypted": return LokEncryptedAccessStrategy.new()
@@ -304,6 +245,7 @@ func start_plugin() -> void:
 	add_settings(plugin_settings)
 	load_settings(plugin_settings)
 	
+	
 	LokUtil.check_and_connect_signal(
 		ProjectSettings, &"settings_changed", _on_project_settings_changed
 	)
@@ -316,15 +258,14 @@ func finish_plugin() -> void:
 		ProjectSettings, &"settings_changed", _on_project_settings_changed
 	)
 
+# Registers plugin's autoload and settings.
+# Initializes properties to settings' defaults
 func _enter_tree() -> void:
 	start_plugin()
-	#if not ProjectSettings.settings_changed.is_connected(_on_project_settings_changed):
-		#ProjectSettings.settings_changed.connect(_on_project_settings_changed)
 
+# Unregisters plugin's autoload and settings.
 func _exit_tree() -> void:
 	finish_plugin()
-	#if ProjectSettings.settings_changed.is_connected(_on_project_settings_changed):
-		#ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
 
 # Registers plugin's autoload and settings.
 func _enable_plugin() -> void:
@@ -334,7 +275,10 @@ func _enable_plugin() -> void:
 func _disable_plugin() -> void:
 	finish_plugin()
 
+# Updates config.cfg file to store settings
 func _on_project_settings_changed() -> void:
-	save_settings(get_changed_settings(plugin_settings))
+	var changed_settings: Dictionary = get_changed_settings(plugin_settings)
+	
+	save_settings(changed_settings)
 
 #endregion
