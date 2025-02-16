@@ -354,6 +354,8 @@ func consume_data(data: Dictionary) -> void:
 
 # Adds this StorageAccessor to the GlobalStorageManager
 func _enter_tree() -> void:
+	if Engine.is_editor_hint():
+		return
 	if storage_manager == null:
 		push_error_no_manager()
 		return
@@ -362,6 +364,8 @@ func _enter_tree() -> void:
 
 # Removes this StorageAccessor from the GlobalStorageManager
 func _exit_tree() -> void:
+	if Engine.is_editor_hint():
+		return
 	if storage_manager == null:
 		push_error_no_manager()
 		return
