@@ -169,6 +169,14 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	
 	return true
 
+func get_file_path(file_id: String) -> String:
+	var file_path: String = saves_directory.path_join(save_files_prefix)
+	
+	if file_id != "":
+		file_path += file_id
+	
+	return file_path
+
 ## The [method get_accessors_by_id] method looks through all currently
 ## registered [LokStorageAccessor]s and returns the ones that match the
 ## [param id] passed.
@@ -330,7 +338,7 @@ func save_data(
 	accessor_ids: Array[String] = [],
 	replace: bool = false
 ) -> Dictionary:
-	var file_path: String = saves_directory
+	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
 	var data: Dictionary = gather_data(accessor_ids, version_number)
@@ -357,7 +365,7 @@ func load_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = saves_directory
+	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
 	var loaded_data: Dictionary = await access_executor.load_data(
@@ -378,7 +386,7 @@ func read_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = saves_directory
+	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
 	var reading_result: Dictionary = await access_executor.request_reading(
@@ -393,7 +401,7 @@ func remove_data(
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var file_path: String = saves_directory
+	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
 	var removing_result: Dictionary = await access_executor.request_removing(
