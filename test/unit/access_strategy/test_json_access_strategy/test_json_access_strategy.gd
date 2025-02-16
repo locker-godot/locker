@@ -6,7 +6,9 @@ var JSONAccessStrategy: GDScript = preload("res://addons/locker/access_strategy/
 var strategy: LokAccessStrategy
 
 var file_path: String = "res://test/saves/file_json_access_strategy"
+
 var partition_path: String = file_path.path_join("partition1.sav")
+
 var default_accessor1_data: Dictionary = {
 	"accessor_id_1": {
 		"version": "1.0.0",
@@ -14,6 +16,7 @@ var default_accessor1_data: Dictionary = {
 		"data2": "value2"
 	}
 }
+
 var default_accessor2_data: Dictionary = {
 	"accessor_id_2": {
 		"version": "1.0.1",
@@ -21,6 +24,7 @@ var default_accessor2_data: Dictionary = {
 		"overwritten_data2": "overwritten_value2"
 	}
 }
+
 var default_accessor3_data: Dictionary = {
 	"accessor_id_3": {
 		"version": "1.0.2",
@@ -28,6 +32,8 @@ var default_accessor3_data: Dictionary = {
 		"data2": "value2"
 	}
 }
+
+var suppress_errors: bool = true
 
 func before_each() -> void:
 	LokFileSystemUtil.remove_directory_recursive_if_exists(file_path)
@@ -44,7 +50,7 @@ func after_all() -> void:
 func test_save_partition_returns_new_partition() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	var result: Dictionary = strategy.save_partition(partition_path, data_to_save)
+	var result: Dictionary = strategy.save_partition(partition_path, data_to_save, false, suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
@@ -61,9 +67,9 @@ func test_save_partition_creates_new_partition() -> void:
 		"data": data_to_save
 	}
 	
-	strategy.save_partition(partition_path, data_to_save)
+	strategy.save_partition(partition_path, data_to_save, false, suppress_errors)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't saved properly")
 
@@ -76,10 +82,10 @@ func test_save_partition_overwrites_partition() -> void:
 		"data": second_data_to_save
 	}
 	
-	strategy.save_partition(partition_path, first_data_to_save)
-	strategy.save_partition(partition_path, second_data_to_save, true)
+	strategy.save_partition(partition_path, first_data_to_save, false, suppress_errors)
+	strategy.save_partition(partition_path, second_data_to_save, true, suppress_errors)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't overwritten properly")
 
@@ -92,10 +98,10 @@ func test_save_partition_updates_partition() -> void:
 		"data": first_data_to_save.merged(second_data_to_save)
 	}
 	
-	strategy.save_partition(partition_path, first_data_to_save)
-	strategy.save_partition(partition_path, second_data_to_save, false)
+	strategy.save_partition(partition_path, first_data_to_save, false, suppress_errors)
+	strategy.save_partition(partition_path, second_data_to_save, false, suppress_errors)
 	
-	var loaded_result: Dictionary = strategy.load_partition(partition_path)
+	var loaded_result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	assert_eq(loaded_result, expected_result, "Data wasn't updated properly")
 
@@ -115,7 +121,7 @@ func test_save_data_returns_new_data() -> void:
 	expected_saved_data["accessor_id_2"]["partition"] = "partition2"
 	
 	var result: Dictionary = strategy.save_data(
-		file_path, "sav", data_to_save
+		file_path, "sav", data_to_save, false, suppress_errors
 	)
 	
 	var expected_result: Dictionary = {
@@ -134,7 +140,7 @@ func test_save_data_creates_new_file() -> void:
 	}
 	
 	strategy.save_data(
-		file_path, "sav", data_to_save
+		file_path, "sav", data_to_save, false, suppress_errors
 	)
 	
 	assert_true(
@@ -157,9 +163,9 @@ func test_save_data_overwrites_data() -> void:
 	expected_saved_data["accessor_id_1"]["partition"] = "partition2"
 	expected_saved_data["accessor_id_2"]["partition"] = "partition1"
 	
-	strategy.save_data(file_path, "sav", first_data_to_save)
+	strategy.save_data(file_path, "sav", first_data_to_save, false, suppress_errors)
 	var result: Dictionary = strategy.save_data(
-		file_path, "sav", second_data_to_save, true
+		file_path, "sav", second_data_to_save, true, suppress_errors
 	)
 	
 	var expected_result: Dictionary = {
@@ -186,10 +192,10 @@ func test_save_data_updates_data() -> void:
 	expected_saved_data["accessor_id_3"]["partition"] = "partition1"
 	expected_saved_data["accessor_id_2"]["partition"] = "partition2"
 	
-	strategy.save_data(file_path, "sav", first_data_to_save)
-	strategy.save_data(file_path, "sav", second_data_to_save)
+	strategy.save_data(file_path, "sav", first_data_to_save, false, suppress_errors)
+	strategy.save_data(file_path, "sav", second_data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav")
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
@@ -203,7 +209,7 @@ func test_save_data_updates_data() -> void:
 #region Method load_partition
 
 func test_load_partition_returns_error_not_found() -> void:
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_NOT_FOUND,
@@ -215,7 +221,7 @@ func test_load_partition_returns_error_not_found() -> void:
 func test_load_partition_returns_error_unrecognized() -> void:
 	LokFileSystemUtil.create_file_if_not_exists(partition_path)
 	
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_UNRECOGNIZED,
@@ -227,9 +233,9 @@ func test_load_partition_returns_error_unrecognized() -> void:
 func test_load_partition_returns_result() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	strategy.save_partition(partition_path, data_to_save)
+	strategy.save_partition(partition_path, data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_partition(partition_path)
+	var result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	var expected_loaded_data: Dictionary = data_to_save
 	
@@ -247,7 +253,7 @@ func test_load_partition_returns_result() -> void:
 func test_load_data_returns_error_not_found() -> void:
 	LokFileSystemUtil.remove_directory_if_exists(file_path)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav")
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_NOT_FOUND,
@@ -259,7 +265,7 @@ func test_load_data_returns_error_not_found() -> void:
 func test_load_data_returns_error_unrecognized() -> void:
 	LokFileSystemUtil.create_file_if_not_exists(partition_path)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav")
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.ERR_FILE_UNRECOGNIZED,
@@ -274,9 +280,9 @@ func test_load_data_returns_result() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav")
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_loaded_data: Dictionary = default_accessor1_data.merged(
 		default_accessor2_data
@@ -297,9 +303,9 @@ func test_load_data_filters_partitions() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav", [ "partition1" ])
+	var result: Dictionary = strategy.load_data(file_path, "sav", [ "partition1" ], [], [], suppress_errors)
 	
 	var expected_loaded_data: Dictionary = default_accessor1_data.duplicate(true)
 	expected_loaded_data["accessor_id_1"]["partition"] = "partition1"
@@ -317,9 +323,9 @@ func test_load_data_filters_accessors() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav", [], [ "accessor_id_2" ])
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [ "accessor_id_2" ], [], suppress_errors)
 	
 	var expected_loaded_data: Dictionary = default_accessor2_data.duplicate(true)
 	expected_loaded_data["accessor_id_2"]["partition"] = "partition2"
@@ -337,9 +343,9 @@ func test_load_data_filters_versions() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [ "1.0.0" ])
+	var result: Dictionary = strategy.load_data(file_path, "sav", [], [], [ "1.0.0" ], suppress_errors)
 	
 	var expected_loaded_data: Dictionary = default_accessor1_data.duplicate(true)
 	expected_loaded_data["accessor_id_1"]["partition"] = "partition1"
@@ -359,10 +365,10 @@ func test_remove_partition_returns_removed_result() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1)
-	strategy.save_partition(partition_path, data_to_save2)
+	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
+	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
-	var result: Dictionary = strategy.remove_partition(partition_path)
+	var result: Dictionary = strategy.remove_partition(partition_path, [], [], suppress_errors)
 	
 	var expected_removed_data: Dictionary = data_to_save1.merged(data_to_save2)
 	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
@@ -379,9 +385,9 @@ func test_remove_partition_returns_removed_result() -> void:
 func test_remove_partition_removes_from_files() -> void:
 	var data_to_save: Dictionary = default_accessor1_data
 	
-	strategy.save_partition(partition_path, data_to_save)
+	strategy.save_partition(partition_path, data_to_save, false, suppress_errors)
 	
-	strategy.remove_partition(partition_path)
+	strategy.remove_partition(partition_path, [], [], suppress_errors)
 	
 	assert_false(
 		LokFileSystemUtil.file_exists(partition_path),
@@ -392,11 +398,11 @@ func test_remove_partition_filters_accessor_ids() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1)
-	strategy.save_partition(partition_path, data_to_save2)
+	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
+	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
 	var result: Dictionary = strategy.remove_partition(
-		partition_path, [ "accessor_id_1" ]
+		partition_path, [ "accessor_id_1" ], [], suppress_errors
 	)
 	
 	var expected_removed_data: Dictionary = data_to_save1
@@ -417,11 +423,11 @@ func test_remove_partition_filters_version_numbers() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1)
-	strategy.save_partition(partition_path, data_to_save2)
+	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
+	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
 	var result: Dictionary = strategy.remove_partition(
-		partition_path, [], [ "1.0.0" ]
+		partition_path, [], [ "1.0.0" ], suppress_errors
 	)
 	
 	var expected_removed_data: Dictionary = data_to_save1
@@ -442,11 +448,11 @@ func test_remove_partition_filters_accessor_ids_and_version_numbers() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1)
-	strategy.save_partition(partition_path, data_to_save2)
+	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
+	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
 	var result: Dictionary = strategy.remove_partition(
-		partition_path, [ "accessor_id_2" ], [ "1.0.0" ]
+		partition_path, [ "accessor_id_2" ], [ "1.0.0" ], suppress_errors
 	)
 	
 	var expected_removed_data: Dictionary = {}
@@ -467,16 +473,14 @@ func test_remove_partition_updates_in_file_system() -> void:
 	var data_to_save1: Dictionary = default_accessor1_data
 	var data_to_save2: Dictionary = default_accessor2_data
 	
-	strategy.save_partition(partition_path, data_to_save1)
-	strategy.save_partition(partition_path, data_to_save2)
+	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
+	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
-	#strategy.remove_partition(partition_path, [ "accessor_id_1" ])
-	
-	print(strategy.remove_partition(partition_path, [ "accessor_id_1" ]))
+	print(strategy.remove_partition(partition_path, [ "accessor_id_1" ], [], suppress_errors))
 	
 	var expected_updated_data: Dictionary = data_to_save2
 	
-	var load_result: Dictionary = strategy.load_partition(partition_path)
+	var load_result: Dictionary = strategy.load_partition(partition_path, suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
@@ -497,9 +501,9 @@ func test_remove_data_returns_removed_result() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	var result: Dictionary = strategy.remove_data(file_path, "sav")
+	var result: Dictionary = strategy.remove_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_removed_data: Dictionary = default_accessor1_data.merged(
 		default_accessor2_data
@@ -521,9 +525,9 @@ func test_remove_data_removes_from_files() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
-	strategy.remove_data(file_path, "sav")
+	strategy.remove_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	assert_false(
 		LokFileSystemUtil.directory_exists(file_path),
@@ -536,7 +540,7 @@ func test_remove_data_filters_partitions() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
 	var expected_removed_data: Dictionary = default_accessor1_data.duplicate(true)
 	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
@@ -544,7 +548,7 @@ func test_remove_data_filters_partitions() -> void:
 	var expected_updated_data: Dictionary = {}
 	
 	var result: Dictionary = strategy.remove_data(
-		file_path, "sav", [ "partition1" ]
+		file_path, "sav", [ "partition1" ], [], [], suppress_errors
 	)
 	
 	var expected_result: Dictionary = {
@@ -561,7 +565,7 @@ func test_remove_data_filters_accessors() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
 	var expected_removed_data: Dictionary = default_accessor2_data.duplicate(true)
 	expected_removed_data["accessor_id_2"]["partition"] = "partition2"
@@ -570,7 +574,7 @@ func test_remove_data_filters_accessors() -> void:
 	expected_updated_data["accessor_id_1"]["partition"] = "partition1"
 	
 	var result: Dictionary = strategy.remove_data(
-		file_path, "sav", [], [ "accessor_id_2" ]
+		file_path, "sav", [], [ "accessor_id_2" ], [], suppress_errors
 	)
 	
 	var expected_result: Dictionary = {
@@ -587,7 +591,7 @@ func test_remove_data_filters_versions() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
 	var expected_removed_data: Dictionary = default_accessor1_data.duplicate(true)
 	expected_removed_data["accessor_id_1"]["partition"] = "partition1"
@@ -596,7 +600,7 @@ func test_remove_data_filters_versions() -> void:
 	expected_updated_data["accessor_id_2"]["partition"] = "partition2"
 	
 	var result: Dictionary = strategy.remove_data(
-		file_path, "sav", [], [], [ "1.0.0" ]
+		file_path, "sav", [], [], [ "1.0.0" ], suppress_errors
 	)
 	
 	var expected_result: Dictionary = {
@@ -613,16 +617,16 @@ func test_remove_data_updates_in_file_system() -> void:
 		"partition2": default_accessor2_data
 	}
 	
-	strategy.save_data(file_path, "sav", data_to_save)
+	strategy.save_data(file_path, "sav", data_to_save, false, suppress_errors)
 	
 	var expected_loaded_data: Dictionary = default_accessor2_data.duplicate(true)
 	expected_loaded_data["accessor_id_2"]["partition"] = "partition2"
 	
-	var result: Dictionary = strategy.remove_data(
-		file_path, "sav", [], [], [ "1.0.0" ]
+	strategy.remove_data(
+		file_path, "sav", [], [], [ "1.0.0" ], suppress_errors
 	)
 	
-	var load_result: Dictionary = strategy.load_data(file_path, "sav")
+	var load_result: Dictionary = strategy.load_data(file_path, "sav", [], [], [], suppress_errors)
 	
 	var expected_result: Dictionary = {
 		"status": Error.OK,
