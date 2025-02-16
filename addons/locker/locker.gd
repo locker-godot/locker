@@ -8,7 +8,10 @@
 ## [code]addons/locker[/code] path of the [ProjectSettings]. [br]
 ## They only become available if the [LockerPlugin] is active, though. [br]
 ## When active, this Plugin also registers the [LokGlobalStorageManager]
-## as an autoload singleton.
+## as an autoload singleton. [br]
+## [br]
+## [b]Version[/b]: 1.0.0[br]
+## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LockerPlugin
 extends EditorPlugin
 
