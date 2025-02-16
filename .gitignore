@@ -19,3 +19,4 @@ mono_crash.*.json
 /addons/locker/config.cfg
 /saves/
 /test/saves/*
+/examples/**/saves/
