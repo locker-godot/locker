@@ -1,6 +1,6 @@
 [gd_scene load_steps=14 format=3 uid="uid://1lorc06jn4sg"]
 
-[ext_resource type="Texture2D" uid="uid://c7idgkcldecpt" path="res://icon.svg" id="1_36edx"]
+[ext_resource type="Texture2D" uid="uid://cabtwgcshp66e" path="res://icon.svg" id="1_36edx"]
 [ext_resource type="Script" path="res://examples/simple_topdown/simple_topdown.gd" id="1_c2pfy"]
 [ext_resource type="Script" path="res://addons/locker/storage_manager/scene_storage_manager.gd" id="1_smdcc"]
 [ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_aiit2"]
