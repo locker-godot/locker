@@ -35,6 +35,23 @@ func create_result(
 	
 	return result
 
+func get_partition_name(
+	file_path: String,
+	partition_id: String,
+	file_format: String
+) -> String:
+	var file_name: String = LokFileSystemUtil.get_directory_name(file_path)
+	var partition_name: String = partition_id
+	
+	if partition_name == "":
+		partition_name = file_name
+	
+	partition_name = LokFileSystemUtil.join_file_name(
+		partition_name, file_format
+	)
+	
+	return partition_name
+
 func filter_data(
 	data: Dictionary,
 	accessor_ids: Array[String] = [],
@@ -116,16 +133,11 @@ func save_data(
 	
 	# Save each partition
 	for partition_id: String in data:
-		var partition_name: String = LokFileSystemUtil.join_file_name(
-			partition_id, file_format
+		var partition_name: String = get_partition_name(
+			file_path, partition_id, file_format
 		)
 		var partition_path: String = file_path.path_join(partition_name)
 		var partition_data: Dictionary = data[partition_id]
-		
-		#print("%s: Started saving partition %s;" % [
-			#Time.get_ticks_msec(),
-			#partition_path
-		#])
 		
 		var partition_result: Dictionary = save_partition(
 			partition_path, partition_data, replace, suppress_errors
@@ -140,11 +152,6 @@ func save_data(
 		append_partition_to_data(partition_result["data"], partition_id)
 		
 		result["data"].merge(partition_result["data"])
-		
-		#print("%s: Finished saving partition %s;" % [
-			#Time.get_ticks_msec(),
-			#partition_path
-		#])
 	
 	var all_partitions: PackedStringArray = LokFileSystemUtil.get_file_names(
 		file_path, [ file_format ]
