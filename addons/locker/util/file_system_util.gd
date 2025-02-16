@@ -249,6 +249,17 @@ static func remove_directory_recursive_if_exists(path: String) -> Error:
 	
 	return Error.ERR_DOES_NOT_EXIST
 
+## The [method get_directory_name] method is a utility method that grabs
+## the name of a directory from a [param directory_path].
+static func get_directory_name(directory_path: String) -> String:
+	var path_parts: PackedStringArray = directory_path.rsplit("/", false)
+	var directory_name: String = ""
+	
+	if path_parts.size() > 0:
+		directory_name = path_parts[-1]
+	
+	return directory_name
+
 #endregion
 
 #region File Methods
