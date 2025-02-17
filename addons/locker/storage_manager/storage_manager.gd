@@ -9,7 +9,7 @@
 ## [b]Version[/b]: 1.0.0[br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokStorageManager
-extends Node
+extends LokAccessorGroup
 
 #region Signals
 
@@ -35,6 +35,24 @@ signal removing_finished(result: Dictionary)
 
 #endregion
 
+#region Properties
+
+@export var current_file: String = "":
+	set = set_current_file,
+	get = get_current_file
+
+#endregion
+
+#region Setters & Getters
+
+func set_current_file(new_file: String) -> void:
+	current_file = new_file
+
+func get_current_file() -> String:
+	return current_file
+
+#endregion
+
 #region Debug Methods
 
 ## The [method get_readable_name] method is a utility for debugging. [br]
@@ -49,6 +67,8 @@ func get_readable_name() -> String:
 	return str(self)
 
 #endregion
+
+#region Methods
 
 ## The [method save_data] method should work as the main way of saving the
 ## game, gathering together information from all active [LokStorageAccessor]s
@@ -73,9 +93,9 @@ func get_readable_name() -> String:
 ## At the end, this method should return the data that was saved via
 ## a [Dictionary].
 func save_data(
-	file_id: String,
-	version_number: String = "",
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	version_number: String = current_version,
+	accessors: Array[LokStorageAccessor] = [],
 	replace: bool = false
 ) -> Dictionary: return {}
 
@@ -100,8 +120,8 @@ func save_data(
 ## When finished, this method should return the data it gathered loading the
 ## save file in a [Dictionary].
 func load_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
@@ -120,8 +140,8 @@ func load_data(
 ## On finish, this method should return the data read filtered by the passed
 ## parameters in a [Dictionary].
 func read_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
@@ -143,8 +163,10 @@ func read_data(
 ## [i]See [method default_remover] if you want a concrete example of how
 ## should be the signature of the [param remover][/i].
 func remove_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
+
+#endregion
