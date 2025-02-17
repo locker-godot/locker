@@ -26,15 +26,6 @@ var save_versions: bool = LockerPlugin.get_setting_save_versions():
 	set = set_save_versions,
 	get = get_save_versions
 
-## The [member accessors] property is an [Array] responsible for storing all the
-## [LokStorageAccessor]s that are currently in the scene tree. [br]
-## This [Array] shouldn't be manipulated directly, given that the
-## [LokStorageAccessor]s are automatically added and removed from it
-## on entering and exiting the tree.
-var accessors: Array[LokStorageAccessor] = []:
-	set = set_accessors,
-	get = get_accessors
-
 ## The [member access_strategy] property stores a [LokAccessStrategy] that
 ## dictates how the data is saved and loaded. [br]
 ## This property shouldn't be altered by other classes, since it's a
@@ -88,12 +79,6 @@ func set_save_versions(new_value: bool) -> void:
 func get_save_versions() -> bool:
 	return save_versions
 
-func set_accessors(new_accessors: Array[LokStorageAccessor]) -> void:
-	accessors = new_accessors
-
-func get_accessors() -> Array[LokStorageAccessor]:
-	return accessors
-
 func set_access_executor(new_executor: LokAccessExecutor) -> void:
 	var old_executor: LokAccessExecutor = access_executor
 	
@@ -142,32 +127,15 @@ func push_warning_no_executor() -> void:
 
 #region Methods
 
-## The [method add_accessor] method is responsible for adding a new
-## [LokStorageAccessor] to the [member accessors] list, so that
-## it can have its data saved and loaded together with the other ones. [br]
-## This method is called automatically by [LokStorageAccessor]s when they
-## enter the scene tree, so there's no need to use it yourself.
-func add_accessor(accessor: LokStorageAccessor) -> bool:
-	accessors.append(accessor)
+func get_accessor_ids(
+	from_accessors: Array[LokStorageAccessor]
+) -> Array[String]:
+	var accessor_ids: Array[String] = []
 	
-	return true
-
-## The [method remove_accessor] method is responsible for removing a
-## [LokStorageAccessor] from the [member accessors] list, so that
-## it doesn't have its data saved and loaded anymore. [br]
-## This makes sense when such [LokStorageAccessor] exits from the tree,
-## and hence doesn't have the ability to do anything with the data. [br]
-## This method is called automatically by [LokStorageAccessor]s when they
-## exit the scene tree, so there's no need to use it yourself.
-func remove_accessor(accessor: LokStorageAccessor) -> bool:
-	var accessor_index: int = accessors.find(accessor)
+	for accessor: LokStorageAccessor in from_accessors:
+		accessor_ids.append(accessor.id)
 	
-	if accessor_index == -1:
-		return false
-	
-	accessors.remove_at(accessor_index)
-	
-	return true
+	return accessor_ids
 
 func get_file_path(file_id: String) -> String:
 	var file_path: String = saves_directory.path_join(save_files_prefix)
@@ -176,28 +144,6 @@ func get_file_path(file_id: String) -> String:
 		file_path = "%s_%s" % [ file_path, file_id ]
 	
 	return file_path
-
-## The [method get_accessors_by_id] method looks through all currently
-## registered [LokStorageAccessor]s and returns the ones that match the
-## [param id] passed.
-func get_accessors_by_id(id: String) -> Array[LokStorageAccessor]:
-	var result: Array[LokStorageAccessor] = []
-	
-	for accessor: LokStorageAccessor in accessors:
-		if accessor.id == id:
-			result.append(accessor)
-	
-	return result
-
-## The [method get_accessor_by_id] method looks through all currently
-## registered [LokStorageAccessor]s and returns the first one that matches the
-## [param id] passed.
-func get_accessor_by_id(id: String) -> LokStorageAccessor:
-	for accessor: LokStorageAccessor in accessors:
-		if accessor.id == id:
-			return accessor
-	
-	return null
 
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor].[br]
@@ -265,14 +211,14 @@ func collect_data(
 ## }
 ## [/codeblock]
 func gather_data(
-	accessor_ids: Array[String] = [], version_number: String = ""
+	included_accessors: Array[LokStorageAccessor] = [], version_number: String = ""
 ) -> Dictionary:
 	var data: Dictionary = {}
 	
 	for accessor: LokStorageAccessor in accessors:
 		if accessor.id == "":
 			continue
-		if not LokUtil.filter_value(accessor_ids, accessor.id):
+		if not LokUtil.filter_value(included_accessors, accessor):
 			continue
 		
 		var accessor_data: Dictionary = collect_data(accessor, version_number)
@@ -287,7 +233,7 @@ func gather_data(
 	
 	return data
 
-## The [method distribute_data] method is the central point where the data
+## The [method distribute_result] method is the central point where the data
 ## can be distributed to all [member accessors].[br]
 ## If the [param accessor_ids] parameter is not empty, this method only
 ## distributes data to the [LokStorageAccessor]s that match those ids.[br]
@@ -310,37 +256,44 @@ func gather_data(
 ##   "accessor_n_id": { ... }
 ## }
 ## [/codeblock]
-func distribute_data(
-	data: Dictionary, accessor_ids: Array[String] = []
+func distribute_result(
+	result: Dictionary, included_accessors: Array[LokStorageAccessor] = []
 ) -> void:
 	for accessor: LokStorageAccessor in accessors:
-		if not LokUtil.filter_value(accessor_ids, accessor.id):
+		if not LokUtil.filter_value(included_accessors, accessor):
 			continue
+		
+		var status: Error = result.get("status", Error.OK)
+		var data: Dictionary = result.get("data", {})
 		
 		var accessor_data: Dictionary = data.get(accessor.id, {})
-		
-		if accessor_data.is_empty():
-			continue
+		var accessor_result: Dictionary = {
+			"status": status,
+			"data": accessor_data
+		}
 		
 		var accessor_version: String = accessor_data.get("version", "")
 		
 		accessor.set_version_number(accessor_version)
-		accessor.consume_data(accessor_data.duplicate(true))
+		accessor.consume_data(accessor_result.duplicate(true))
 
 ## Another optional parameter this method accept is the [param accessor_ids],
 ## which is a list that enumerates the ids of the [LokStorageAccessor]
 ## 
 ## To better understand these parameters, read about that method.
 func save_data(
-	file_id: String,
-	version_number: String = "",
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	version_number: String = current_version,
+	accessors: Array[LokStorageAccessor] = [],
 	replace: bool = false
 ) -> Dictionary:
+	if file_id == "" and current_file != "":
+		file_id = current_file
+	
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var data: Dictionary = gather_data(accessor_ids, version_number)
+	var data: Dictionary = gather_data(accessors, version_number)
 	
 	print("%s: Started saving file %s;" % [
 		Time.get_ticks_msec(),
@@ -359,13 +312,18 @@ func save_data(
 	return saving_result
 
 func load_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
+	if file_id == "" and current_file != "":
+		file_id = current_file
+	
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
+	
+	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
 	var loading_result: Dictionary = await access_executor.request_loading(
 		file_path,
@@ -375,18 +333,23 @@ func load_data(
 		version_numbers
 	)
 	
-	distribute_data(loading_result.get("data", {}), accessor_ids)
+	distribute_result(loading_result, included_accessors)
 	
 	return loading_result
 
 func read_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
+	if file_id == "" and current_file != "":
+		file_id = current_file
+	
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
+	
+	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
 	var reading_result: Dictionary = await access_executor.request_reading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
@@ -395,13 +358,18 @@ func read_data(
 	return reading_result
 
 func remove_data(
-	file_id: String,
-	accessor_ids: Array[String] = [],
+	file_id: String = current_file,
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
+	if file_id == "" and current_file != "":
+		file_id = current_file
+	
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
+	
+	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
 	var removing_result: Dictionary = await access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
