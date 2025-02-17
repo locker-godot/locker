@@ -17,6 +17,12 @@
 class_name LokStorageAccessor
 extends Node
 
+signal saving_finished(result: Dictionary)
+
+signal loading_finished(result: Dictionary)
+
+signal removing_finished(result: Dictionary)
+
 ## The [member storage_manager] property is just a reference to the
 ## [LokGlobalStorageManager] autoload. [br]
 ## Its reference is stored in this property so it can be more easily
@@ -40,6 +46,10 @@ var storage_manager := LokGlobalStorageManager:
 	set = set_id,
 	get = get_id
 
+@export var file: String = "":
+	set = set_file,
+	get = get_file
+
 ## The [member partition] property specifies in what partition the
 ## data of this [LokStorageAccessor] should be stored. [br]
 ## If left empty, it means it is stored in the default partition. [br]
@@ -50,6 +60,17 @@ var storage_manager := LokGlobalStorageManager:
 @export var partition: String = "":
 	set = set_partition,
 	get = get_partition
+
+## The [member version_number] property stores a [String] that points
+## to one of the [member versions]' [member LokStorageAccessorVersion.number].
+## [br]
+## To work properly, this [LokStorageAccessor] needs to point to a
+## version number existent in the [member versions] list, which is already
+## done by default if the list has at least one [LokStorageAccessorVersion]
+## that hadn't had its [member LokStorageAccessorVersion.number] altered.
+@export var version_number: String = "1.0.0":
+	set = set_version_number,
+	get = get_version_number
 
 ## The [member versions] property stores a list of [LokStorageAccessorVersion]s
 ## with which this [LokStorageAccessor] is able to save and load data. [br]
@@ -66,17 +87,6 @@ var storage_manager := LokGlobalStorageManager:
 @export var versions: Array[LokStorageAccessorVersion] = []:
 	set = set_versions,
 	get = get_versions
-
-## The [member version_number] property stores a [String] that points
-## to one of the [member versions]' [member LokStorageAccessorVersion.number].
-## [br]
-## To work properly, this [LokStorageAccessor] needs to point to a
-## version number existent in the [member versions] list, which is already
-## done by default if the list has at least one [LokStorageAccessorVersion]
-## that hadn't had its [member LokStorageAccessorVersion.number] altered.
-@export var version_number: String = "1.0.0":
-	set = set_version_number,
-	get = get_version_number
 
 ## The [member dependency_paths] property stores a [Dictionary] that helps
 ## with keeping track of dependencies that this [LokStorageAccessor] needs
@@ -126,6 +136,12 @@ func set_id(new_id: String) -> void:
 
 func get_id() -> String:
 	return id
+
+func set_file(new_file: String) -> void:
+	file = new_file
+
+func get_file() -> String:
+	return file
 
 func set_partition(new_partition: String) -> void:
 	partition = new_partition
@@ -299,9 +315,12 @@ func select_version(number: String) -> bool:
 ## but that can be defined in the [param version_number]
 ## parameter.
 func save_data(
-	file_id: String,
+	file_id: String = file,
 	version_number: String = ""
 ) -> Dictionary:
+	if file_id == "" and file != "":
+		file_id = file
+	
 	if not is_active():
 		push_error_unactive_accessor()
 		return {}
@@ -309,14 +328,21 @@ func save_data(
 		push_error_no_manager()
 		return {}
 	
-	return await storage_manager.save_data(
-		file_id, version_number, [ id ], false
+	var result: Dictionary = await storage_manager.save_data(
+		file_id, version_number, [ self ], false
 	)
+	
+	saving_finished.emit(result)
+	
+	return result
 
 ## The [method load_data] method uses the
 ## [LokGlobalStorageManager] to load the data of this
 ## [LokStorageAccessor].
-func load_data(file_id: String) -> Dictionary:
+func load_data(file_id: String = file) -> Dictionary:
+	if file_id == "" and file != "":
+		file_id = file
+	
 	if not is_active():
 		push_error_unactive_accessor()
 		return {}
@@ -324,9 +350,32 @@ func load_data(file_id: String) -> Dictionary:
 		push_error_no_manager()
 		return {}
 	
-	return await storage_manager.load_data(
-		file_id, [ id ], [ partition ]
+	var result: Dictionary = await storage_manager.load_data(
+		file_id, [ self ], [ partition ]
 	)
+	
+	loading_finished.emit(result)
+	
+	return result
+
+func remove_data(file_id: String = file) -> Dictionary:
+	if file_id == "" and file != "":
+		file_id = file
+	
+	if not is_active():
+		push_error_unactive_accessor()
+		return {}
+	if storage_manager == null:
+		push_error_no_manager()
+		return {}
+	
+	var result: Dictionary = await storage_manager.remove_data(
+		file_id, [ self ], [ partition ]
+	)
+	
+	removing_finished.emit(result)
+	
+	return result
 
 ## The [method retrieve_data] method uses the
 ## [method LokStorageAccessorVersion.retrieve_data]
