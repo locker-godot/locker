@@ -1,0 +1,66 @@
+[gd_scene load_steps=8 format=3 uid="uid://c5unbq3ae44h8"]
+
+[ext_resource type="PackedScene" uid="uid://cbrn0exw0ssrt" path="res://examples/file_choosing/scenes/file.tscn" id="1_eniq1"]
+[ext_resource type="Script" path="res://examples/file_choosing/file_choosing.gd" id="1_vfonc"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/accessor_group.gd" id="1_vjga4"]
+[ext_resource type="Script" path="res://examples/file_choosing/scripts/files_container.gd" id="2_jrec7"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="4_1x5ht"]
+[ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="5_u7k0x"]
+
+[sub_resource type="Resource" id="Resource_epkn0"]
+resource_local_to_scene = true
+script = ExtResource("5_u7k0x")
+number = "1.0.0"
+
+[node name="FileChoosing" type="Node2D"]
+script = ExtResource("1_vfonc")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FilesContainer" type="HBoxContainer" parent="UILayer/UI/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+script = ExtResource("2_jrec7")
+
+[node name="AccessorGroup" type="Node" parent="UILayer/UI/Center/FilesContainer" node_paths=PackedStringArray("accessors")]
+unique_name_in_owner = true
+script = ExtResource("1_vjga4")
+accessors = [NodePath("../File1/StorageAccessor"), NodePath("../File2/StorageAccessor"), NodePath("../File3/StorageAccessor")]
+
+[node name="File1" parent="UILayer/UI/Center/FilesContainer" instance=ExtResource("1_eniq1")]
+layout_mode = 2
+
+[node name="StorageAccessor" parent="UILayer/UI/Center/FilesContainer/File1" index="0"]
+versions = Array[ExtResource("4_1x5ht")]([SubResource("Resource_epkn0")])
+
+[node name="File2" parent="UILayer/UI/Center/FilesContainer" instance=ExtResource("1_eniq1")]
+layout_mode = 2
+
+[node name="StorageAccessor" parent="UILayer/UI/Center/FilesContainer/File2" index="0"]
+versions = Array[ExtResource("4_1x5ht")]([SubResource("Resource_epkn0")])
+
+[node name="File3" parent="UILayer/UI/Center/FilesContainer" instance=ExtResource("1_eniq1")]
+layout_mode = 2
+
+[node name="StorageAccessor" parent="UILayer/UI/Center/FilesContainer/File3" index="0"]
+versions = Array[ExtResource("4_1x5ht")]([SubResource("Resource_epkn0")])
+
+[editable path="UILayer/UI/Center/FilesContainer/File1"]
+[editable path="UILayer/UI/Center/FilesContainer/File2"]
+[editable path="UILayer/UI/Center/FilesContainer/File3"]

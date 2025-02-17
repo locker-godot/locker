@@ -1,0 +1,83 @@
+[gd_scene load_steps=7 format=3 uid="uid://cbrn0exw0ssrt"]
+
+[ext_resource type="LabelSettings" uid="uid://uxfr14nbvtdb" path="res://examples/file_choosing/resources/file_title_label_settings.tres" id="1_0hxq7"]
+[ext_resource type="Script" path="res://examples/file_choosing/scripts/file_card.gd" id="1_l8x3p"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_x8j06"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="3_snras"]
+[ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="4_w6if2"]
+
+[sub_resource type="Resource" id="Resource_epkn0"]
+resource_local_to_scene = true
+script = ExtResource("4_w6if2")
+number = "1.0.0"
+
+[node name="File" type="PanelContainer"]
+custom_minimum_size = Vector2(150, 0)
+script = ExtResource("1_l8x3p")
+
+[node name="StorageAccessor" type="Node" parent="."]
+script = ExtResource("2_x8j06")
+id = "game_status"
+partition = "game_status"
+versions = Array[ExtResource("3_snras")]([SubResource("Resource_epkn0")])
+dependency_paths = {
+"file_card": NodePath("..")
+}
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Info" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "File 1"
+label_settings = ExtResource("1_0hxq7")
+horizontal_alignment = 1
+
+[node name="Status" type="VBoxContainer" parent="Margin/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Lives" type="HBoxContainer" parent="Margin/Info/Status"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Info/Status/Lives"]
+layout_mode = 2
+text = "Player lives:"
+
+[node name="Amount" type="Label" parent="Margin/Info/Status/Lives"]
+layout_mode = 2
+text = "10"
+
+[node name="Progress" type="HBoxContainer" parent="Margin/Info/Status"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/Info/Status/Progress"]
+layout_mode = 2
+text = "Progress"
+
+[node name="Amount" type="Label" parent="Margin/Info/Status/Progress"]
+layout_mode = 2
+text = "50%"
+
+[node name="RemoveButton" type="Button" parent="Margin/Info/Status"]
+layout_mode = 2
+text = "Remove"
+
+[node name="CreateButton" type="Button" parent="Margin/Info"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "New file!"
+
+[connection signal="removing_finished" from="StorageAccessor" to="StorageAccessor" method="load_data" unbinds=1]
+[connection signal="saving_finished" from="StorageAccessor" to="StorageAccessor" method="load_data" unbinds=1]
+[connection signal="pressed" from="Margin/Info/Status/RemoveButton" to="StorageAccessor" method="remove_data"]
+[connection signal="pressed" from="Margin/Info/CreateButton" to="StorageAccessor" method="save_data"]
