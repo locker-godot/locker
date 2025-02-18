@@ -1,0 +1,37 @@
+[gd_scene load_steps=7 format=3 uid="uid://bfkno7ccr0764"]
+
+[ext_resource type="Texture2D" uid="uid://cabtwgcshp66e" path="res://icon.svg" id="1_4n58o"]
+[ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/player.gd" id="2_0hilf"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_5vyyg"]
+[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="4_atapx"]
+[ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/dynamic_player_accessor_v1.gd" id="5_ubttn"]
+
+[sub_resource type="Resource" id="Resource_r0fis"]
+resource_local_to_scene = true
+script = ExtResource("5_ubttn")
+number = "1.0.0"
+
+[node name="Player" type="Sprite2D"]
+texture = ExtResource("1_4n58o")
+script = ExtResource("2_0hilf")
+
+[node name="StorageAccessor" type="Node" parent="."]
+script = ExtResource("2_5vyyg")
+versions = Array[ExtResource("4_atapx")]([SubResource("Resource_r0fis")])
+dependency_paths = {
+"player": NodePath(".."),
+"username": NodePath("../UserName")
+}
+
+[node name="UserName" type="Label" parent="."]
+anchors_preset = -1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -64.0
+offset_top = -63.0
+offset_right = -64.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1

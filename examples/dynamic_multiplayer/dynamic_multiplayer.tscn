@@ -1,0 +1,46 @@
+[gd_scene load_steps=3 format=3 uid="uid://dil3ai3efgqtj"]
+
+[ext_resource type="PackedScene" uid="uid://cc7l2ffhkq17i" path="res://examples/dynamic_multiplayer/scenes/player_menu.tscn" id="1_68vuy"]
+[ext_resource type="Script" path="res://examples/dynamic_multiplayer/dynamic_multiplayer.gd" id="1_uvbs8"]
+
+[node name="DynamicMultiplayer" type="Node2D"]
+script = ExtResource("1_uvbs8")
+
+[node name="UILayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UILayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Margin" type="MarginContainer" parent="UILayer/UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Container" type="Control" parent="UILayer/UI/Margin"]
+layout_mode = 2
+
+[node name="Player1Menu" parent="UILayer/UI/Margin/Container" instance=ExtResource("1_68vuy")]
+layout_mode = 0
+username = "player1"
+
+[node name="Player2Menu" parent="UILayer/UI/Margin/Container" instance=ExtResource("1_68vuy")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -124.0
+offset_right = 0.0
+grow_horizontal = 0
+username = "player2"
