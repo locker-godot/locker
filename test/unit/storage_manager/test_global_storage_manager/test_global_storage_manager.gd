@@ -1,377 +1,450 @@
 
 extends GutTest
 
-class StorageAccessorTest extends LokStorageAccessor:
-	
-	var id: String = ""
-	
-	var data: Dictionary = {}
-	
-	func consume_data(_data: Dictionary) -> void:
-		data = _data
-	
+var GlobalStorageManager: GDScript = preload("res://addons/locker/scripts/storage_manager/global_storage_manager.gd")
+var StorageAccessor: GDScript = preload("res://addons/locker/scripts/storage_accessor/storage_accessor.gd")
+var AccessExecutor: GDScript = preload("res://addons/locker/scripts/storage_manager/access_executor.gd")
+var DoubledStorageAccessor: GDScript
+var DoubledAccessExecutor: GDScript
 
-var GlobalStorageManager: GDScript = preload("res://addons/locker/storage_manager/global_storage_manager.gd")
-var DoubledGlobalStorageManager: GDScript
-var StorageAccessor: GDScript = preload("res://addons/locker/storage_accessor/storage_accessor.gd")
-var AccessStrategy: GDScript = preload("res://addons/locker/access_strategy/access_strategy.gd")
-
-var manager: LokStorageManager
+var manager := LokGlobalStorageManager
 
 func before_all() -> void:
-	register_inner_classes(get_script())
-	
-	DoubledGlobalStorageManager = partial_double(GlobalStorageManager)
+	DoubledStorageAccessor = partial_double(StorageAccessor)
+	DoubledAccessExecutor = double(AccessExecutor)
 
 func before_each() -> void:
-	manager = add_child_autofree(DoubledGlobalStorageManager.new())
-	stub(manager.get_debug_mode).to_return(false)
+	manager = add_child_autofree(GlobalStorageManager.new())
+	
+	stub(DoubledAccessExecutor, "request_loading").to_return({})
 
 func after_all() -> void:
 	queue_free()
 
-#region Property access_strategy
+#region General behavior
 
-func test_access_strategy_starts_as_not_null() -> void:
-	assert_not_null(
-		manager.access_strategy,
-		"Access strategy start as null"
-	)
-
-#endregion
-
-#region Method add_accessor
-
-func test_add_accessor_registers_in_the_list() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
+func test_initializes_with_project_settings() -> void:
+	var expected_saves_directory: String = LockerPlugin.get_setting_saves_directory()
+	var expected_save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix()
+	var expected_save_files_format: String = LockerPlugin.get_setting_save_files_format()
+	var expected_save_versions: bool = LockerPlugin.get_setting_save_versions()
+	var expected_access_strategy: String = LockerPlugin.get_setting_access_strategy()
+	var expected_encrypted_strategy_password: String = LockerPlugin.get_setting_encrypted_strategy_password()
 	
-	manager.add_accessor(accessor)
+	var saves_directory: String = manager.get_saves_directory()
+	var save_files_prefix: String = manager.get_save_files_prefix()
+	var save_files_format: String = manager.get_save_files_format()
+	var save_versions: bool = manager.get_save_versions()
+	var access_strategy: LokAccessStrategy = manager.get_access_strategy()
+	var encrypted_strategy_password: String = ""
 	
-	assert_eq(
-		manager.accessors.back(),
-		accessor,
-		"Accessor wasn't added"
-	)
-
-func test_add_accessor_connects_signal() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
+	if access_strategy is LokEncryptedAccessStrategy:
+		encrypted_strategy_password = access_strategy.get_password()
 	
-	manager.add_accessor(accessor)
+	assert_eq(saves_directory, expected_saves_directory, "Unexpected value")
+	assert_eq(save_files_prefix, expected_save_files_prefix, "Unexpected value")
+	assert_eq(save_files_format, expected_save_files_format, "Unexpected value")
+	assert_eq(save_versions, expected_save_versions, "Unexpected value")
+	assert_eq(LockerPlugin.strategy_to_string(access_strategy), expected_access_strategy, "Unexpected value")
 	
-	assert_connected(
-		accessor,
-		manager,
-		"id_changed",
-		"_on_accessor_id_changed"
-	)
+	if expected_access_strategy == "Encrypted":
+		assert_eq(encrypted_strategy_password, expected_encrypted_strategy_password, "Unexpected value")
 
 #endregion
 
-#region Method remove_accessor
+#region Method get_file_path
 
-func test_remove_accessor_removes_from_the_list() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
+func test_get_file_path_returns_default_path() -> void:
+	manager.saves_directory = "res://tests/saves/"
+	manager.save_files_prefix = "file"
 	
-	manager.add_accessor(accessor)
-	manager.remove_accessor(accessor)
+	var expected: String = "res://tests/saves/file"
 	
-	assert_true(
-		manager.accessors.is_empty(),
-		"Accessor wasn't removed"
-	)
+	assert_eq(manager.get_file_path(""), expected, "Unexpected result")
 
-func test_remove_accessor_disconnects_signal() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
+func test_get_file_path_returns_path_based_on_id() -> void:
+	manager.saves_directory = "res://tests/saves/"
+	manager.save_files_prefix = "file"
 	
-	manager.add_accessor(accessor)
-	manager.remove_accessor(accessor)
+	var expected: String = "res://tests/saves/file_1"
 	
-	assert_not_connected(
-		accessor,
-		manager,
-		"id_changed",
-		"_on_accessor_id_changed"
-	)
-
-func test_remove_returns_true_on_success() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
-	
-	manager.add_accessor(accessor)
-	
-	assert_true(
-		manager.remove_accessor(accessor),
-		"Returned false with an expected success"
-	)
-
-func test_remove_returns_false_on_failure() -> void:
-	var accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
-	
-	assert_false(
-		manager.remove_accessor(accessor),
-		"Returned true with an expected failure"
-	)
+	assert_eq(manager.get_file_path("1"), expected, "Unexpected result")
 
 #endregion
 
-#region Method get_accessors_grouped_by_id
+#region Method collect_data
 
-func test_get_accessors_grouped_by_id_works_properly() -> void:
-	var DoubledStorageAccessor: GDScript = double(StorageAccessor)
+func test_collect_data_returns_empty_dict() -> void:
+	var expected: Dictionary = {}
 	
-	var accessor1: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	var accessor2: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id1")
-	var accessor3: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor3.get_id).to_return("id2")
-	
-	manager.add_accessor(accessor1)
-	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
-	
-	var expected: Dictionary = {
-		"id1": [ accessor1, accessor2 ],
-		"id2": [ accessor3 ]
-	}
-	
-	assert_eq(
-		manager.get_accessors_grouped_by_id(""),
-		expected,
-		"Agroupation didn't work properly"
-	)
+	assert_eq(manager.collect_data(null, ""), expected, "Unexpected result")
 
-#endregion
+func test_collect_data_returns_sets_version_passed() -> void:
+	var expected: String = "2.0.0"
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	
+	manager.collect_data(accessor, "2.0.0")
+	
+	assert_eq(accessor.version_number, expected, "Unexpected result")
 
-#region Method get_repeated_accessors_grouped_by_id
+func test_collect_data_obtains_data_without_version() -> void:
+	manager.set_save_versions(false)
+	
+	var expected: Dictionary = { "retrieved": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	stub(accessor.retrieve_data).to_return(expected.duplicate())
+	
+	var result: Dictionary = manager.collect_data(accessor, "1.0.0")
+	
+	assert_eq(result, expected, "Unexpected result")
 
-func test_get_repeated_accessors_grouped_by_id_works_properly() -> void:
-	var DoubledStorageAccessor: GDScript = double(StorageAccessor)
+func test_collect_data_obtains_data_with_version() -> void:
+	manager.set_save_versions(true)
 	
-	var accessor1: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	var accessor2: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id1")
-	var accessor3: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor3.get_id).to_return("id2")
+	var expected: Dictionary = { "retrieved": true }
 	
-	manager.add_accessor(accessor1)
-	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	stub(accessor.retrieve_data).to_return(expected.duplicate())
 	
-	var expected: Dictionary = {
-		"id1": [ accessor1, accessor2 ]
-	}
+	expected["version"] = "1.0.0"
 	
-	assert_eq(
-		manager.get_repeated_accessors_grouped_by_id(""),
-		expected,
-		"Agroupation didn't work properly"
-	)
+	var result: Dictionary = manager.collect_data(accessor, "1.0.0")
+	
+	assert_eq(result, expected, "Unexpected result")
 
 #endregion
 
 #region Method gather_data
 
-func test_gather_data_gathers_only_from_selected_version() -> void:
-	var DoubledStorageAccessor: GDScript = partial_double(StorageAccessor)
+func test_gather_data_ignores_unidentified_accessors() -> void:
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	stub(accessor.retrieve_data).to_return({ "accessor": true })
 	
-	var accessor3_get_id = func(this: LokStorageAccessor) -> String:
-		if this.version_number == "1.0.0":
-			return ""
-		
-		return "id3"
+	var result: Dictionary = manager.gather_data()
 	
-	var accessor1: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	stub(accessor1.get_version_number).to_return("1.0.0")
-	stub(accessor1.retrieve_data).to_return({ "name1": "accessor1" })
-	var accessor2: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id2")
-	stub(accessor2.get_version_number).to_return("1.0.0")
-	stub(accessor2.retrieve_data).to_return({ "name2": "accessor2" })
-	var accessor3: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor3.get_id).to_call(accessor3_get_id.bind(accessor3))
-	stub(accessor3.retrieve_data).to_return({ "name3": "accessor3" })
-	
-	manager.add_accessor(accessor1)
-	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
-	
-	var expected: Dictionary = {
-		"id1": { "version": "1.0.0", "name1": "accessor1" },
-		"id2": { "version": "1.0.0", "name2": "accessor2" }
-	}
-	
-	assert_eq(
-		manager.gather_data([] as Array[String], "1.0.0"),
-		expected,
-		"Gathering didn't work as expected"
-	)
+	assert_eq(result, {}, "Data obtained")
 
-func test_gather_data_gathers_only_from_passed_accessors() -> void:
-	var DoubledStorageAccessor: GDScript = partial_double(StorageAccessor)
+func test_gather_data_includes_identified_accessors() -> void:
+	manager.set_save_versions(false)
 	
-	var accessor1: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	stub(accessor1.get_version_number).to_return("1.0.0")
-	stub(accessor1.retrieve_data).to_return({ "name1": "accessor1" })
-	var accessor2: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id2")
-	stub(accessor2.get_version_number).to_return("1.0.0")
-	stub(accessor2.retrieve_data).to_return({ "name2": "accessor2" })
-	var accessor3: LokStorageAccessor = autofree(DoubledStorageAccessor.new())
-	stub(accessor3.get_id).to_return("id3")
-	stub(accessor3.get_version_number).to_return("1.0.0")
-	stub(accessor3.retrieve_data).to_return({ "name3": "accessor3" })
+	var accessor_data: Dictionary = { "accessor": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor.id = "accessor"
+	stub(accessor.retrieve_data).to_return(accessor_data.duplicate())
+	
+	manager.add_accessor(accessor)
+	
+	var expected: Dictionary = {
+		accessor.partition: {
+			accessor.id: accessor_data
+		}
+	}
+	
+	var result: Dictionary = manager.gather_data([], "1.0.0")
+	
+	assert_eq(result, expected, "Data obtained")
+
+func test_gather_data_includes_versions() -> void:
+	manager.set_save_versions(true)
+	
+	var accessor_data: Dictionary = { "accessor": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor.id = "accessor"
+	stub(accessor.retrieve_data).to_return(accessor_data.duplicate())
+	
+	manager.add_accessor(accessor)
+	
+	var expected: Dictionary = {
+		accessor.partition: {
+			accessor.id: accessor_data.merged({ "version": "1.0.0" })
+		}
+	}
+	
+	var result: Dictionary = manager.gather_data([], "1.0.0")
+	
+	assert_eq(result, expected, "Data obtained")
+
+func test_gather_data_gets_from_multiple_accessors() -> void:
+	manager.set_save_versions(false)
+	
+	var accessor1_data: Dictionary = { "accessor1": true }
+	var accessor2_data: Dictionary = { "accessor2": true }
+	
+	var accessor1: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor1.id = "accessor1"
+	accessor1.partition = "partition"
+	stub(accessor1.retrieve_data).to_return(accessor1_data.duplicate())
+	var accessor2: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor2.id = "accessor2"
+	accessor2.partition = "partition"
+	stub(accessor2.retrieve_data).to_return(accessor2_data.duplicate())
 	
 	manager.add_accessor(accessor1)
 	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
 	
 	var expected: Dictionary = {
-		"id1": { "version": "1.0.0", "name1": "accessor1" },
-		"id2": { "version": "1.0.0", "name2": "accessor2" }
+		"partition": {
+			accessor1.id: accessor1_data,
+			accessor2.id: accessor2_data
+		}
 	}
 	
-	assert_eq(
-		manager.gather_data([ "id1", "id2" ] as Array[String], "1.0.0"),
-		expected,
-		"Gathering didn't work as expected"
-	)
+	var result: Dictionary = manager.gather_data([], "1.0.0")
+	
+	assert_eq(result, expected, "Data obtained")
+
+func test_gather_data_filters_accessors() -> void:
+	manager.set_save_versions(false)
+	
+	var accessor1_data: Dictionary = { "accessor1": true }
+	var accessor2_data: Dictionary = { "accessor2": true }
+	
+	var accessor1: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor1.id = "accessor1"
+	accessor1.partition = "partition"
+	stub(accessor1.retrieve_data).to_return(accessor1_data.duplicate())
+	var accessor2: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor2.id = "accessor2"
+	accessor2.partition = "partition"
+	stub(accessor2.retrieve_data).to_return(accessor2_data.duplicate())
+	
+	manager.add_accessor(accessor1)
+	manager.add_accessor(accessor2)
+	
+	var expected: Dictionary = {
+		"partition": {
+			accessor1.id: accessor1_data
+		}
+	}
+	
+	var result: Dictionary = manager.gather_data([ accessor1 ], "1.0.0")
+	
+	assert_eq(result, expected, "Data obtained")
+
+func test_gather_data_separates_partitions() -> void:
+	manager.set_save_versions(false)
+	
+	var accessor1_data: Dictionary = { "accessor1": true }
+	var accessor2_data: Dictionary = { "accessor2": true }
+	
+	var accessor1: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor1.id = "accessor1"
+	accessor1.partition = "partition1"
+	stub(accessor1.retrieve_data).to_return(accessor1_data.duplicate())
+	var accessor2: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor2.id = "accessor2"
+	accessor2.partition = "partition2"
+	stub(accessor2.retrieve_data).to_return(accessor2_data.duplicate())
+	
+	manager.add_accessor(accessor1)
+	manager.add_accessor(accessor2)
+	
+	var expected: Dictionary = {
+		accessor1.partition: {
+			accessor1.id: accessor1_data
+		},
+		accessor2.partition: {
+			accessor2.id: accessor2_data
+		}
+	}
+	
+	var result: Dictionary = manager.gather_data([], "1.0.0")
+	
+	assert_eq(result, expected, "Data obtained")
+
+func test_gather_data_ignores_accessors_without_data() -> void:
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	stub(accessor.retrieve_data).to_return({})
+	
+	var result: Dictionary = manager.gather_data()
+	
+	assert_eq(result, {}, "Data obtained")
 
 #endregion
 
-#region Method distribute_data
+#region Method distribute_result
 
-func test_distribute_data_distributes_only_to_accessors_in_version_specified() -> void:
-	var DoubledStorageAccessor = partial_double(StorageAccessorTest)
+func test_distribute_result_passes_to_accessors() -> void:
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	
-	var accessor3_get_id = func(this: LokStorageAccessor) -> String:
-		if this.version_number == "1.0.0":
-			return ""
-		
-		return "id3"
+	manager.add_accessor(accessor)
 	
-	var accessor1: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	var accessor2: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id2")
-	var accessor3: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	accessor3.set_version_number("2.0.0")
-	stub(accessor3.get_id).to_call(accessor3_get_id.bind(accessor3))
+	manager.distribute_result({})
+	
+	assert_called(accessor, "consume_data")
+
+func test_distribute_result_filters_accessors() -> void:
+	var accessor1: LokStorageAccessor = DoubledStorageAccessor.new()
+	var accessor2: LokStorageAccessor = DoubledStorageAccessor.new()
 	
 	manager.add_accessor(accessor1)
 	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
 	
-	manager.distribute_data({
-		"id1": { "version": "1.0.0", "name1": "accessor1" },
-		"id2": { "version": "1.0.0", "name2": "accessor2" },
-		"id3": { "version": "1.0.0", "name3": "accessor3" }
-	}, [] as Array[String])
+	manager.distribute_result({}, [ accessor1 ])
 	
-	assert_eq(
-		accessor1.data,
-		{ "version": "1.0.0", "name1": "accessor1" },
-		"Accessor 1 didn't receive data"
-	)
-	assert_eq(
-		accessor2.data,
-		{ "version": "1.0.0", "name2": "accessor2" },
-		"Accessor 2 didn't receive data"
-	)
-	assert_eq(
-		accessor3.data,
-		{},
-		"Accessor 3 received data"
-	)
+	assert_not_called(accessor2, "consume_data")
 
-func test_distribute_data_distributes_only_to_accessors_specified() -> void:
-	var DoubledStorageAccessor = partial_double(StorageAccessorTest)
+func test_distribute_result_sets_version_number() -> void:
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor.id = "accessor"
 	
-	var accessor1: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	stub(accessor1.get_id).to_return("id1")
-	var accessor2: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	stub(accessor2.get_id).to_return("id2")
-	var accessor3: StorageAccessorTest = autofree(DoubledStorageAccessor.new())
-	stub(accessor3.get_id).to_return("id3")
+	manager.add_accessor(accessor)
+	
+	manager.distribute_result({
+		"status": Error.OK,
+		"data": {
+			"accessor": {
+				"version": "2.0.0"
+			}
+		}
+	})
+	
+	assert_eq(accessor.version_number, "2.0.0", "Version didn't match")
+
+func test_distribute_result_sends_according_to_ids() -> void:
+	var accessor1: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor1.id = "accessor1"
+	var accessor2: LokStorageAccessor = DoubledStorageAccessor.new()
+	accessor2.id = "accessor2"
 	
 	manager.add_accessor(accessor1)
 	manager.add_accessor(accessor2)
-	manager.add_accessor(accessor3)
 	
-	manager.distribute_data({
-		"id1": { "version": "1.0.0", "name1": "accessor1" },
-		"id2": { "version": "1.0.0", "name2": "accessor2" },
-		"id3": { "version": "1.0.0", "name3": "accessor3" }
-	}, [ "id1", "id2" ] as Array[String])
+	var accessor1_data: Dictionary = { "accessor1": true }
+	var accessor2_data: Dictionary = { "accessor2": true }
 	
-	assert_eq(
-		accessor1.data,
-		{ "version": "1.0.0", "name1": "accessor1" },
-		"Accessor 1 didn't receive data"
-	)
-	assert_eq(
-		accessor2.data,
-		{ "version": "1.0.0", "name2": "accessor2" },
-		"Accessor 2 didn't receive data"
-	)
-	assert_eq(
-		accessor3.data,
-		{},
-		"Accessor 3 received data"
-	)
+	manager.distribute_result({
+		"status": Error.OK,
+		"data": {
+			"accessor1": accessor1_data.duplicate(),
+			"accessor2": accessor2_data.duplicate(),
+		}
+	})
+	
+	accessor1_data = { "status": Error.OK, "data": accessor1_data }
+	accessor2_data = { "status": Error.OK, "data": accessor2_data }
+	
+	assert_called(accessor1, "consume_data", [ accessor1_data ])
+	assert_called(accessor2, "consume_data", [ accessor2_data ])
 
 #endregion
 
 #region Method save_data
 
-func test_save_data_gathers_data() -> void:
-	var DoubledAccessStrategy: GDScript = double(AccessStrategy)
+func test_save_data_passes_to_executor() -> void:
+	manager.access_executor = DoubledAccessExecutor.new()
 	
-	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
-	stub(manager.get_access_strategy).to_return(strategy)
+	manager.save_data()
 	
-	manager.save_data(1, "1.0.0", [], false)
-	
-	assert_called(manager, "gather_data")
+	assert_called(manager.access_executor, "request_saving")
 
-func test_save_data_delegates_to_strategy() -> void:
-	var DoubledAccessStrategy: GDScript = partial_double(AccessStrategy)
+func test_save_data_emits_saving_started() -> void:
+	watch_signals(manager)
 	
-	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
-	stub(strategy.save_data).to_do_nothing()
+	manager.access_executor = DoubledAccessExecutor.new()
 	
-	stub(manager.get_access_strategy).to_return(strategy)
+	manager.save_data()
 	
-	manager.save_data(1, "1.0.0", [], false)
+	assert_signal_emitted(manager, "saving_started", "Signal not emitted")
+
+func test_save_data_emits_saving_finished() -> void:
+	watch_signals(manager)
 	
-	assert_called(strategy, "save_data")
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.save_data()
+	
+	assert_signal_emitted(manager, "saving_finished", "Signal not emitted")
 
 #endregion
 
 #region Method load_data
 
-func test_load_data_distributes_data() -> void:
-	var DoubledAccessStrategy: GDScript = double(AccessStrategy)
+func test_load_data_passes_to_executor() -> void:
+	manager.access_executor = DoubledAccessExecutor.new()
 	
-	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
-	stub(strategy.load_data).to_return({})
+	manager.load_data()
 	
-	stub(manager.get_access_strategy).to_return(strategy)
-	
-	manager.load_data(1, [], [], [])
-	
-	assert_called(manager, "distribute_data")
+	assert_called(manager.access_executor, "request_loading")
 
-func test_load_data_delegates_to_strategy() -> void:
-	var DoubledAccessStrategy: GDScript = double(AccessStrategy)
+func test_save_data_emits_loading_started() -> void:
+	watch_signals(manager)
 	
-	var strategy: LokAccessStrategy = DoubledAccessStrategy.new()
-	stub(strategy.load_data).to_return({})
+	manager.access_executor = DoubledAccessExecutor.new()
 	
-	stub(manager.get_access_strategy).to_return(strategy)
+	manager.load_data()
 	
-	manager.load_data(1, [], [], [])
+	assert_signal_emitted(manager, "loading_started", "Signal not emitted")
+
+func test_save_data_emits_loading_finished() -> void:
+	watch_signals(manager)
 	
-	assert_called(strategy, "load_data")
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.load_data()
+	
+	assert_signal_emitted(manager, "loading_finished", "Signal not emitted")
+
+#endregion
+
+#region Method read_data
+
+func test_read_data_passes_to_executor() -> void:
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.read_data()
+	
+	assert_called(manager.access_executor, "request_reading")
+
+func test_save_data_emits_reading_started() -> void:
+	watch_signals(manager)
+	
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.read_data()
+	
+	assert_signal_emitted(manager, "reading_started", "Signal not emitted")
+
+func test_save_data_emits_reading_finished() -> void:
+	watch_signals(manager)
+	
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.read_data()
+	
+	assert_signal_emitted(manager, "reading_finished", "Signal not emitted")
+
+#endregion
+
+#region Method remove_data
+
+func test_remove_data_passes_to_executor() -> void:
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.remove_data()
+	
+	assert_called(manager.access_executor, "request_removing")
+
+func test_save_data_emits_removing_started() -> void:
+	watch_signals(manager)
+	
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.remove_data()
+	
+	assert_signal_emitted(manager, "removing_started", "Signal not emitted")
+
+func test_save_data_emits_removing_finished() -> void:
+	watch_signals(manager)
+	
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.remove_data()
+	
+	assert_signal_emitted(manager, "removing_finished", "Signal not emitted")
+
+#endregion

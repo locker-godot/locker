@@ -26,15 +26,7 @@ var save_versions: bool = LockerPlugin.get_setting_save_versions():
 	set = set_save_versions,
 	get = get_save_versions
 
-## The [member access_strategy] property stores a [LokAccessStrategy] that
-## dictates how the data is saved and loaded. [br]
-## This property shouldn't be altered by other classes, since it's a
-## needed object for performing data manipulation.
-#var access_strategy: LokAccessStrategy:
-	#set = set_access_strategy,
-	#get = get_access_strategy
-
-var access_executor: LokAccessExecutor:
+var access_executor: LokAccessExecutor = LokAccessExecutor.new():
 	set = set_access_executor,
 	get = get_access_executor
 
@@ -67,21 +59,7 @@ func get_save_versions() -> bool:
 	return save_versions
 
 func set_access_executor(new_executor: LokAccessExecutor) -> void:
-	var old_executor: LokAccessExecutor = access_executor
-	
 	access_executor = new_executor
-	
-	if old_executor == new_executor:
-		return
-	
-	#LokUtil.check_and_disconnect_signals(
-		#old_executor,
-		#access_executor_connections
-	#)
-	#LokUtil.check_and_connect_signals(
-		#new_executor,
-		#access_executor_connections
-	#)
 
 func get_access_executor() -> LokAccessExecutor:
 	return access_executor
@@ -282,11 +260,6 @@ func save_data(
 	
 	var data: Dictionary = gather_data(accessors, version_number)
 	
-	print("%s: Started saving file %s;" % [
-		Time.get_ticks_msec(),
-		file_id
-	])
-	
 	saving_started.emit()
 	
 	var result: Dictionary = await access_executor.request_saving(
@@ -294,11 +267,6 @@ func save_data(
 	)
 	
 	saving_finished.emit(result)
-	
-	print("%s: Finished saving file %s;" % [
-		Time.get_ticks_msec(),
-		file_id
-	])
 	
 	return result
 
@@ -382,7 +350,6 @@ func remove_data(
 
 # Initializes values according to settings
 func _init() -> void:
-	access_executor = LokAccessExecutor.new()
 	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
 	
 	var access_strategy: LokAccessStrategy = get_access_strategy()
