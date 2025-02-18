@@ -29,7 +29,7 @@ const AUTOLOAD_NAME := "LokGlobalStorageManager"
 ## The [constant AUTOLOAD_PATH] constant stores the path to the script of
 ## the [LokGlobalStorageManager] so that this [LockerPlugin] can register it
 ## as an autoload when it is activated.
-const AUTOLOAD_PATH := "res://addons/locker/storage_manager/global_storage_manager.gd"
+const AUTOLOAD_PATH := "res://addons/locker/scripts/storage_manager/global_storage_manager.gd"
 
 #endregion
 
@@ -281,6 +281,14 @@ static func string_to_strategy(string: String) -> LokAccessStrategy:
 		"Encrypted": return LokEncryptedAccessStrategy.new()
 	
 	return null
+
+static func strategy_to_string(strategy: LokAccessStrategy) -> String:
+	if strategy is LokJSONAccessStrategy:
+		return "JSON"
+	if strategy is LokEncryptedAccessStrategy:
+		return "Encrypted"
+	
+	return ""
 
 ## The [method save_settings] method takes a [param settings] [Dictionary] and
 ## takes the current value of each one of them from the [ProjectSettings],
