@@ -1,365 +1,361 @@
 
 extends GutTest
 
-class StorageAccessorVersionTest extends LokStorageAccessorVersion:
-	
-	var data_consumed: Dictionary = {}
-	
-	func retrieve_data(dependencies: Dictionary) -> Dictionary:
-		return dependencies
-	
-	func consume_data(data: Dictionary, dependencies: Dictionary) -> void:
-		data_consumed = data.merged(dependencies)
-	
+var StorageAccessor: GDScript = preload("res://addons/locker/scripts/storage_accessor/storage_accessor.gd")
+var StorageManager: GDScript = preload("res://addons/locker/scripts/storage_manager/storage_manager.gd")
+var StorageAccessorVersion: GDScript = preload("res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd")
+var DoubledStorageManager: GDScript
+var DoubledStorageAccessorVersion: GDScript
 
 var accessor: LokStorageAccessor
 
+func before_all() -> void:
+	DoubledStorageManager = partial_double(StorageManager)
+	DoubledStorageAccessorVersion = partial_double(StorageAccessorVersion)
+
 func before_each() -> void:
-	accessor = autofree(LokStorageAccessor.new())
+	accessor = add_child_autofree(StorageAccessor.new())
+	accessor.storage_manager = add_child_autofree(DoubledStorageManager.new())
 
 func after_all() -> void:
 	queue_free()
 
 #region General behavior
 
-func test_adds_itself_to_global_manager_on_enter_tree() -> void:
-	var other_accessor: LokStorageAccessor = autofree(LokStorageAccessor.new())
-	
-	var DoubledStorageManager: GDScript = partial_double(
-		LokGlobalStorageManager.get_script()
+func test_storage_manager_starts_as_the_autoload() -> void:
+	var new_accessor: LokStorageAccessor = add_child_autofree(
+		LokStorageAccessor.new()
 	)
 	
-	other_accessor.storage_manager = autofree(DoubledStorageManager.new())
-	
-	add_child(other_accessor)
+	assert_eq(
+		new_accessor.storage_manager,
+		LokGlobalStorageManager,
+		"Value didn't match expected"
+	)
+
+func test_storage_accessor_autoappends_to_global_manager() -> void:
+	var new_accessor: LokStorageAccessor = add_child_autofree(
+		LokStorageAccessor.new()
+	)
 	
 	assert_true(
-		other_accessor.storage_manager.accessors.has(other_accessor),
-		"Manager didn't have accessor added"
+		LokGlobalStorageManager.accessors.has(new_accessor),
+		"Accessor not found in Global Manager"
 	)
 
-func test_removes_itself_from_global_manager_on_exit_tree() -> void:
-	var other_accessor := LokStorageAccessor.new()
+func test_storage_accessor_autoremoves_from_global_manager() -> void:
+	var new_accessor: LokStorageAccessor = LokStorageAccessor.new()
 	
-	var DoubledStorageManager: GDScript = partial_double(
-		LokGlobalStorageManager.get_script()
-	)
+	add_child(new_accessor)
 	
-	var storage_manager: LokGlobalStorageManager = DoubledStorageManager.new()
+	new_accessor.free()
 	
-	other_accessor.storage_manager = storage_manager
-	
-	add_child(other_accessor)
-	other_accessor.queue_free()
-	
-	await wait_frames(1, "Waiting accessor to be freed")
-	
-	assert_eq(
-		storage_manager.accessors,
-		[],
-		"Manager didn't have accessor removed"
+	assert_false(
+		LokGlobalStorageManager.accessors.has(new_accessor),
+		"Accessor found in Global Manager"
 	)
 
 #endregion
 
-#region Property versions
+#region Signals
 
-func test_versions_starts_empty() -> void:
-	assert_eq(accessor.versions, [], "Version didn't start as expected")
+func test_saving_started_is_emitted() -> void:
+	watch_signals(accessor)
+	
+	accessor.save_data()
+	
+	assert_signal_emitted(accessor, "saving_started", "Signal not emitted")
 
-func test_versions_setter_updates_version() -> void:
-	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
+func test_loading_started_is_emitted() -> void:
+	watch_signals(accessor)
 	
-	accessor.versions = [ version ]
+	accessor.load_data()
 	
-	assert_eq(
-		accessor.version,
-		version,
-		"Versions didn't update version"
-	)
+	assert_signal_emitted(accessor, "loading_started", "Signal not emitted")
+
+func test_removing_started_is_emitted() -> void:
+	watch_signals(accessor)
+	
+	accessor.remove_data()
+	
+	assert_signal_emitted(accessor, "removing_started", "Signal not emitted")
+
+func test_saving_finished_is_emitted() -> void:
+	watch_signals(accessor)
+	
+	accessor.save_data()
+	
+	assert_signal_emitted(accessor, "saving_finished", "Signal not emitted")
+
+func test_loading_finished_is_emitted() -> void:
+	watch_signals(accessor)
+	
+	accessor.load_data()
+	
+	assert_signal_emitted(accessor, "loading_finished", "Signal not emitted")
+
+func test_removing_finished_is_emitted() -> void:
+	watch_signals(accessor)
+	
+	accessor.remove_data()
+	
+	assert_signal_emitted(accessor, "removing_finished", "Signal not emitted")
 
 #endregion
 
-#region Property version_number
+#region Properties
 
-func test_version_number_starts_as_1_0_0() -> void:
-	assert_eq(
-		accessor.version_number,
-		"1.0.0",
-		"Version number didn't start as expected"
-	)
-
-func test_version_number_setter_updates_version() -> void:
-	accessor.version_number = ""
-	
-	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
-	
-	accessor.versions = [ version ]
-	
-	accessor.version_number = "1.0.0"
-	
-	assert_eq(
-		accessor.version,
-		version,
-		"Version_number didn't update version"
-	)
-
-func test_version_number_setter_updates_version_only_on_change() -> void:
-	var version: LokStorageAccessorVersion = LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
+func test_version_number_updates_version() -> void:
+	var version := LokStorageAccessorVersion.create("2.0.0")
 	
 	accessor.versions.append(version)
 	
-	accessor.version_number = "1.0.0"
+	accessor.version_number = "2.0.0"
 	
-	assert_null(
-		accessor.version,
-		"Version didn't stay unupdated"
-	)
+	assert_eq(accessor.version, version, "Version didn't match expected")
 
-#endregion
-
-#region Property dependency_paths
-
-func test_dependency_paths_starts_empty() -> void:
-	assert_eq(
-		accessor.dependency_paths,
-		{},
-		"Dependency_paths didn't start as expected"
-	)
-
-#endregion
-
-#region Property version
-
-func test_version_starts_null() -> void:
-	assert_null(
-		accessor.version,
-		"Version didn't start as expected"
-	)
-
-func test_version_setter_disconnects_previous_version() -> void:
-	var version1 := LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
-	var version2 := LokStorageAccessorVersion.create(
-		"2.0.0"
-	)
+func test_version_number_converts_to_latest() -> void:
+	var version := LokStorageAccessorVersion.create("2.0.0")
 	
-	accessor.version = version1
-	accessor.version = version2
+	accessor.versions.append(version)
 	
-	assert_not_connected(
-		version1, accessor, "id_changed", "_on_version_id_changed"
-	)
-
-func test_version_setter_connects_next_version() -> void:
-	var version := LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
+	accessor.version_number = ""
 	
-	accessor.version = version
-	
-	assert_connected(
-		version, accessor, "id_changed", "_on_version_id_changed"
-	)
+	assert_eq(accessor.version_number, "2.0.0", "Version number didn't update")
 
-func test_version_id_changes_propagate() -> void:
-	var version := LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
-	
-	watch_signals(accessor)
-	
-	accessor.version = version
-	
-	version.id = "2"
-	
-	assert_signal_emitted_with_parameters(
-		accessor, "id_changed", [ "1", "2" ]
-	)
-
-#endregion
-
-#region Method get_id
-
-func test_get_id_returns_empty_string_without_version() -> void:
-	assert_eq(
-		accessor.get_id(),
-		"",
-		"Get_id didn't return expected value"
-	)
-
-func test_get_id_returns_version_id() -> void:
-	accessor.version = LokStorageAccessorVersion.create(
-		"1.0.0"
-	)
-	
-	assert_eq(
-		accessor.get_id(),
-		"1",
-		"Get_id didn't return expected value"
-	)
-
-#endregion
-
-#region Method find_version
-
-func test_find_version_returns_matching_version() -> void:
+func test_versions_updates_version() -> void:
 	var version := LokStorageAccessorVersion.create("1.0.0")
 	
 	accessor.versions = [ version ]
 	
-	assert_eq(
-		accessor.find_version("1.0.0"),
-		version,
-		"Find_version didn't return expected value"
-	)
-
-func test_find_version_uses_version_number_by_default() -> void:
-	var version := LokStorageAccessorVersion.create("1.0.0")
-	
-	accessor.versions = [ version ]
-	accessor.version_number = "1.0.0"
-	
-	assert_eq(
-		accessor.find_version("1.0.0"),
-		version,
-		"Find_version didn't return expected value"
-	)
-
-func test_find_version_returns_null_if_not_found() -> void:
-	assert_null(
-		accessor.find_version("1.0.0"),
-		"Find_version didn't return expected value"
-	)
+	assert_eq(accessor.version, version, "Version didn't match expected")
 
 #endregion
 
-#region Method select_version
+#region General methods
 
-func test_select_version_returns_true_on_success() -> void:
+func test_get_dependencies_parses_node_paths() -> void:
+	var dep: Node = add_child_autofree(Node.new())
+	var dep_path: NodePath = dep.get_path()
+	
+	accessor.dependency_paths[&"dep"] = dep_path
+	
+	var expected: Dictionary = { &"dep": dep }
+	var deps: Dictionary = accessor.get_dependencies()
+	
+	assert_eq(deps, expected, "Dependencies weren't parsed")
+
+func test_find_version_returns_right_version() -> void:
+	var version := LokStorageAccessorVersion.create("2.0.0")
+	
+	accessor.versions.append(version)
+	
+	assert_eq(accessor.find_version("2.0.0"), version, "Version not found")
+
+func test_find_version_returns_null() -> void:
+	assert_eq(accessor.find_version("2.0.0"), null, "Version found")
+
+func test_find_latest_version_returns_right_version() -> void:
+	var version1 := LokStorageAccessorVersion.create("1.0.0")
+	var version2 := LokStorageAccessorVersion.create("2.0.0")
+	
+	accessor.versions = [ version1, version2 ]
+	
+	assert_eq(accessor.find_latest_version(), version2, "Version not found")
+
+func test_find_latest_version_returns_null() -> void:
+	assert_eq(accessor.find_latest_version(), null, "Version found")
+
+func test_select_version_returns_true() -> void:
 	var version := LokStorageAccessorVersion.create("1.0.0")
 	
-	accessor.versions = [ version ]
+	accessor.versions.append(version)
 	
-	assert_true(
-		accessor.select_version("1.0.0"),
-		"Select_version didn't return expected value"
-	)
+	assert_true(accessor.select_version("1.0.0"), "Version not found")
 
-func test_select_version_returns_false_if_not_found() -> void:
-	assert_false(
-		accessor.select_version("1.0.0"),
-		"Select_version didn't return expected value"
-	)
-
-#endregion
-
-#region Method get_dependencies
-
-func test_get_dependencies_returns_nodes_instead_of_paths() -> void:
-	var DoubledManager: GDScript = double(LokGlobalStorageManager.get_script())
-	
-	accessor.storage_manager = DoubledManager.new()
-	add_child(accessor)
-	
-	accessor.dependency_paths = {
-		"test": self.get_path()
-	}
-	
-	assert_eq(
-		accessor.get_dependencies(),
-		{ "test": self },
-		"Get_dependencies didn't return expected value"
-	)
+func test_select_version_returns_false() -> void:
+	assert_false(accessor.select_version("1.0.0"), "Version found")
 
 #endregion
 
 #region Method save_data
 
-func test_save_data_delegates_to_global_manager() -> void:
-	var DoubledManager = double(LokGlobalStorageManager.get_script())
+func test_save_data_defaults_file_to_class_property() -> void:
+	accessor.file = "accessor_file"
 	
-	accessor.storage_manager = DoubledManager.new()
-	
-	accessor.save_data(
-		"1", "1.0.0"
-	)
+	accessor.save_data()
 	
 	assert_called(
-		accessor.storage_manager,
-		"save_data",
-		[ "1", "1.0.0", [ accessor.get_id() ], false ]
+		accessor.storage_manager, "save_data",
+		[ "accessor_file", "", [ accessor ], false ]
 	)
+
+func test_save_data_prioritizes_passed_file() -> void:
+	accessor.file = "other_file"
+	
+	accessor.save_data("accessor_file")
+	
+	assert_called(
+		accessor.storage_manager, "save_data",
+		[ "accessor_file", "", [ accessor ], false ]
+	)
+
+func test_save_data_cancels_without_storage_manager() -> void:
+	accessor.storage_manager = null
+	
+	assert_eq(await accessor.save_data(), {}, "Save data didn't cancel")
+
+func test_save_data_cancels_if_not_active() -> void:
+	accessor.active = false
+	
+	assert_eq(await accessor.save_data(), {}, "Save data didn't cancel")
 
 #endregion
 
 #region Method load_data
 
-func test_load_data_delegates_to_global_manager() -> void:
-	var DoubledManager = double(LokGlobalStorageManager.get_script())
+func test_load_data_defaults_file_to_class_property() -> void:
+	accessor.file = "accessor_file"
 	
-	accessor.storage_manager = DoubledManager.new()
-	
-	accessor.load_data("1")
+	accessor.load_data()
 	
 	assert_called(
-		accessor.storage_manager,
-		"load_data",
-		[ "1", [ accessor.get_id() ], [], [] ]
+		accessor.storage_manager, "load_data",
+		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
 	)
+
+func test_load_data_prioritizes_passed_file() -> void:
+	accessor.file = "other_file"
+	
+	accessor.load_data("accessor_file")
+	
+	assert_called(
+		accessor.storage_manager, "load_data",
+		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
+	)
+
+func test_load_data_cancels_without_storage_manager() -> void:
+	accessor.storage_manager = null
+	
+	assert_eq(await accessor.load_data(), {}, "Load data didn't cancel")
+
+func test_load_data_cancels_if_not_active() -> void:
+	accessor.active = false
+	
+	assert_eq(await accessor.load_data(), {}, "Load data didn't cancel")
+
+#endregion
+
+#region Method remove_data
+
+func test_remove_data_defaults_file_to_class_property() -> void:
+	accessor.file = "accessor_file"
+	
+	accessor.remove_data()
+	
+	assert_called(
+		accessor.storage_manager, "remove_data",
+		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
+	)
+
+func test_remove_data_prioritizes_passed_file() -> void:
+	accessor.file = "other_file"
+	
+	accessor.remove_data("accessor_file")
+	
+	assert_called(
+		accessor.storage_manager, "remove_data",
+		[ "accessor_file", [ accessor ], [ accessor.partition ], [] ]
+	)
+
+func test_remove_data_cancels_without_storage_manager() -> void:
+	accessor.storage_manager = null
+	
+	assert_eq(await accessor.remove_data(), {}, "Remove data didn't cancel")
+
+func test_remove_data_cancels_if_not_active() -> void:
+	accessor.active = false
+	
+	assert_eq(await accessor.remove_data(), {}, "Remove data didn't cancel")
 
 #endregion
 
 #region Method retrieve_data
 
-func test_retrieve_data_returns_empty_dictionary_without_version() -> void:
-	assert_eq(
-		accessor.retrieve_data(),
-		{},
-		"Retrieve_data didn't return expected value"
-	)
+func test_retrieve_data_cancels_without_version() -> void:
+	assert_eq(accessor.retrieve_data(), {}, "Retrieval didn't cancel")
 
-func test_retrieve_data_delegates_to_version() -> void:
-	var version := StorageAccessorVersionTest.new()
-	var DoubledManager: GDScript = double(LokGlobalStorageManager.get_script())
+func test_retrieve_data_cancels_if_inactive() -> void:
+	var version := LokStorageAccessorVersion.create("1.0.0")
 	
-	accessor.storage_manager = DoubledManager.new()
-	accessor.version = version
-	add_child(accessor)
-	accessor.dependency_paths = { "accessor": accessor.get_path() }
+	accessor.versions = [ version ]
+	accessor.active = false
 	
-	assert_eq(
-		accessor.retrieve_data(),
-		{ "accessor": accessor },
-		"Retrieve_data didn't return expected value"
-	)
+	assert_eq(accessor.retrieve_data(), {}, "Retrieval didn't cancel")
+
+func test_retrieve_data_consults_version() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
+	
+	var expected: Dictionary = { "success": true }
+	
+	stub(version.retrieve_data).to_return(expected)
+	
+	accessor.versions = [ version ]
+	
+	assert_eq(accessor.retrieve_data(), expected, "Return wasn't expected")
+
+func test_retrieve_data_passes_dependencies_to_version() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
+	
+	var dep: Node = add_child_autofree(Node.new())
+	var dep_path: NodePath = dep.get_path()
+	
+	var expected: Dictionary = { "success": true }
+	
+	stub(version.retrieve_data).to_return(expected).when_passed({ &"dep": dep })
+	
+	accessor.versions = [ version ]
+	accessor.dependency_paths = { &"dep": dep_path }
+	
+	assert_eq(accessor.retrieve_data(), expected, "Dependencies weren't passed")
 
 #endregion
 
 #region Method consume_data
 
-func test_consume_data_delegates_to_version() -> void:
-	var version := StorageAccessorVersionTest.new()
-	var DoubledManager: GDScript = double(LokGlobalStorageManager.get_script())
+func test_consume_data_cancels_if_inactive() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
 	
-	accessor.storage_manager = DoubledManager.new()
-	accessor.version = version
-	add_child(accessor)
-	accessor.dependency_paths = { "accessor": accessor.get_path() }
+	accessor.versions = [ version ]
+	accessor.active = false
 	
-	accessor.consume_data({ "data": "something" })
+	accessor.consume_data({})
 	
-	assert_eq(
-		accessor.version.data_consumed,
-		{ "accessor": accessor, "data": "something" },
-		"Consume_data didn't return expected value"
-	)
+	assert_not_called(version, "consume_data")
+
+func test_consume_data_consults_version() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
+	
+	accessor.versions = [ version ]
+	
+	accessor.consume_data({})
+	
+	assert_called(version, "consume_data")
+
+func test_consume_data_passes_args_to_version() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
+	
+	var dep: Node = add_child_autofree(Node.new())
+	var dep_path: NodePath = dep.get_path()
+	
+	accessor.versions = [ version ]
+	accessor.dependency_paths = { &"dep": dep_path }
+	
+	var data: Dictionary = { "data": true }
+	var deps: Dictionary = { &"dep": dep }
+	
+	accessor.consume_data(data)
+	
+	assert_called(version, "consume_data", [ data, deps ])
 
 #endregion

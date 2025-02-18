@@ -1,6 +1,7 @@
 @icon("res://addons/locker/icons/storage_accessor.svg")
 @tool
-## The [LokStorageAccessor] is a node specialized in saving and loading data.
+## The [LokStorageAccessor] is a node specialized in saving,
+## loading and removing data.
 ## 
 ## This class uses different [member versions] to handle data saving
 ## and loading accross different game versions. [br]
@@ -8,7 +9,7 @@
 ## must have at least one [LokStorageAccessorVersion] set in its
 ## [member versions] and point to it through the [member version_number]
 ## property. [br]
-## Such version must define the logic of how the data is gathered to be
+## Such version should define the logic of how the data is gathered to be
 ## saved and how it is used when loaded. [br]
 ## See more about it here [LokStorageAccessorVersion]. [br]
 ## [br]
@@ -17,6 +18,12 @@
 class_name LokStorageAccessor
 extends Node
 
+signal saving_started()
+
+signal loading_started()
+
+signal removing_started()
+
 signal saving_finished(result: Dictionary)
 
 signal loading_finished(result: Dictionary)
@@ -24,7 +31,7 @@ signal loading_finished(result: Dictionary)
 signal removing_finished(result: Dictionary)
 
 ## The [member storage_manager] property is just a reference to the
-## [LokGlobalStorageManager] autoload. [br]
+## [LokStorageManager] autoload. [br]
 ## Its reference is stored in this property so it can be more easily
 ## mocked in unit tests. [br]
 ## The value of this property shouldn't be altered. Doing so may
@@ -32,7 +39,7 @@ signal removing_finished(result: Dictionary)
 ## That's why the setter of this property is originally setup to do
 ## nothing, so that this property acts essentially like a constant
 ## unless its setter is overriden.
-var storage_manager := LokGlobalStorageManager:
+var storage_manager: LokStorageManager = LokGlobalStorageManager:
 	set = set_storage_manager,
 	get = get_storage_manager
 
@@ -42,7 +49,7 @@ var storage_manager := LokGlobalStorageManager:
 ## [LokStorageAccessor]'s ids don't crash. [br]
 ## If they do, there may arise data inconsistency issues or even
 ## loss of data.
-@export var id: String:
+@export var id: String = "":
 	set = set_id,
 	get = get_id
 
@@ -120,10 +127,10 @@ var version: LokStorageAccessorVersion:
 
 #region Setters & Getters
 
-func set_storage_manager(new_manager: LokGlobalStorageManager) -> void:
-	pass
+func set_storage_manager(new_manager: LokStorageManager) -> void:
+	storage_manager = new_manager
 
-func get_storage_manager() -> LokGlobalStorageManager:
+func get_storage_manager() -> LokStorageManager:
 	return storage_manager
 
 func set_id(new_id: String) -> void:
@@ -159,9 +166,6 @@ func get_versions() -> Array[LokStorageAccessorVersion]:
 
 func set_version_number(new_number: String) -> void:
 	var old_number: String = version_number
-	
-	if old_number == new_number:
-		return
 	
 	version_number = new_number
 	
@@ -286,14 +290,13 @@ func update_version() -> void:
 	# Uses latest version for empty version_numbers
 	if version_number == "":
 		version = find_latest_version()
+		
+		# Conforms version_number to latest version
+		if version != null:
+			version_number = version.number
 	# Searches corresponding version for other version_numbers
 	else:
 		version = find_version(version_number)
-	
-	# Conforms version_number to current version
-	# (in case its latest)
-	if version != null:
-		version_number = version.number
 
 ## The [method select_version] method looks through all the
 ## [member versions] and sets the current [member version] to be
@@ -309,7 +312,7 @@ func select_version(number: String) -> bool:
 	return found_version
 
 ## The [method save_data] method uses the
-## [LokGlobalStorageManager] to save the data of this
+## [LokStorageManager] to save the data of this
 ## [LokStorageAccessor]. [br]
 ## By default, the version used is the [code]latest[/code],
 ## but that can be defined in the [param version_number]
@@ -328,6 +331,8 @@ func save_data(
 		push_error_no_manager()
 		return {}
 	
+	saving_started.emit()
+	
 	var result: Dictionary = await storage_manager.save_data(
 		file_id, version_number, [ self ], false
 	)
@@ -337,7 +342,7 @@ func save_data(
 	return result
 
 ## The [method load_data] method uses the
-## [LokGlobalStorageManager] to load the data of this
+## [LokStorageManager] to load the data of this
 ## [LokStorageAccessor].
 func load_data(file_id: String = file) -> Dictionary:
 	if file_id == "" and file != "":
@@ -350,8 +355,10 @@ func load_data(file_id: String = file) -> Dictionary:
 		push_error_no_manager()
 		return {}
 	
+	loading_started.emit()
+	
 	var result: Dictionary = await storage_manager.load_data(
-		file_id, [ self ], [ partition ]
+		file_id, [ self ], [ partition ], []
 	)
 	
 	loading_finished.emit(result)
@@ -369,8 +376,10 @@ func remove_data(file_id: String = file) -> Dictionary:
 		push_error_no_manager()
 		return {}
 	
+	removing_started.emit()
+	
 	var result: Dictionary = await storage_manager.remove_data(
-		file_id, [ self ], [ partition ]
+		file_id, [ self ], [ partition ], []
 	)
 	
 	removing_finished.emit(result)
