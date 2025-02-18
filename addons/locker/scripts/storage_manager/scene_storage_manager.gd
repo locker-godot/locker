@@ -19,43 +19,16 @@ extends LokStorageManager
 ## mocking it with unit testing easier. [br]
 ## To guarantee that this property isn't altered, its setter doesn't allow
 ## modifications. That could be changed if this class is overridden, though.
-var global_manager: LokStorageManager:
+var global_manager: LokStorageManager = LokGlobalStorageManager:
 	set = set_global_manager,
 	get = get_global_manager
-
-var global_manager_connections: Array[Dictionary] = [
-	{ "name": &"operation_started", "callable": _on_global_manager_operation_started },
-	{ "name": &"saving_started", "callable": _on_global_manager_saving_started },
-	{ "name": &"loading_started", "callable": _on_global_manager_loading_started },
-	{ "name": &"reading_started", "callable": _on_global_manager_reading_started },
-	{ "name": &"removing_started", "callable": _on_global_manager_removing_started },
-	{ "name": &"operation_finished", "callable": _on_global_manager_operation_finished },
-	{ "name": &"saving_finished", "callable": _on_global_manager_saving_finished },
-	{ "name": &"loading_finished", "callable": _on_global_manager_loading_finished },
-	{ "name": &"reading_finished", "callable": _on_global_manager_reading_finished },
-	{ "name": &"removing_finished", "callable": _on_global_manager_removing_finished },
-]
 
 #endregion
 
 #region Setters & Getters
 
 func set_global_manager(new_manager: LokStorageManager) -> void:
-	var old_manager: LokStorageManager = global_manager
-	
 	global_manager = new_manager
-	
-	if old_manager == new_manager:
-		return
-	
-	LokUtil.check_and_disconnect_signals(
-		old_manager,
-		global_manager_connections
-	)
-	LokUtil.check_and_connect_signals(
-		new_manager,
-		global_manager_connections
-	)
 
 func get_global_manager() -> LokStorageManager:
 	return global_manager
@@ -96,12 +69,18 @@ func save_data(
 		push_error_no_manager()
 		return {}
 	
-	return await global_manager.save_data(
+	saving_started.emit()
+	
+	var result: Dictionary = await global_manager.save_data(
 		file_id,
 		version_number,
 		included_accessors,
 		replace
 	)
+	
+	saving_finished.emit(result)
+	
+	return result
 
 ## The [method load_data] method uses the
 ## [method LokGlobalStorageManager.load_data] method to load the
@@ -128,12 +107,18 @@ func load_data(
 		push_error_no_manager()
 		return {}
 	
-	return await global_manager.load_data(
+	loading_started.emit()
+	
+	var result: Dictionary = await global_manager.load_data(
 		file_id,
 		included_accessors,
 		partition_ids,
 		version_numbers
 	)
+	
+	loading_finished.emit(result)
+	
+	return result
 
 ## The [method read_data] method is an intermediate to calling the same method
 ## in the [LokGlobalStorageManager] autoload. More information about it
@@ -148,12 +133,18 @@ func read_data(
 		push_error_no_manager()
 		return {}
 	
-	return await global_manager.read_data(
+	reading_started.emit()
+	
+	var result: Dictionary = await global_manager.read_data(
 		file_id,
 		included_accessors,
 		partition_ids,
 		version_numbers
 	)
+	
+	reading_finished.emit(result)
+	
+	return result
 
 ## The [method remove_data] method is an intermediate to calling the same method
 ## in the [LokGlobalStorageManager] autoload. More information about it
@@ -168,46 +159,17 @@ func remove_data(
 		push_error_no_manager()
 		return {}
 	
-	return await global_manager.remove_data(
+	removing_started.emit()
+	
+	var result: Dictionary = await global_manager.remove_data(
 		file_id,
 		included_accessors,
 		partition_ids,
 		version_numbers
 	)
-
-func _init() -> void:
-	global_manager = LokGlobalStorageManager
-
-func _on_global_manager_operation_started(operation_name: StringName) -> void:
-	operation_started.emit(operation_name)
-
-func _on_global_manager_saving_started() -> void:
-	saving_started.emit()
-
-func _on_global_manager_loading_started() -> void:
-	loading_started.emit()
-
-func _on_global_manager_reading_started() -> void:
-	reading_started.emit()
-
-func _on_global_manager_removing_started() -> void:
-	removing_started.emit()
-
-func _on_global_manager_operation_finished(
-	result: Dictionary, operation: StringName
-) -> void:
-	operation_finished.emit(result, operation)
-
-func _on_global_manager_saving_finished(result: Dictionary) -> void:
-	saving_finished.emit(result)
-
-func _on_global_manager_loading_finished(result: Dictionary) -> void:
-	loading_finished.emit(result)
-
-func _on_global_manager_reading_finished(result: Dictionary) -> void:
-	reading_finished.emit(result)
-
-func _on_global_manager_removing_finished(result: Dictionary) -> void:
+	
 	removing_finished.emit(result)
+	
+	return result
 
 #endregion

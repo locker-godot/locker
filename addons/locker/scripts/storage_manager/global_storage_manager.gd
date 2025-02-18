@@ -38,19 +38,6 @@ var access_executor: LokAccessExecutor:
 	set = set_access_executor,
 	get = get_access_executor
 
-var access_executor_connections: Array[Dictionary] = [
-	{ "name": &"operation_started", "callable": _on_executor_operation_started },
-	{ "name": &"saving_started", "callable": _on_executor_saving_started },
-	{ "name": &"loading_started", "callable": _on_executor_loading_started },
-	{ "name": &"reading_started", "callable": _on_executor_reading_started },
-	{ "name": &"removing_started", "callable": _on_executor_removing_started },
-	{ "name": &"operation_finished", "callable": _on_executor_operation_finished },
-	{ "name": &"saving_finished", "callable": _on_executor_saving_finished },
-	{ "name": &"loading_finished", "callable": _on_executor_loading_finished },
-	{ "name": &"reading_finished", "callable": _on_executor_reading_finished },
-	{ "name": &"removing_finished", "callable": _on_executor_removing_finished },
-]
-
 #endregion
 
 #region Setters & Getters
@@ -87,14 +74,14 @@ func set_access_executor(new_executor: LokAccessExecutor) -> void:
 	if old_executor == new_executor:
 		return
 	
-	LokUtil.check_and_disconnect_signals(
-		old_executor,
-		access_executor_connections
-	)
-	LokUtil.check_and_connect_signals(
-		new_executor,
-		access_executor_connections
-	)
+	#LokUtil.check_and_disconnect_signals(
+		#old_executor,
+		#access_executor_connections
+	#)
+	#LokUtil.check_and_connect_signals(
+		#new_executor,
+		#access_executor_connections
+	#)
 
 func get_access_executor() -> LokAccessExecutor:
 	return access_executor
@@ -300,16 +287,20 @@ func save_data(
 		file_id
 	])
 	
-	var saving_result: Dictionary = await access_executor.request_saving(
+	saving_started.emit()
+	
+	var result: Dictionary = await access_executor.request_saving(
 		file_path, file_format, data, replace
 	)
+	
+	saving_finished.emit(result)
 	
 	print("%s: Finished saving file %s;" % [
 		Time.get_ticks_msec(),
 		file_id
 	])
 	
-	return saving_result
+	return result
 
 func load_data(
 	file_id: String = current_file,
@@ -325,7 +316,9 @@ func load_data(
 	
 	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
-	var loading_result: Dictionary = await access_executor.request_loading(
+	loading_started.emit()
+	
+	var result: Dictionary = await access_executor.request_loading(
 		file_path,
 		file_format,
 		partition_ids,
@@ -333,9 +326,11 @@ func load_data(
 		version_numbers
 	)
 	
-	distribute_result(loading_result, included_accessors)
+	loading_finished.emit(result)
 	
-	return loading_result
+	distribute_result(result, included_accessors)
+	
+	return result
 
 func read_data(
 	file_id: String = current_file,
@@ -351,11 +346,15 @@ func read_data(
 	
 	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
-	var reading_result: Dictionary = await access_executor.request_reading(
+	reading_started.emit()
+	
+	var result: Dictionary = await access_executor.request_reading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	
-	return reading_result
+	reading_finished.emit(result)
+	
+	return result
 
 func remove_data(
 	file_id: String = current_file,
@@ -371,11 +370,15 @@ func remove_data(
 	
 	var accessor_ids: Array[String] = get_accessor_ids(included_accessors)
 	
-	var removing_result: Dictionary = await access_executor.request_removing(
+	removing_started.emit()
+	
+	var result: Dictionary = await access_executor.request_removing(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	
-	return removing_result
+	removing_finished.emit(result)
+	
+	return result
 
 # Initializes values according to settings
 func _init() -> void:
@@ -386,35 +389,5 @@ func _init() -> void:
 	
 	if access_strategy is LokEncryptedAccessStrategy:
 		access_strategy.password = LockerPlugin.get_setting_encrypted_strategy_password()
-
-func _on_executor_operation_started(operation_name: StringName) -> void:
-	operation_started.emit(operation_name)
-
-func _on_executor_saving_started() -> void:
-	saving_started.emit()
-
-func _on_executor_loading_started() -> void:
-	loading_started.emit()
-
-func _on_executor_reading_started() -> void:
-	reading_started.emit()
-
-func _on_executor_removing_started() -> void:
-	removing_started.emit()
-
-func _on_executor_operation_finished(result: Dictionary, operation: StringName) -> void:
-	operation_finished.emit(result, operation)
-
-func _on_executor_saving_finished(result: Dictionary) -> void:
-	saving_finished.emit(result)
-
-func _on_executor_loading_finished(result: Dictionary) -> void:
-	loading_finished.emit(result)
-
-func _on_executor_reading_finished(result: Dictionary) -> void:
-	reading_finished.emit(result)
-
-func _on_executor_removing_finished(result: Dictionary) -> void:
-	removing_finished.emit(result)
 
 #endregion

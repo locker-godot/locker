@@ -13,8 +13,6 @@ extends LokAccessorGroup
 
 #region Signals
 
-signal operation_started(operation: StringName)
-
 signal saving_started()
 
 signal loading_started()
@@ -22,8 +20,6 @@ signal loading_started()
 signal reading_started()
 
 signal removing_started()
-
-signal operation_finished(result: Dictionary, operation: StringName)
 
 signal saving_finished(result: Dictionary)
 
