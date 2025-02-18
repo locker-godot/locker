@@ -2,6 +2,18 @@
 class_name LokAccessorGroup
 extends Node
 
+signal group_saving_started()
+
+signal group_loading_started()
+
+signal group_removing_started()
+
+signal group_saving_finished()
+
+signal group_loading_finished()
+
+signal group_removing_finished()
+
 ## The [member current_version] property is used as the version with which
 ## data is saved when using this [LokSceneStorageManager]. [br]
 ## By default, it is set to [code]""[/code], which is converted to the
@@ -58,45 +70,44 @@ func remove_accessor(accessor: LokStorageAccessor) -> bool:
 	
 	return true
 
-## The [method get_accessors_by_id] method looks through all currently
-## registered [LokStorageAccessor]s and returns the ones that match the
-## [param id] passed.
-func get_accessors_by_id(id: String) -> Array[LokStorageAccessor]:
-	var result: Array[LokStorageAccessor] = []
+func save_accessor_group(version_number: String = current_version) -> void:
+	if accessors.is_empty():
+		return
 	
-	for accessor: LokStorageAccessor in accessors:
-		if accessor.id == id:
-			result.append(accessor)
+	group_saving_started.emit()
 	
-	return result
-
-## The [method get_accessor_by_id] method looks through all currently
-## registered [LokStorageAccessor]s and returns the first one that matches the
-## [param id] passed.
-func get_accessor_by_id(id: String) -> LokStorageAccessor:
-	for accessor: LokStorageAccessor in accessors:
-		if accessor.id == id:
-			return accessor
-	
-	return null
-
-func save_data_per_accessor(version_number: String = current_version) -> void:
 	for accessor: LokStorageAccessor in accessors:
 		if not accessor.is_active():
 			continue
 		
 		await accessor.save_data("", version_number)
+	
+	group_saving_finished.emit()
 
-func load_data_per_accessor() -> void:
+func load_accessor_group() -> void:
+	if accessors.is_empty():
+		return
+	
+	group_loading_started.emit()
+	
 	for accessor: LokStorageAccessor in accessors:
 		if not accessor.is_active():
 			continue
 		
-		await accessor.load_data()
+		await accessor.load_data("")
+	
+	group_loading_finished.emit()
 
-func remove_data_per_accessor() -> void:
+func remove_accessor_group() -> void:
+	if accessors.is_empty():
+		return
+	
+	group_removing_started.emit()
+	
 	for accessor: LokStorageAccessor in accessors:
 		if not accessor.is_active():
 			continue
 		
-		await accessor.remove_data()
+		await accessor.remove_data("")
+	
+	group_removing_finished.emit()

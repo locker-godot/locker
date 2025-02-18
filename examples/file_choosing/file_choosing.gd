@@ -6,4 +6,4 @@ extends Node2D
 func _ready() -> void:
 	LokGlobalStorageManager.set_saves_directory("res://examples/file_choosing/saves/")
 	LokGlobalStorageManager.set_access_strategy(LokJSONAccessStrategy.new())
-	accessor_group.load_data_per_accessor()
+	accessor_group.load_accessor_group()
