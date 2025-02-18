@@ -6,52 +6,11 @@ extends RefCounted
 
 signal operation_started(operation: StringName)
 
-signal saving_started()
-
-signal loading_started()
-
-signal reading_started()
-
-signal removing_started()
-
 signal operation_finished(result: Dictionary, operation: StringName)
-
-signal saving_finished(result: Dictionary)
-
-signal loading_finished(result: Dictionary)
-
-signal reading_finished(result: Dictionary)
-
-signal removing_finished(result: Dictionary)
 
 #endregion
 
 #region Properties
-
-var operations: Dictionary = {
-	&"save": {
-		&"callable": save_data,
-		&"start_signal": saving_started,
-		&"finish_signal": saving_finished
-	},
-	&"load": {
-		&"callable": load_data,
-		&"start_signal": loading_started,
-		&"finish_signal": loading_finished,
-	},
-	&"read": {
-		&"callable": read_data,
-		&"start_signal": reading_started,
-		&"finish_signal": reading_finished,
-	},
-	&"remove": {
-		&"callable": remove_data,
-		&"start_signal": removing_started,
-		&"finish_signal": removing_finished,
-	}
-}:
-	set = set_operations,
-	get = get_operations
 
 var mutex: Mutex = Mutex.new():
 	set = set_mutex,
@@ -69,17 +28,13 @@ var exit_executor: bool = false:
 	set = set_exit_executor,
 	get = should_exit_executor
 
-var queued_operations: Array[Dictionary] = []:
+var queued_operations: Array[LokAccessOperation] = []:
 	set = set_queued_operations,
 	get = get_queued_operations
 
-var current_operation: Dictionary = {}:
+var current_operation: LokAccessOperation = null:
 	set = set_current_operation,
 	get = get_current_operation
-
-var last_result: Dictionary = {}:
-	set = set_last_result,
-	get = get_last_result
 
 var access_strategy: LokAccessStrategy = null:
 	set = set_access_strategy,
@@ -88,12 +43,6 @@ var access_strategy: LokAccessStrategy = null:
 #endregion
 
 #region Setters & getters
-
-func set_operations(new_operations: Dictionary) -> void:
-	operations = new_operations
-
-func get_operations() -> Dictionary:
-	return operations
 
 func set_mutex(new_mutex: Mutex) -> void:
 	mutex = new_mutex
@@ -119,23 +68,17 @@ func set_exit_executor(new_exit_executor: bool) -> void:
 func should_exit_executor() -> bool:
 	return exit_executor
 
-func set_queued_operations(new_operations: Array[Dictionary]) -> void:
+func set_queued_operations(new_operations: Array[LokAccessOperation]) -> void:
 	queued_operations = new_operations
 
-func get_queued_operations() -> Array[Dictionary]:
+func get_queued_operations() -> Array[LokAccessOperation]:
 	return queued_operations
 
-func set_current_operation(new_operation: Dictionary) -> void:
+func set_current_operation(new_operation: LokAccessOperation) -> void:
 	current_operation = new_operation
 
-func get_current_operation() -> Dictionary:
+func get_current_operation() -> LokAccessOperation:
 	return current_operation
-
-func set_last_result(new_result: Dictionary) -> void:
-	last_result = new_result
-
-func get_last_result() -> Dictionary:
-	return last_result
 
 func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
 	access_strategy = new_strategy
@@ -175,14 +118,13 @@ func execute() -> void:
 		if should_stop:
 			break
 		
-		# Emit the operation start signals
-		start_operation(get_operation_name(current_operation))
+		if current_operation == null:
+			continue
 		
-		# Execute the operation itself
-		get_operation_callable(current_operation).call()
+		current_operation.operate()
 		
 		mutex.lock()
-		current_operation = {}
+		current_operation = null
 		mutex.unlock()
 
 func finish_execution() -> void:
@@ -194,99 +136,23 @@ func finish_execution() -> void:
 	
 	await thread.wait_to_finish()
 
-func queue_operation(operation: Dictionary) -> void:
+func queue_operation(operation: LokAccessOperation) -> void:
 	queued_operations.push_front(operation)
 
-func dequeue_operation() -> Dictionary:
+func dequeue_operation() -> LokAccessOperation:
 	if queued_operations.is_empty():
-		return {}
+		return null
 	
 	return queued_operations.pop_back()
-
-func create_operation(
-	operation_name: StringName,
-	callable_args: Array
-) -> Dictionary:
-	var base_operation: Dictionary = get_operation_by_name(operation_name)
-	
-	var new_operation: Dictionary = base_operation.duplicate()
-	new_operation[&"name"] = operation_name
-	new_operation[&"callable"] = get_operation_callable(
-		base_operation
-	).bindv(callable_args)
-	
-	return new_operation
-
-func get_operation_by_name(operation_name: StringName) -> Dictionary:
-	return operations.get(operation_name, {})
-
-func get_operation_name(operation: Dictionary) -> StringName:
-	return operation.get(&"name", &"")
-
-func get_operation_callable(operation: Dictionary) -> Callable:
-	return operation.get(&"callable", Callable())
-
-func get_operation_start_signal(operation: Dictionary) -> Signal:
-	return operation.get(&"start_signal", Signal())
-
-func get_operation_finish_signal(operation: Dictionary) -> Signal:
-	return operation.get(&"finish_signal", Signal())
-
-func create_result(
-	data: Dictionary = {},
-	status: Error = Error.OK
-) -> Dictionary:
-	return {
-		"status": status,
-		"data": data
-	}
 
 func has_queued_operations() -> bool:
 	return not queued_operations.is_empty()
 
 func has_current_operation() -> bool:
-	return not current_operation.is_empty()
+	return current_operation != null
 
 func is_busy() -> bool:
 	return has_queued_operations() or has_current_operation()
-
-func is_saving() -> bool:
-	var current_operation_name: StringName = get_operation_name(current_operation)
-	
-	return current_operation_name == &"save"
-
-func is_loading() -> bool:
-	var current_operation_name: StringName = get_operation_name(current_operation)
-	
-	return current_operation_name == &"load"
-
-func is_reading() -> bool:
-	var current_operation_name: StringName = get_operation_name(current_operation)
-	
-	return current_operation_name == &"read"
-
-func is_removing() -> bool:
-	var current_operation_name: StringName = get_operation_name(current_operation)
-	
-	return current_operation_name == &"remove"
-
-func start_operation(operation_name: StringName) -> void:
-	var operation: Dictionary = get_operation_by_name(operation_name)
-	
-	operation_started.emit.call_deferred(operation_name)
-	get_operation_start_signal(operation).emit.call_deferred()
-
-func finish_operation(result: Dictionary, operation_name: StringName) -> Dictionary:
-	mutex.lock()
-	last_result = result
-	mutex.unlock()
-	
-	var operation: Dictionary = get_operation_by_name(operation_name)
-	
-	get_operation_finish_signal(operation).emit.call_deferred(result)
-	operation_finished.emit.call_deferred(result, operation_name)
-	
-	return result
 
 func request_saving(
 	file_path: String,
@@ -295,8 +161,12 @@ func request_saving(
 	replace: bool = false
 ) -> Dictionary:
 	return await operate(
-		&"save",
-		[ file_path, file_format, data, replace ]
+		save_data.bind(
+			file_path,
+			file_format,
+			data,
+			replace
+		)
 	)
 
 func request_loading(
@@ -307,8 +177,13 @@ func request_loading(
 	version_numbers: Array[String] = []
 ) -> Dictionary:
 	return await operate(
-		&"load",
-		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
+		load_data.bind(
+			file_path,
+			file_format,
+			partition_ids,
+			accessor_ids,
+			version_numbers
+		)
 	)
 
 func request_reading(
@@ -319,8 +194,13 @@ func request_reading(
 	version_numbers: Array[String] = []
 ) -> Dictionary:
 	return await operate(
-		&"read",
-		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
+		read_data.bind(
+			file_path,
+			file_format,
+			partition_ids,
+			accessor_ids,
+			version_numbers
+		)
 	)
 	
 func request_removing(
@@ -331,12 +211,19 @@ func request_removing(
 	version_numbers: Array[String] = []
 ) -> Dictionary:
 	return await operate(
-		&"remove",
-		[ file_path, file_format, partition_ids, accessor_ids, version_numbers ]
+		remove_data.bind(
+			file_path,
+			file_format,
+			partition_ids,
+			accessor_ids,
+			version_numbers
+		)
 	)
 
-func operate(operation_name: StringName, args: Array) -> Dictionary:
-	var new_operation: Dictionary = create_operation(operation_name, args)
+func operate(operation_callable: Callable) -> Dictionary:
+	var new_operation := LokAccessOperation.new(operation_callable)
+	new_operation.started.connect(_on_operation_started, CONNECT_ONE_SHOT)
+	new_operation.finished.connect(_on_operation_finished, CONNECT_ONE_SHOT)
 	
 	mutex.lock()
 	queue_operation(new_operation)
@@ -344,15 +231,12 @@ func operate(operation_name: StringName, args: Array) -> Dictionary:
 	
 	semaphore.post()
 	
-	while true:
-		await operation_finished
-		
-		if queued_operations.is_empty():
-			break
+	var finished_args: Array = await new_operation.finished
 	
-	mutex.lock()
-	var result: Dictionary = last_result
-	mutex.unlock()
+	var result: Dictionary = {}
+	
+	if finished_args.size() > 0:
+		result = finished_args[0]
 	
 	return result
 
@@ -362,19 +246,19 @@ func save_data(
 	data: Dictionary,
 	replace: bool = false
 ) -> Dictionary:
-	var result: Dictionary = create_result()
+	var result: Dictionary = LokAccessStrategy.create_result()
 	
 	if access_strategy == null:
 		push_error_no_access_strategy()
 		result["status"] = Error.ERR_UNCONFIGURED
 		
-		return finish_operation(result, &"save")
+		return result
 	
 	result = access_strategy.save_data(
 		file_path, file_format, data, replace, false
 	)
 	
-	return finish_operation(result, &"save")
+	return result
 
 # Blocking operation
 func load_data(
@@ -384,13 +268,13 @@ func load_data(
 	accessor_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var result: Dictionary = create_result()
+	var result: Dictionary = LokAccessStrategy.create_result()
 	
 	if access_strategy == null:
 		push_error_no_access_strategy()
 		result["status"] = Error.ERR_UNCONFIGURED
 		
-		return finish_operation(result, &"load")
+		return result
 	
 	result = access_strategy.load_data(
 		file_path,
@@ -401,7 +285,7 @@ func load_data(
 		false
 	)
 	
-	return finish_operation(result, &"load")
+	return result
 
 # Blocking operation
 func read_data(
@@ -411,13 +295,13 @@ func read_data(
 	accessor_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var result: Dictionary = create_result()
+	var result: Dictionary = LokAccessStrategy.create_result()
 	
 	if access_strategy == null:
 		push_error_no_access_strategy()
 		result["status"] = Error.ERR_UNCONFIGURED
 		
-		return finish_operation(result, &"read")
+		return result
 	
 	result = access_strategy.load_data(
 		file_path,
@@ -428,7 +312,7 @@ func read_data(
 		false
 	)
 	
-	return finish_operation(result, &"read")
+	return result
 
 # Blocking operation
 func remove_data(
@@ -438,13 +322,13 @@ func remove_data(
 	accessor_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
-	var result: Dictionary = create_result()
+	var result: Dictionary = LokAccessStrategy.create_result()
 	
 	if access_strategy == null:
 		push_error_no_access_strategy()
 		result["status"] = Error.ERR_UNCONFIGURED
 		
-		return finish_operation(result, &"remove")
+		return result
 	
 	result = access_strategy.remove_data(
 		file_path,
@@ -455,6 +339,12 @@ func remove_data(
 		false
 	)
 	
-	return finish_operation(result, &"remove")
+	return result
+
+func _on_operation_started(operation: LokAccessOperation) -> void:
+	operation_started.emit(operation)
+
+func _on_operation_finished(result: Dictionary, operation: LokAccessOperation) -> void:
+	operation_finished.emit(result, operation)
 
 #endregion

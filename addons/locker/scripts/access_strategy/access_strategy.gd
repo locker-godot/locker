@@ -25,7 +25,7 @@ extends Resource
 ## The returned [Dictionary] has two keys: the [code]"status"[/code], which
 ## stores a [enum @GlobalScope.Error] code, and the [code]"data"[/code],
 ## which stores a [Dictionary] with the resultant data of an operation.
-func create_result(
+static func create_result(
 	data: Dictionary = {},
 	status: Error = Error.OK
 ) -> Dictionary:
