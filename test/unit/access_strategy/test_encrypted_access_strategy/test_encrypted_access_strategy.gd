@@ -620,7 +620,7 @@ func test_remove_data_updates_in_file_system() -> void:
 	var expected_loaded_data: Dictionary = default_accessor2_data.duplicate(true)
 	expected_loaded_data["accessor_id_2"]["partition"] = "partition2"
 	
-	var result: Dictionary = strategy.remove_data(
+	strategy.remove_data(
 		file_path, "sav", [], [], [ "1.0.0" ], suppress_errors
 	)
 	
