@@ -2,8 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://cabtwgcshp66e" path="res://icon.svg" id="1_4n58o"]
 [ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/player.gd" id="2_0hilf"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_5vyyg"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="4_atapx"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor.gd" id="2_5vyyg"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="4_atapx"]
 [ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/dynamic_player_accessor_v1.gd" id="5_ubttn"]
 
 [sub_resource type="Resource" id="Resource_r0fis"]

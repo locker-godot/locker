@@ -1,7 +1,7 @@
 
 extends GutTest
 
-var EncryptedAccessStrategy: GDScript = preload("res://addons/locker/access_strategy/encrypted_access_strategy.gd")
+var EncryptedAccessStrategy: GDScript = preload("res://addons/locker/scripts/access_strategy/encrypted_access_strategy.gd")
 
 var strategy: LokAccessStrategy
 

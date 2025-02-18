@@ -10,10 +10,6 @@ config_version=5
 
 [addons]
 
-locker/saves_directory="user://mods/"
-locker/save_files_prefix="mod"
-locker/save_files_format="json"
-locker/save_versions=false
 locker/encrypted_strategy/password="password"
 
 [application]
@@ -25,7 +21,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-LokGlobalStorageManager="*res://addons/locker/storage_manager/global_storage_manager.gd"
+LokGlobalStorageManager="*res://addons/locker/scripts/storage_manager/global_storage_manager.gd"
 
 [editor_plugins]
 

@@ -2,9 +2,9 @@
 
 [ext_resource type="PackedScene" uid="uid://cbrn0exw0ssrt" path="res://examples/file_choosing/scenes/file.tscn" id="1_eniq1"]
 [ext_resource type="Script" path="res://examples/file_choosing/file_choosing.gd" id="1_vfonc"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/accessor_group.gd" id="1_vjga4"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/accessor_group.gd" id="1_vjga4"]
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/files_container.gd" id="2_jrec7"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="4_1x5ht"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="4_1x5ht"]
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="5_u7k0x"]
 
 [sub_resource type="Resource" id="Resource_epkn0"]

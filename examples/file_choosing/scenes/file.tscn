@@ -2,8 +2,8 @@
 
 [ext_resource type="LabelSettings" uid="uid://uxfr14nbvtdb" path="res://examples/file_choosing/resources/file_title_label_settings.tres" id="1_0hxq7"]
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/file_card.gd" id="1_l8x3p"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor.gd" id="2_x8j06"]
-[ext_resource type="Script" path="res://addons/locker/storage_accessor/storage_accessor_version.gd" id="3_snras"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor.gd" id="2_x8j06"]
+[ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="3_snras"]
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="4_w6if2"]
 
 [sub_resource type="Resource" id="Resource_epkn0"]
