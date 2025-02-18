@@ -26,7 +26,7 @@ func push_error_tried_saving_with_loader() -> void:
 ## in order to make it unable to save data. [br]
 ## If it is attempted to call it, an error is pushed.
 func save_data(
-	file_id: String,
+	file_id: String = file,
 	version_number: String = ""
 ) -> Dictionary:
 	push_error_tried_saving_with_loader()

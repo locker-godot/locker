@@ -25,7 +25,7 @@ func push_error_tried_loading_with_saver() -> void:
 ## The [method load_data] method is overridden by this [LokStorageSaver]
 ## in order to make it unable to load data. [br]
 ## If it is attempted to call it, an error is pushed.
-func load_data(file_id: String) -> Dictionary:
+func load_data(file_id: String = file) -> Dictionary:
 	push_error_tried_loading_with_saver()
 	
 	return {}
