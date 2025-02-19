@@ -1,4 +1,3 @@
-@icon("res://addons/locker/icons/storage_manager.svg")
 ## The [LokStorageManager] is the super class of the [LokGlobalStorageManager]
 ## and [LokSceneStorageManager] classes.
 ## 
