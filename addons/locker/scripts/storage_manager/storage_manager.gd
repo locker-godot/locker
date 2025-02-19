@@ -12,26 +12,60 @@ extends LokAccessorGroup
 
 #region Signals
 
+## The [signal saving_started] signal is emitted when a save
+## operation was started by this [LokStorageManager].
 signal saving_started()
 
+## The [signal loading_started] signal is emitted when a load
+## operation was started by this [LokStorageManager].
 signal loading_started()
 
+## The [signal reading_started] signal is emitted when a read
+## operation was started by this [LokStorageManager].
 signal reading_started()
 
+## The [signal removing_started] signal is emitted when a remove
+## operation was started by this [LokStorageManager].
 signal removing_started()
 
+## The [signal saving_finished] signal is emitted when a save
+## operation was finished by this [LokStorageManager]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## saved.
 signal saving_finished(result: Dictionary)
 
+## The [signal loading_finished] signal is emitted when a load
+## operation was finished by this [LokStorageManager]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## loaded.
 signal loading_finished(result: Dictionary)
 
+## The [signal reading_finished] signal is emitted when a read
+## operation was finished by this [LokStorageManager]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## readed.
 signal reading_finished(result: Dictionary)
 
+## The [signal removing_finished] signal is emitted when a remove
+## operation was finished by this [LokStorageManager]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## removed.
 signal removing_finished(result: Dictionary)
 
 #endregion
 
 #region Properties
 
+## The [member current_file] property stores the id of the default file
+## to be used when performing operations with this [LokStorageManager].
 @export var current_file: String = "":
 	set = set_current_file,
 	get = get_current_file
@@ -65,101 +99,105 @@ func get_readable_name() -> String:
 
 #region Methods
 
-## The [method save_data] method should work as the main way of saving the
-## game, gathering together information from all active [LokStorageAccessor]s
-## and saving them in a desired file. [br]
-## The only mandatory parameter of this method is the [param file_id]
-## that should determine in what file the game should be saved. [br]
+## The [method save_data] method should save the information from all active
+## [member LokAccessorGroup.accessors] of this [LokStorageManager]
+## in a desired file. [br]
+## This method receives several parameters to customize that process. [br]
+## The [param file_id] should determine in what file the game should be saved.
+## This id defaults to the one set in the [member current_file] property. [br]
 ## The [param version_number] parameter is supposed to specify what version
 ## of the registered [LokStorageAccessor]s should be used to save the game.
-## By default, it is set to [code]""[/code], which converts to the latest
-## version available. [br]
-## The [param accessor_ids] parameter is an [Array] that represents what
+## By default, it is set to the [member LokAccessorGroup.current_version],
+## which converts to the latest version available. [br]
+## The [param included_accessors] parameter is an [Array] that represents what
 ## is the subset of [LokStorageAccessor]s that should be involved in this
-## saving process. If left empty, as default, it means that all
+## saving process. If left empty, as default, it would mean that all
 ## [LokStorageAccessor]s currently registered would have their informations
 ## saved. [br]
 ## The [param replace] parameter is a flag that tells whether the previous
 ## data saved, if any, should be overwritten by the new one.
 ## It's not recommended setting this flag to [code]true[/code] since
-## [LokStorageAccessor]s from unloaded scenes may need that overwritten data.
+## [LokStorageAccessor]s not included in the saving may need that
+## overwritten data later on.
 ## This flag should only be used if you know the previous data and
 ## are sure you want to delete it. [br]
-## At the end, this method should return the data that was saved via
-## a [Dictionary].
+## At the end, this method should return the result of the saving via
+## a [Dictionary] with a [code]"status"[/code] key specifying a
+## [enum @GlobalScope.Error] code, and a [code]"data"[/code] key
+## storing all data saved.
 func save_data(
 	file_id: String = current_file,
 	version_number: String = current_version,
-	accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = [],
 	replace: bool = false
 ) -> Dictionary: return {}
 
-## The [method load_data] method should work as the main way of loading the
-## game, getting the information from a desired file and
-## distributing it to all active [LokStorageAccessor]s. [br]
-## The only mandatory parameter of this method is the [param file_id]
-## that should determine from what file the game should be loaded. [br]
-## Besides that, there's the [param accessor_ids] parameter
-## which is an [Array] that represents what
-## is the subset of [LokStorageAccessor]s that should receive the
-## data obtained in this loading process. [br]
+## The [method load_data] method should load the information from all active
+## [member LokAccessorGroup.accessors] of this [LokStorageManager]
+## from a desired file and further distribute it to them, so they
+## can use it with their [method LokStorageAccessor.consume_data] method. [br]
+## This method receives several parameters to customize that process. [br]
+## The [param file_id] should determine from what file the game should be
+## loaded.
+## This id defaults to the one set in the [member current_file] property. [br]
+## Besides that, the [param included_accessors] parameter is an [Array] that
+## represents what is the subset of [LokStorageAccessor]s that should be
+## involved in this loading process.
+## If left empty, as default, it would mean that all
+## [LokStorageAccessor]s currently registered would have their informations
+## loaded. [br]
 ## To provide yet more control over what data is loaded, the
 ## [param partition_ids] and [param version_numbers] parameters can be passed,
-## serving to filter what information is applied in the game. [br]
+## serving to filter what information should be applied to the game. [br]
 ## If you have sure about in what partitions is the data you want to load,
 ## passing their [param partition_ids] is more efficient since the loading
 ## only needs to check those partitions. [br]
 ## If the optional parameters are left empty, as default, it means that all
-## [param accessor_ids], [param partition_ids] and [param version_numbers]
+## [param included_accessors], [param partition_ids] and [param version_numbers]
 ## are used when loading. [br]
-## When finished, this method should return the data it gathered loading the
-## save file in a [Dictionary].
+## At the end, this method should return the result of the loading via
+## a [Dictionary] with a [code]"status"[/code] key specifying a
+## [enum @GlobalScope.Error] code, and a [code]"data"[/code] key
+## storing all data loaded.
 func load_data(
 	file_id: String = current_file,
-	accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
 
-## The [method read_data] method is the main way of loading the game data
-## from a file without distributing it to the corresponding
-## [LokStorageAccessor]s. [br]
-## The only mandatory parameter of this method is the [param file_id],
-## that should determine from what file the data should be read. [br]
-## Besides that, there's the [param accessor_ids], [param partition_ids]
-## and [param version_numbers] parameters, which respectively serve to filter
-## the [b]data id[/b], [b]partition id[/b], and [b]version number[/b]
-## of the data obtained. ([i]See [member LokStorageAccessor.id],
-## [member LokStorageAccessor.partition] and
-## [member LokStorageAccessorVersion.number][/i]) [br]
-## On finish, this method should return the data read filtered by the passed
-## parameters in a [Dictionary].
+## The [method read_data] method should read the information from
+## a desired file, like the [method load_data] method,
+## but not distribute that data to its respective [LokStorageAccessor]s. [br]
+## Excluding that small difference, this method is basically the same as the
+## [method load_data] method, but more inclined for possibilitating saved data
+## analysis without necessarily applying it to the game. [br]
+## To read more about the parameters and return of this method, see the
+## [method load_data] method.
 func read_data(
 	file_id: String = current_file,
-	accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
 
-## The [method remove_data] method should serve as the main way of removing
-## data previously saved in this game. [br]
-## It's only mandatory parameter is the [param file_id],
-## which should specify from what file the data should be removed. [br]
-## If it's wanted to delete just some of the data, the [param remover]
-## parameter can be passed a [Callable] to control
-## which data should be removed. [br]
-## In order to do that, this [Callable] should receive three [String]s:
-## one representing the [param accessor_id], other representing the
-## [param partition_id] and the other representing the
-## [param version_number] with which that data was saved. [br]
-## Finally, this [Callable] should return a
-## [code]bool[/code], with [code]true[/code] meaning a data should be removed
-## and [code]false[/code] meaning it shouldn't. [br]
-## [i]See [method default_remover] if you want a concrete example of how
-## should be the signature of the [param remover][/i].
+## The [method remove_data] method should remove the information from a
+## desired file of specified by the [param file_id] parameter. [br]
+## By default, that [param file_id] is set to the
+## [member current_file] property. [br]
+## The [param included_accessors], [param partition_ids] and
+## [param version_numbers] parameters can be used to filter what should be
+## removed, if it's not desired to remove the entire file. [br]
+## To read more about those parameters, see the [method load_data] method,
+## which uses them as filters in the same way. [br]
+## At the end, this method should return the result of the removing via
+## a [Dictionary] with a [code]"status"[/code] key specifying a
+## [enum @GlobalScope.Error] code, a [code]"data"[/code] key
+## storing all data removed, and an [code]"updated_data"[/code] key
+## storing all data kept.
 func remove_data(
 	file_id: String = current_file,
-	accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = [],
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary: return {}
