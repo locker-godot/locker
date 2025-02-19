@@ -17,7 +17,7 @@
 ## [b]Version[/b]: 1.0.0[br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokAccessStrategy
-extends Resource
+extends RefCounted
 
 ## The [method create_result] method helps with the creation of a [Dictionary]
 ## representing the result of an operation done by this [LokAccessStrategy].
