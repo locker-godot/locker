@@ -18,27 +18,49 @@
 class_name LokStorageAccessor
 extends Node
 
+## The [signal saving_started] is emitted when a save operation was started
+## by this [LokStorageAccessor].
 signal saving_started()
 
+## The [signal loading_started] is emitted when a load operation was started
+## by this [LokStorageAccessor].
 signal loading_started()
 
+## The [signal removing_started] is emitted when a remove operation was started
+## by this [LokStorageAccessor].
 signal removing_started()
 
+## The [signal saving_finished] is emitted when a save operation was finished
+## by this [LokStorageAccessor]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## saved.
 signal saving_finished(result: Dictionary)
 
+## The [signal loading_finished] is emitted when a load operation was finished
+## by this [LokStorageAccessor]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code and a [code]"data"[/code] key, with the data
+## loaded.
 signal loading_finished(result: Dictionary)
 
+## The [signal removing_finished] is emitted when a remove operation was
+## finished by this [LokStorageAccessor]. [br]
+## This signal brings a [Dictionary] representing the result of the operation.
+## This [Dictionary] has a [code]"status"[/code] key, with a
+## [enum @GlobalScope.Error] code; a [code]"data"[/code] key, with the data
+## removed; and a [code]"updated_data"[/code] key, with the data
+## that wasn't removed.
 signal removing_finished(result: Dictionary)
 
 ## The [member storage_manager] property is just a reference to the
-## [LokStorageManager] autoload. [br]
+## [LokGlobalStorageManager] autoload. [br]
 ## Its reference is stored in this property so it can be more easily
 ## mocked in unit tests. [br]
 ## The value of this property shouldn't be altered. Doing so may
-## cause the saving and loading system to not work properly. [br]
-## That's why the setter of this property is originally setup to do
-## nothing, so that this property acts essentially like a constant
-## unless its setter is overriden.
+## cause the saving and loading system to not work properly.
 var storage_manager: LokStorageManager = LokGlobalStorageManager:
 	set = set_storage_manager,
 	get = get_storage_manager
@@ -46,13 +68,24 @@ var storage_manager: LokStorageManager = LokGlobalStorageManager:
 ## The [member id] property specifies what is the unique id of this
 ## [LokStorageAccessor]. [br]
 ## You should always plan your save system to make sure your
-## [LokStorageAccessor]'s ids don't crash. [br]
+## [LokStorageAccessor]'s ids don't crash when saving data. [br]
 ## If they do, there may arise data inconsistency issues or even
-## loss of data.
+## loss of data. [br]
+## Multiple [LokStorageAccessor]s with same [member id] is fine, though,
+## with the [method load_data] operation, or in the case those
+## [LokStorageAccessor]s belong to different save files.
 @export var id: String = "":
 	set = set_id,
 	get = get_id
 
+## The [member file] property specifies from what file the
+## data of this [LokStorageAccessor] belongs to. [br]
+## If left empty, it is considered as being the default file. [br]
+## This [member file] property is only used by the operations
+## of this [LokStorageAccessor] as the default file, not in general
+## operations that include multiple [LokStorageAccessor]s. [br]
+## This is useful when in need of implementing something like a file
+## selection screen.
 @export var file: String = "":
 	set = set_file,
 	get = get_file
@@ -89,8 +122,8 @@ var storage_manager: LokStorageManager = LokGlobalStorageManager:
 ## In order for this [LokStorageAccessor] to correctly find new versions,
 ## they should be added to this [Array] through a new [Array], so that
 ## this property's setter gets triggered. Alternatively, you can use
-## a method like [method Array.append], but make sure to call
-## [method 
+## a method like [method Array.append], but make sure to call the
+## [method update_version] method next.
 @export var versions: Array[LokStorageAccessorVersion] = []:
 	set = set_versions,
 	get = get_versions
@@ -98,19 +131,21 @@ var storage_manager: LokStorageManager = LokGlobalStorageManager:
 ## The [member dependency_paths] property stores a [Dictionary] that helps
 ## with keeping track of dependencies that this [LokStorageAccessor] needs
 ## to get or send data to. [br]
-## This property is meant to store [String] keys and [NodePath] values that
+## This property stores keys and values that
 ## are sent to the active [LokStorageAccessorVersion] so that it can manipulate
 ## the data accordingly. [br]
-## Before being sent to a [LokStorageAccessorVersion], the [NodePath]s are
+## If the keys are [NodePath]s, before being sent to a
+## [LokStorageAccessorVersion], the [NodePath]s are
 ## converted into [Node]s, so that the [LokStorageAccessorVersion] can
-## have their references, despite being a [Resource].
+## have their references, despite it being a [Resource].
 @export var dependency_paths: Dictionary = {}:
 	set = set_dependency_paths,
 	get = get_dependency_paths
 
 ## The [member active] property is a flag that tells whether this
-## [LokStorageAccessor] should save and load its data when its
-## [method save_data] and [method load_data] methods try so. [br]
+## [LokStorageAccessor] should operate its data when its
+## [method save_data], [method load_data] or [method remove_data]
+## methods try to. [br]
 ## By default it is set to [code]true[/code] so that this
 ## [LokStorageAccessor] can do its tasks as expected.
 @export var active: bool = true:
@@ -201,6 +236,8 @@ func get_version() -> LokStorageAccessorVersion:
 
 #region Debug Methods
 
+## The [method get_readable_name] method is a way of getting a more
+## user friendly name for this [LokStorageAccessor], for use in debugging.
 func get_readable_name() -> String:
 	if is_inside_tree():
 		return str(get_path())
@@ -209,11 +246,16 @@ func get_readable_name() -> String:
 	
 	return str(self)
 
+## The [method push_error_no_manager] method pushes an error
+## warning that there's no [member storage_manager] set in this
+## [LokStorageAccessor].
 func push_error_no_manager() -> void:
 	push_error(
 		"No StorageManager found in Accessor '%s'" % get_readable_name()
 	)
 
+## The [method push_error_unactive_accessor] method pushes an error
+## warning that an operation was tried in an unactive [LokStorageAccessor].
 func push_error_unactive_accessor() -> void:
 	push_error(
 		"Tried saving or loading unactive Accessor '%s'" % get_readable_name()
@@ -365,6 +407,9 @@ func load_data(file_id: String = file) -> Dictionary:
 	
 	return result
 
+## The [method remove_data] method uses the
+## [LokStorageManager] to remove the data of this
+## [LokStorageAccessor].
 func remove_data(file_id: String = file) -> Dictionary:
 	if file_id == "" and file != "":
 		file_id = file
@@ -400,7 +445,7 @@ func retrieve_data() -> Dictionary:
 
 ## The [method consume_data] method uses the
 ## [method LokStorageAccessorVersion.consume_data]
-## to use the data that was be loaded
+## to use the data that was loaded
 ## by the [method LokStorageAccessor.load_data] method.
 func consume_data(data: Dictionary) -> void:
 	if version == null:
@@ -430,6 +475,7 @@ func _exit_tree() -> void:
 	
 	storage_manager.remove_accessor(self)
 
+# Returns warnings of the configuration of this StorageAccessor
 func _get_configuration_warnings() -> PackedStringArray:
 	var warnings: PackedStringArray = []
 	
