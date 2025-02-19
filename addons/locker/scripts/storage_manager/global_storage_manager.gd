@@ -1,31 +1,56 @@
-
-## The [LokGlobalStorageManager] class serves as the manager of the data
-## saving and loading process.
+## The [LokGlobalStorageManager] class is the main manager of the
+## manipulation processes.
 ## 
 ## This class is registered as an autoload when the [LockerPlugin] is active,
 ## so that it can do its tasks. [br]
 ## It's this class that's responsible for keeping track of all the
-## [LokStorageAccessor]s that need saving and loading.
+## [LokStorageAccessor]s in the current scene tree, so that they can
+## easily save and load their data.
 extends LokStorageManager
 
 #region Properties
 
+## The [member saves_directory] property stores a [String] pointing to the
+## directory where the save files should be accessed. [br]
+## By default, this property initializes with the value from the
+## [code]"addons/locker/saves_directory"[/code] setting in the [ProjectSettings]
+## (which is created by the [LockerPlugin]).
 var saves_directory: String = LockerPlugin.get_setting_saves_directory():
 	set = set_saves_directory,
 	get = get_saves_directory
 
+## The [member save_files_prefix] property stores a [String] that tells what's
+## the prefix that should be used in the save files when creating them. [br]
+## By default, this property initializes with the value from the
+## [code]"addons/locker/save_files_prefix"[/code] setting in the
+## [ProjectSettings] (which is created by the [LockerPlugin]).
 var save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix():
 	set = set_save_files_prefix,
 	get = get_save_files_prefix
 
+## The [member save_files_format] property stores a [String] that tells what's
+## the format that should be used in the save files when accessing them. [br]
+## By default, this property initializes with the value from the
+## [code]"addons/locker/save_files_format"[/code] setting in the
+## [ProjectSettings] (which is created by the [LockerPlugin]).
 var save_files_format: String = LockerPlugin.get_setting_save_files_format():
 	set = set_save_files_format,
 	get = get_save_files_format
 
+## The [member save_versions] property stores a [code]bool[/code] that tells if
+## the save files should store data about the version used when saving them,
+## which is useful for easily versioning the saves using
+## [LokStorageAccessorVersion]s. [br]
+## By default, this property initializes with the value from the
+## [code]"addons/locker/save_versions"[/code] setting in the
+## [ProjectSettings] (which is created by the [LockerPlugin]).
 var save_versions: bool = LockerPlugin.get_setting_save_versions():
 	set = set_save_versions,
 	get = get_save_versions
 
+## The [member access_executor] property stores a [LokAccessExecutor] that
+## is responsible for separating the save files' operations in a separate
+## [Thread] so that they can be used asynchronously.
 var access_executor: LokAccessExecutor = LokAccessExecutor.new():
 	set = set_access_executor,
 	get = get_access_executor
@@ -64,16 +89,21 @@ func set_access_executor(new_executor: LokAccessExecutor) -> void:
 func get_access_executor() -> LokAccessExecutor:
 	return access_executor
 
+## The [method set_access_strategy] method allows quickly setting the
+## [LokAccessStrategy] of the [member access_executor], if it is not
+## [code]null[/code].
 func set_access_strategy(new_strategy: LokAccessStrategy) -> void:
 	if access_executor == null:
-		push_warning_no_executor()
+		push_error_no_executor()
 		return
 	
 	access_executor.access_strategy = new_strategy
 
+## The [method get_access_strategy] method allows quickly getting the
+## [LokAccessStrategy] of the [member access_executor].
 func get_access_strategy() -> LokAccessStrategy:
 	if access_executor == null:
-		push_warning_no_executor()
+		push_error_no_executor()
 		return
 	
 	return access_executor.access_strategy
@@ -82,7 +112,9 @@ func get_access_strategy() -> LokAccessStrategy:
 
 #region Debug Methods
 
-func push_warning_no_executor() -> void:
+## The [method push_error_no_executor] method pushes an error saying
+## that no [LokAccessExecutor] was found in this class.
+func push_error_no_executor() -> void:
 	push_error("%s: No AccessExecutor found in %s" % [
 		error_string(Error.ERR_UNCONFIGURED),
 		get_readable_name()
@@ -92,6 +124,9 @@ func push_warning_no_executor() -> void:
 
 #region Methods
 
+## The [method get_accessor_ids] method returns an [Array] of [String]s
+## representing the ids from the [LokStorageAccessor]s received in the
+## [param from_accessors] parameter.
 func get_accessor_ids(
 	from_accessors: Array[LokStorageAccessor]
 ) -> Array[String]:
@@ -102,29 +137,73 @@ func get_accessor_ids(
 	
 	return accessor_ids
 
-func get_file_path(file_id: String) -> String:
-	var file_path: String = saves_directory.path_join(save_files_prefix)
+## The [method get_file_id] method returns a [String] with the id of
+## a file that has [param file_name] as its name. [br]
+## If the file has no [code]"_"[/code], its entire name is its id, else,
+## its id is considered to be the part after the first [code]"_"[/code].
+func get_file_id(file_name: String) -> String:
+	var file_parts: PackedStringArray = file_name.split("_", true, 1)
 	
-	if file_id != "":
-		file_path = "%s_%s" % [ file_path, file_id ]
+	if file_parts.size() > 1:
+		return file_parts[1]
+	
+	return file_parts[0]
+
+## The [method get_file_name] method returns a [String] with the name of
+## a file that has [param file_id] as its id. [br]
+## If [param file_id] is an empty [String], the file name defaults to the
+## [member save_files_prefix]. [br]
+## If that property is an empty [String], then the file name equals to the
+## [param file_id]. [br]
+## If both are not empty [String], then the file name equals to a nicely
+## concatenated [code]<save_files_prefix>_<file_id>[/code].
+func get_file_name(file_id: String) -> String:
+	if file_id == "":
+		return save_files_prefix
+	if save_files_prefix == "":
+		return file_id
+	
+	return "%s_%s" % [ save_files_prefix, file_id ]
+
+## The [method get_file_path] method returns a [String] with the path of
+## a file that has [param file_id] as its id. [br]
+## If both the [member save_files_prefix] and the [param file_id] are empty
+## [String]s, then the file path will return an empty [String] to avoid
+## that the [member saves_directory] is used as a file.
+func get_file_path(file_id: String) -> String:
+	var file_name: String = get_file_name(file_id)
+	
+	if file_name == "":
+		return ""
+	
+	var file_path: String = saves_directory.path_join(file_name)
 	
 	return file_path
 
+## The [method get_saved_file_ids] method returns an [Array] of [String]s
+## with the ids of all files saved in the [member saves_directory].
+func get_saved_file_ids() -> Array[String]:
+	var file_names: PackedStringArray = LokFileSystemUtil.get_subdirectory_names(
+		saves_directory
+	)
+	
+	var file_ids: Array[String] = []
+	
+	for file_name: String in file_names:
+		file_ids.append(get_file_id(file_name))
+	
+	return file_ids
+
 ## The [method collect_data] method is used to get and organize the data
-## from an [param accessor].[br]
+## from an [param accessor]. [br]
 ## Optionally, a [param version_number] can be passed to dictate from which
 ## version of the [param accessor] the data should be got. If left undefined,
-## this parameter defaults to the version [code]""[/code], which
-## converts to the latest available.[br]
+## this parameter defaults to the latest available. [br]
 ## At the end, this method returns a [Dictionary] with all the data obtained
-## from the [param accessor]. It's structure is the following:[br]
-## [codeblock]
-## {
-##   "version" = "version_number",
-##   "accessor_data_1" = <data>,
-##   "accessor_data_n" = <data>
-## }
-## [/codeblock]
+## from the [param accessor]. [br]
+## That [Dictionary] is guaranteed to have a [code]"version"[/code] key
+## saying what version was used to get that data [b]IF[/b] the
+## [member save_versions] property is [code]true[/code].
 func collect_data(
 	accessor: LokStorageAccessor,
 	version_number: String = ""
@@ -147,28 +226,28 @@ func collect_data(
 	return accessor_data
 
 ## The [method gather_data] method is the central point where the data
-## from all [member accessors] is collected using the
-## [method collect_data] method.[br]
-## If the [param accessor_ids] parameter is not empty, this method only
-## gathers data from the [LokStorageAccessor]s that match those ids.[br]
+## from all [member LokAccessorGroup.accessors] is collected using the
+## [method collect_data] method. [br]
+## If the [param included_accessors] parameter is not empty, this method only
+## gathers data from the [LokStorageAccessor]s that are present in that [Array].
+## [br]
 ## The [param version_number] parameter is used as the version of the
 ## [LokStorageAccessor]s from which the data is collected. If left undefined,
-## this parameter defaults to [code]""[/code], which converts
-## to the latest version.[br]
+## this parameter defaults to an empty [String], which converts
+## to their latest version. [br]
 ## In the case there's [member LokStorageAccessor.id] conflicts in the
 ## same [member LokStorageAccessor.partition],
 ## the id of the last accessor encountered is prioritized. It is often
 ## unknown, though, which accessor is the last one, so it's always better
-## to avoid repeated ids.[br]
+## to avoid repeated ids. [br]
 ## At the end, this method returns a [Dictionary] with all the data obtained
-## from the [LokStorageAccessor]s. It's structure is the following:[br]
+## from the [LokStorageAccessor]s. It's structure is the following:
 ## [codeblock]
 ## {
 ##   "partition_1_id": {
 ##     "accessor_1_id": {
-##       "version": "version_number",
-##       "data_1": <data>,
-##       "data_n": <data>
+##       "version": <String> (optional),
+##       ...
 ##     },
 ##     "accessor_n_id": { ... }
 ##   },
@@ -176,7 +255,8 @@ func collect_data(
 ## }
 ## [/codeblock]
 func gather_data(
-	included_accessors: Array[LokStorageAccessor] = [], version_number: String = ""
+	included_accessors: Array[LokStorageAccessor] = [],
+	version_number: String = ""
 ) -> Dictionary:
 	var data: Dictionary = {}
 	
@@ -198,31 +278,35 @@ func gather_data(
 	
 	return data
 
-## The [method distribute_result] method is the central point where the data
-## can be distributed to all [member accessors].[br]
-## If the [param accessor_ids] parameter is not empty, this method only
-## distributes data to the [LokStorageAccessor]s that match those ids.[br]
+## The [method distribute_result] method is the central point where the result
+## of loadings is distributed to all [member LokAccessorGroup.accessors]. [br]
+## If the [param included_accessors] parameter is not empty, this method only
+## distributes data to the [LokStorageAccessor]s present in that [Array]. [br]
 ## The version of the [LokStorageAccessor]s that receives the data is
-## determined by the [code]"version"[/code] key of its data in the [param data]
-## [Dictionary]. If there's no such entry, the version that receives the
-## data is the latest available.[br]
+## determined by the [code]"version"[/code] key of its data in the
+## [code]data[/code] subdictionary of the [param result] [Dictionary]. [br]
+## If there's no such entry, the version that receives the
+## data is the latest available. [br]
 ## If there are more than one [LokStorageAccessor]s with the same id found,
 ## the data with that id is distributed to all of these [LokStorageAccessor]s.
 ## [br]
-## The [param data] [Dictionary] that this method expects should match the
-## following pattern:[br]
+## The [param result] [Dictionary] that this method expects should match the
+## following pattern:
 ## [codeblock]
 ## {
-##   "accessor_1_id": {
-##     "version": "version_number",
-##     "data_1": <data>,
-##     "data_n": <data>
-##   },
-##   "accessor_n_id": { ... }
+##   "result": <@GlobalScope.Error>,
+##   "data": {
+##     "accessor_1_id": {
+##       "version": <String>,
+##       ...
+##     },
+##     "accessor_n_id": { ... }
+##   }
 ## }
 ## [/codeblock]
 func distribute_result(
-	result: Dictionary, included_accessors: Array[LokStorageAccessor] = []
+	result: Dictionary,
+	included_accessors: Array[LokStorageAccessor] = []
 ) -> void:
 	for accessor: LokStorageAccessor in accessors:
 		if not LokUtil.filter_value(included_accessors, accessor):
@@ -242,14 +326,16 @@ func distribute_result(
 		accessor.set_version_number(accessor_version)
 		accessor.consume_data(accessor_result.duplicate(true))
 
-## Another optional parameter this method accept is the [param accessor_ids],
-## which is a list that enumerates the ids of the [LokStorageAccessor]
-## 
-## To better understand these parameters, read about that method.
+## The [method save_data] method is the main method for saving data
+## using the [LockerPlugin]. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.save_data] description. [br]
+## Note that if a [param file_id] is passed but is an empty [String], the
+## [member LokStorageManager.current_file] is prioritized over the empty one.
 func save_data(
 	file_id: String = current_file,
 	version_number: String = current_version,
-	accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = [],
 	replace: bool = false
 ) -> Dictionary:
 	if file_id == "" and current_file != "":
@@ -258,7 +344,7 @@ func save_data(
 	var file_path: String = get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var data: Dictionary = gather_data(accessors, version_number)
+	var data: Dictionary = gather_data(included_accessors, version_number)
 	
 	saving_started.emit()
 	
@@ -270,6 +356,12 @@ func save_data(
 	
 	return result
 
+## The [method load_data] method is the main method for loading data
+## using the [LockerPlugin]. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.load_data] description. [br]
+## Note that if a [param file_id] is passed but is an empty [String], the
+## [member LokStorageManager.current_file] is prioritized over the empty one.
 func load_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
@@ -300,6 +392,12 @@ func load_data(
 	
 	return result
 
+## The [method read_data] method is the main method for reading data
+## using the [LockerPlugin]. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.read_data] description. [br]
+## Note that if a [param file_id] is passed but is an empty [String], the
+## [member LokStorageManager.current_file] is prioritized over the empty one.
 func read_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
@@ -324,6 +422,12 @@ func read_data(
 	
 	return result
 
+## The [method remove_data] method is the main method for removing data
+## using the [LockerPlugin]. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.remove_data] description. [br]
+## Note that if a [param file_id] is passed but is an empty [String], the
+## [member LokStorageManager.current_file] is prioritized over the empty one.
 func remove_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
@@ -348,7 +452,7 @@ func remove_data(
 	
 	return result
 
-# Initializes values according to settings
+# Initializes values according to ProjectSettings
 func _init() -> void:
 	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
 	

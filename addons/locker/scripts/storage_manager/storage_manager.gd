@@ -124,7 +124,9 @@ func get_readable_name() -> String:
 ## At the end, this method should return the result of the saving via
 ## a [Dictionary] with a [code]"status"[/code] key specifying a
 ## [enum @GlobalScope.Error] code, and a [code]"data"[/code] key
-## storing all data saved.
+## storing all data saved. [br]
+## The start and finish of this operation should be notified via the
+## [signal saving_started] and [signal saving_finished] signals.
 func save_data(
 	file_id: String = current_file,
 	version_number: String = current_version,
@@ -158,7 +160,9 @@ func save_data(
 ## At the end, this method should return the result of the loading via
 ## a [Dictionary] with a [code]"status"[/code] key specifying a
 ## [enum @GlobalScope.Error] code, and a [code]"data"[/code] key
-## storing all data loaded.
+## storing all data loaded. [br]
+## The start and finish of this operation should be notified via the
+## [signal loading_started] and [signal loading_finished] signals.
 func load_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
@@ -173,7 +177,9 @@ func load_data(
 ## [method load_data] method, but more inclined for possibilitating saved data
 ## analysis without necessarily applying it to the game. [br]
 ## To read more about the parameters and return of this method, see the
-## [method load_data] method.
+## [method load_data] method. [br]
+## The start and finish of this operation should be notified via the
+## [signal reading_started] and [signal reading_finished] signals.
 func read_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
@@ -194,7 +200,9 @@ func read_data(
 ## a [Dictionary] with a [code]"status"[/code] key specifying a
 ## [enum @GlobalScope.Error] code, a [code]"data"[/code] key
 ## storing all data removed, and an [code]"updated_data"[/code] key
-## storing all data kept.
+## storing all data kept. [br]
+## The start and finish of this operation should be notified via the
+## [signal removing_started] and [signal removing_finished] signals.
 func remove_data(
 	file_id: String = current_file,
 	included_accessors: Array[LokStorageAccessor] = [],
