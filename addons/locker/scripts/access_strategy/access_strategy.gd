@@ -127,6 +127,43 @@ func append_partition_to_data(
 			return accessor_data
 	)
 
+## The [method get_file_id] method returns a [String] with the id of
+## a file that has [param file_name] as its name. [br]
+## If the file has no [code]"_"[/code], its entire name is its id, else,
+## its id is considered to be the part after the first [code]"_"[/code].
+func get_file_id(file_name: String) -> String:
+	var file_parts: PackedStringArray = file_name.split("_", false, 1)
+	
+	if file_parts.size() > 1:
+		return file_parts[1]
+	
+	return file_parts[0]
+
+## The [method get_file_ids] method returns a result [Dictionary]
+## (with the same structure of the one created by the [method create_result])
+## whose [code]"data"[/code] field stores an [Array] of [String]s
+## with the ids of all files saved in the [param files_path].
+func get_file_ids(files_path: String) -> Dictionary:
+	var result: Dictionary = create_result()
+	result["data"] = []
+	
+	if not LokFileSystemUtil.directory_exists(files_path):
+		result["status"] = Error.ERR_FILE_NOT_FOUND
+		return result
+	
+	var file_names: PackedStringArray = LokFileSystemUtil.get_subdirectory_names(
+		files_path
+	)
+	
+	var file_ids: Array[String] = []
+	
+	for file_name: String in file_names:
+		file_ids.append(get_file_id(file_name))
+	
+	result["data"] = file_ids
+	
+	return result
+
 ## The [method save_data] method uses the [method save_partition] to
 ## save the information provided through the [param data] [Dictionary] in
 ## their respective partitions. [br]
