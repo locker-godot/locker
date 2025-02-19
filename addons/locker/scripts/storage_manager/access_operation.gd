@@ -29,7 +29,7 @@ signal finished(result: Dictionary)
 ## execute. [br]
 ## This [Callable] is supposed to return a [Dictionary] with the result of
 ## this [LokAccessOperation].
-var callable: Callable = Callable()
+var callable: Callable
 
 func _init(_callable: Callable) -> void:
 	callable = _callable

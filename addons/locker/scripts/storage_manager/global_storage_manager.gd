@@ -140,18 +140,6 @@ func get_accessor_ids(
 	
 	return accessor_ids
 
-## The [method get_file_id] method returns a [String] with the id of
-## a file that has [param file_name] as its name. [br]
-## If the file has no [code]"_"[/code], its entire name is its id, else,
-## its id is considered to be the part after the first [code]"_"[/code].
-func get_file_id(file_name: String) -> String:
-	var file_parts: PackedStringArray = file_name.split("_", true, 1)
-	
-	if file_parts.size() > 1:
-		return file_parts[1]
-	
-	return file_parts[0]
-
 ## The [method get_file_name] method returns a [String] with the name of
 ## a file that has [param file_id] as its id. [br]
 ## If [param file_id] is an empty [String], the file name defaults to the
@@ -182,20 +170,6 @@ func get_file_path(file_id: String) -> String:
 	var file_path: String = saves_directory.path_join(file_name)
 	
 	return file_path
-
-## The [method get_saved_file_ids] method returns an [Array] of [String]s
-## with the ids of all files saved in the [member saves_directory].
-func get_saved_file_ids() -> Array[String]:
-	var file_names: PackedStringArray = LokFileSystemUtil.get_subdirectory_names(
-		saves_directory
-	)
-	
-	var file_ids: Array[String] = []
-	
-	for file_name: String in file_names:
-		file_ids.append(get_file_id(file_name))
-	
-	return file_ids
 
 ## The [method collect_data] method is used to get and organize the data
 ## from an [param accessor]. [br]
@@ -328,6 +302,15 @@ func distribute_result(
 		
 		accessor.set_version_number(accessor_version)
 		accessor.consume_data(accessor_result.duplicate(true))
+
+## The [method get_saved_files_ids] method returns an [Array] of [String]s
+## with the ids of all files saved in the [member saves_directory].
+func get_saved_files_ids() -> Array[String]:
+	var result: Dictionary = await access_executor.request_get_file_ids(
+		saves_directory
+	)
+	
+	return result.get("data", [])
 
 ## The [method save_data] method is the main method for saving data
 ## using the [LockerPlugin]. [br]

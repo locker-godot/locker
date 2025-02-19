@@ -13,6 +13,11 @@ func slow_operation() -> void:
 	for i: int in 5_000_000:
 		i += 1
 
+func slow_file_ids_getter(_files_path: String) -> Dictionary:
+	slow_operation()
+	
+	return { "status": Error.OK, "data": [] }
+
 func slow_saver(
 	_file_path: String,
 	_file_format: String,
@@ -52,6 +57,7 @@ func before_all() -> void:
 	DoubledAccessStrategy = double(AccessStrategy)
 
 func before_each() -> void:
+	stub(DoubledAccessStrategy, "get_file_ids").to_call(slow_file_ids_getter)
 	stub(DoubledAccessStrategy, "save_data").to_call(slow_saver)
 	stub(DoubledAccessStrategy, "load_data").to_call(slow_loader)
 	stub(DoubledAccessStrategy, "remove_data").to_call(slow_remover)
@@ -155,6 +161,21 @@ func test_executor_knows_its_busy() -> void:
 	executor.request_saving("", "", {})
 	
 	assert_true(executor.is_busy(), "Executor doesn't know it's busy")
+
+#endregion
+
+#region Method request_get_files_id
+
+func test_request_get_files_id_passes_arguments_to_access_strategy() -> void:
+	executor.request_get_file_ids("res://test/saves")
+	
+	await wait_for_signal(executor.operation_started, 0.5, "Waiting saving start")
+	
+	assert_called(
+		executor.access_strategy,
+		"get_file_ids",
+		[ "res://test/saves" ]
+	)
 
 #endregion
 

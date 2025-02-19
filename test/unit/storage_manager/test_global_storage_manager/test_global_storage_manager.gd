@@ -333,6 +333,17 @@ func test_distribute_result_sends_according_to_ids() -> void:
 
 #endregion
 
+#region Method get_saved_files_ids
+
+func test_get_saved_files_ids_passes_to_executor() -> void:
+	manager.access_executor = DoubledAccessExecutor.new()
+	
+	manager.get_saved_files_ids()
+	
+	assert_called(manager.access_executor, "request_get_file_ids")
+
+#endregion
+
 #region Method save_data
 
 func test_save_data_passes_to_executor() -> void:
