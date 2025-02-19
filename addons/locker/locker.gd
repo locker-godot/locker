@@ -1,6 +1,6 @@
 @icon("res://addons/locker/icons/locker_plugin.svg")
 @tool
-## The [LockerPlugin] class is the main manager of the Locker Plugin.
+## The [LockerPlugin] class is the manager of the Locker Plugin's settings.
 ## 
 ## This class is responsible for managing the access of the Plugin
 ## settings through the use of the [ProjectSettings]. [br]
@@ -274,7 +274,7 @@ static func get_plugin_settings() -> Dictionary:
 ## The [method string_to_strategy] method takes a [param string] and
 ## returns a [LokAccessStrategy] that corresponds to that [param string]. [br]
 ## If an invalid [param string] is passed, this method returns
-## [code]null[/code]
+## [code]null[/code].
 static func string_to_strategy(string: String) -> LokAccessStrategy:
 	match(string):
 		"JSON": return LokJSONAccessStrategy.new()
@@ -282,6 +282,12 @@ static func string_to_strategy(string: String) -> LokAccessStrategy:
 	
 	return null
 
+## The [method strategy_to_string] method takes a [param strategy] and
+## returns a [String] that represents that [param strategy] in the
+## [code]"addons/locker/access_strategy"[/code] setting of the
+## [ProjectSettings]. [br]
+## If an invalid [param strategy] is passed, this method returns
+## an empty [String].
 static func strategy_to_string(strategy: LokAccessStrategy) -> String:
 	if strategy is LokJSONAccessStrategy:
 		return "JSON"
@@ -434,7 +440,7 @@ func _enable_plugin() -> void:
 func _disable_plugin() -> void:
 	finish_plugin()
 
-# Updates config.cfg file to store settings
+# Updates config.cfg file to store changed settings
 func _on_project_settings_changed() -> void:
 	var changed_settings: Dictionary = get_changed_settings(plugin_settings)
 	
