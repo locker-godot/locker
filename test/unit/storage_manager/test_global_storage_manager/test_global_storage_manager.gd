@@ -17,6 +17,7 @@ func before_each() -> void:
 	manager = add_child_autofree(GlobalStorageManager.new())
 	
 	stub(DoubledAccessExecutor, "request_loading").to_return({})
+	stub(DoubledAccessExecutor, "request_get_file_ids").to_return({})
 
 func after_all() -> void:
 	queue_free()

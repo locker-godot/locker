@@ -310,7 +310,7 @@ func get_saved_files_ids() -> Array[String]:
 		saves_directory
 	)
 	
-	return result.get("data", [])
+	return result.get("data", [] as Array[String])
 
 ## The [method save_data] method is the main method for saving data
 ## using the [LockerPlugin]. [br]
