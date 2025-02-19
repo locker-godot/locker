@@ -1,10 +1,11 @@
-## The [LokSceneStorageManager] class is just an intermediate to access
-## the [LokGlobalStorageManager] class through the current scene tree,
-## if wanted.
+## The [LokSceneStorageManager] class can be communicate with the
+## [LokGlobalStorageManager] Singleton.
 ## 
 ## This class is useful when it is desired to trigger the
 ## [LokGlobalStorageManager] methods through signal emissions
-## in the scene tree using the inspector, for example.[br]
+## in the scene tree using the inspector, for example. [br]
+## Also, this class can be used to perform certain operations including only
+## some nodes of the current scene. [br]
 ## [br]
 ## [b]Version[/b]: 1.0.0[br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
@@ -16,9 +17,7 @@ extends LokStorageManager
 ## The [member global_manager] property should not be altered since it's just
 ## a reference to the [LokGlobalStorageManager] autoload. [br]
 ## Its reference is stored here instead of called directly to make
-## mocking it with unit testing easier. [br]
-## To guarantee that this property isn't altered, its setter doesn't allow
-## modifications. That could be changed if this class is overridden, though.
+## mocking it with unit testing easier.
 var global_manager: LokStorageManager = LokGlobalStorageManager:
 	set = set_global_manager,
 	get = get_global_manager
@@ -48,21 +47,20 @@ func push_error_no_manager() -> void:
 
 #region Methods
 
-## The [method save_data] method is just another way of calling
-## the [method LokGlobalStorageManager.save_data] method, which
-## performs the procedure of saving the game. [br]
-## This method has as its only mandatory parameter the [param file_id]
-## that determines in what file the game should be saved. [br]
-## The [param version_number] parameter specifies what version of the
-## currently registered [LokStorageAccessor]s should be used to save the game.
-## By default, it is set to the value of the [member current_version] property.
+## The [method save_data] method is an intermidiate to calling the
+## [method LokGlobalStorageManager.save_data] method. [br]
+## Using this method, though, only the [member LokAccessorGroup.accessors] of
+## this [LokSceneStorageManager] are included in the saving process, by default.
 ## [br]
-## The remaining parameters are better explained in the
-## [method LokGlobalStorageManager.save_data] method.
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.save_data] description. [br]
+## The start and finish of this operation is notified via the
+## [signal LokStorageManager.saving_started] and
+## [signal LokStorageManager.saving_finished] signals.
 func save_data(
 	file_id: String = current_file,
 	version_number: String = current_version,
-	included_accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = accessors,
 	replace: bool = false
 ) -> Dictionary:
 	if global_manager == null:
@@ -82,24 +80,19 @@ func save_data(
 	
 	return result
 
-## The [method load_data] method uses the
-## [method LokGlobalStorageManager.load_data] method to load the
-## previously saved data into the currently registered [LokStorageAccessor]s
-## of the game.[br]
-## This method has as its only mandatory parameter the [param file_id]
-## that determines from what file the game should be loaded.[br]
-## The [param accessor_ids] parameter specifies which of the
-## currently registered [LokStorageAccessor]s should receive the loaded data.
-## If left as an empty [Array], all current [LokStorageAccessor]s
-## receive the data.[br]
-## The [param partition_ids] and [param version_numbers] parameters work
-## in a similar way, restricting what [b]partitions[/b] and [b]versions[/b]
-## should be considered when loading.
-## At the end, this method returns a [Dictionary] with the information obtained.
-## [i]See also: [method LokGlobalStorageManager.load_data][/i]
+## The [method load_data] method is an intermidiate to calling the
+## [method LokGlobalStorageManager.load_data] method. [br]
+## Using this method, though, only the [member LokAccessorGroup.accessors] of
+## this [LokSceneStorageManager] are included in the loading process,
+## by default. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.load_data] description. [br]
+## The start and finish of this operation is notified via the
+## [signal LokStorageManager.loading_started] and
+## [signal LokStorageManager.loading_finished] signals.
 func load_data(
 	file_id: String = current_file,
-	included_accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = accessors,
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
@@ -120,12 +113,19 @@ func load_data(
 	
 	return result
 
-## The [method read_data] method is an intermediate to calling the same method
-## in the [LokGlobalStorageManager] autoload. More information about it
-## can be found here: [member LokGlobalStorageManager.read_data].
+## The [method read_data] method is an intermidiate to calling the
+## [method LokGlobalStorageManager.read_data] method. [br]
+## Using this method, though, only the [member LokAccessorGroup.accessors] of
+## this [LokSceneStorageManager] are included in the reading process,
+## by default. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.read_data] description. [br]
+## The start and finish of this operation is notified via the
+## [signal LokStorageManager.reading_started] and
+## [signal LokStorageManager.reading_finished] signals.
 func read_data(
 	file_id: String = current_file,
-	included_accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = accessors,
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
@@ -146,12 +146,19 @@ func read_data(
 	
 	return result
 
-## The [method remove_data] method is an intermediate to calling the same method
-## in the [LokGlobalStorageManager] autoload. More information about it
-## can be found here: [member LokGlobalStorageManager.remove_data].
+## The [method remove_data] method is an intermidiate to calling the
+## [method LokGlobalStorageManager.remove_data] method. [br]
+## Using this method, though, only the [member LokAccessorGroup.accessors] of
+## this [LokSceneStorageManager] are included in the removing process,
+## by default. [br]
+## To read more about the parameters and return of this method, see
+## the [method LokStorageManager.remove_data] description. [br]
+## The start and finish of this operation is notified via the
+## [signal LokStorageManager.removing_started] and
+## [signal LokStorageManager.removing_finished] signals.
 func remove_data(
 	file_id: String = current_file,
-	included_accessors: Array[LokStorageAccessor] = [],
+	included_accessors: Array[LokStorageAccessor] = accessors,
 	partition_ids: Array[String] = [],
 	version_numbers: Array[String] = []
 ) -> Dictionary:
