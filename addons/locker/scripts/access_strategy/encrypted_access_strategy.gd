@@ -4,16 +4,16 @@
 ## This class inherits from the [LokAccessStrategy] in order to implement
 ## its [method save_partition] and [method load_partition] methods and
 ## with that provide saving and loading functionalities for
-## encrypted data.
+## encrypted data. [br]
 ## [br]
-## [b]Version[/b]: 1.0.0[br]
+## [b]Version[/b]: 1.0.0 [br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
 class_name LokEncryptedAccessStrategy
 extends LokAccessStrategy
 
 ## The [member password] property is used when encrypting/ decrypting data,
 ## so it must be set to a password intended before starting using this class.
-var password: String = "":
+var password: String:
 	set = set_password,
 	get = get_password
 
@@ -22,6 +22,9 @@ func set_password(new_password: String) -> void:
 
 func get_password() -> String:
 	return password
+
+func _init(_password: String = "") -> void:
+	password = _password
 
 ## The [method save_partition] method overrides its super counterpart
 ## [method LokAccessStrategy.save_partition] in order to provide [param data]
