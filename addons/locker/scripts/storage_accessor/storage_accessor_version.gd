@@ -119,14 +119,18 @@ static func compare_major_versions(
 ## This method receives a [param dependencies] [Dictionary] that brings
 ## all information from the [member LokStorageAccessor.dependency_paths], so
 ## that this [LokStorageAccessorVersion] can access it. [br]
-## Any [NodePath]s from the [member LokStorageAccessor.dependency_paths]
-## are converted to nodes before being passed to this method so that
-## they can be easily referenced by this version. [br]
+## Any [NodePath]s from the [member LokStorageAccessor.dependency_paths]'s
+## values are converted to nodes before being passed to this method so that
+## they can be easily referenced by this [LokStorageAccessorVersion]. [br]
 ## When finished processing, this method should return a [Dictionary] with
 ## the data that should be stored in a save file. [br]
-## Such data must be [String] based, so if you have data of complex values like
-## [Vector2] or [Color], make sure to use the [method @GlobalScope.var_to_str]
-## method or similars to parse them properly.
+## If you're using the [LokJSONAccessStrategy] or the
+## [LokEncryptedAccessStrategy] (the built-in strategies of the [LockerPlugin]),
+## the returned [Dictionary] should only store basic data
+## types like [String]s, [code]floats[/code] and [code]bools[/code],
+## so you need to make sure to transform your data accordingly. [br]
+## For parsing from complex data types like [Vector2]s to [String]s, I recommend
+## using the [method @GlobalScope.var_to_str] method.
 func retrieve_data(
 	_dependencies: Dictionary
 ) -> Dictionary: return {}
@@ -138,12 +142,16 @@ func retrieve_data(
 ## This method receives a [param dependencies] [Dictionary] that brings
 ## all information from the [member LokStorageAccessor.dependency_paths], so
 ## that this [LokStorageAccessorVersion] can access it. [br]
-## Any [NodePath]s from the [member LokStorageAccessor.dependency_paths]
-## are converted to nodes before being passed to this method so that
+## Any [NodePath]s from the [member LokStorageAccessor.dependency_paths]'s
+## values are converted to nodes before being passed to this method so that
 ## they can be easily referenced by this [LokStorageAccessorVersion]. [br]
-## The [param data] [Dictionary] this method receives is [String] based,
-## so it is recommended that you use methods like
-## [method @GlobalScope.str_to_var] to parse this data.
+## If you're using the [LokJSONAccessStrategy] or the
+## [LokEncryptedAccessStrategy] (the built-in strategies of the [LockerPlugin]),
+## the [param data] [Dictionary] will only be capable of storing basic data
+## types like [String]s, [code]floats[/code] and [code]bools[/code],
+## so you need to make sure to transform your data accordingly. [br]
+## For parsing from [String] to complex data types like [Vector2]s, I recommend
+## using the [method @GlobalScope.str_to_var] method.
 func consume_data(
 	_data: Dictionary,
 	_dependencies: Dictionary
