@@ -12,7 +12,7 @@
 ## inheriting from the [LokAccessStrategy] class. [br]
 ## If you need to deal with the file system when inheriting this class,
 ## the [LokFileSystemUtil] class provides lots of static methods that help
-## with decreasing boilerplate code needed for that. [br]
+## with decreasing the boilerplate code needed for that. [br]
 ## [br]
 ## [b]Version[/b]: 1.0.0[br]
 ## [b]Author[/b]: [url]github.com/nadjiel[/url]
@@ -35,6 +35,23 @@ static func create_result(
 	
 	return result
 
+## The [method get_partition_name] method receives a [param file_path],
+## a [param partition_id] and a [param file_format], all of which are
+## [String]s, and returns another [String] representing the name of the
+## partition represented by those data. [br]
+## The partition name here refers to the file name of the partition with
+## the format suffix. [br]
+## [b]Example:[/b]
+## [codeblock]
+## var partition_name: String = get_partition_name(
+##   "res://saves/file_1", "partition_1", "sav"
+## )
+## # This would return "partition_1.sav"
+## [/codeblock]
+## In the case the [param partition_id] is an empty [String], this method
+## considers it as being a partition with the same name as its file, so
+## in the previous example, if the [param partition_id] was [code]""[/code],
+## the result would be [code]"file_1.sav"[/code].
 func get_partition_name(
 	file_path: String,
 	partition_id: String,
@@ -52,6 +69,25 @@ func get_partition_name(
 	
 	return partition_name
 
+## The [method filter_data] method receives a [param data]
+## [Dictionary] other parameters that serve as filters
+## for which entries of that [Dictionary] should be kept. [br]
+## The filter parameters are the [param accessor_ids], [param partition_ids] and
+## the [param version_numbers]. All of these are [Array] of [String]s that
+## identify the entries of the [param data] that should be kept in the
+## [Dictionary] returned by this method. [br]
+## To work properly, this method expects that the [param data] parameter
+## follows the structure:
+## [codeblock]
+## {
+##   "accessor_id_1": {
+##     ...
+##     "partition": <String>,
+##     "version": <String> (optional)
+##   },
+##   "accessor_id_n": { ... }
+## }
+## [/codeblock]
 func filter_data(
 	data: Dictionary,
 	accessor_ids: Array[String] = [],
@@ -73,6 +109,12 @@ func filter_data(
 	
 	return filtered_data
 
+## The [method append_partition_to_data] method receives a [param data]
+## [Dictionary] and a [param partition_id] [String].
+## The [param data] parameter must be a [Dictionary] with other [Dictionary]s
+## as its values, so that this method can set that
+## [param partition_id] as the value of a [code]"partition"[/code] key
+## in each of those sub dictionaries.
 func append_partition_to_data(
 	data: Dictionary,
 	partition_id: String
@@ -99,20 +141,20 @@ func append_partition_to_data(
 ## The structure that the [param data] [Dictionary] should have is as follows:
 ## [codeblock]
 ## {
-##   "partition_name_1": {
+##   "partition_id_1": {
 ##     "accessor_id_1": {
-##       "version": "version_number",
-##       "data_1": <data>,
-##       "data_n": <data>
+##       ...
+##       "version": <String> (optional)
 ##     },
 ##     "accessor_id_n": { ... },
 ##   },
-##   "partition_name_n": { ... }
+##   "partition_id_n": { ... }
 ## }
 ## [/codeblock][br]
-## The return of this method is a [Dictionary] with the [code]"status"[/code]
-## of the operation and the [code]"data"[/code] that was saved. [br]
-## (See [method create_result])
+## The return of this method is a [Dictionary] with a [code]"status"[/code]
+## field representing the status of the operation and a [code]"data"[/code]
+## field with the data that was saved. That [Dictionary] follows the same
+## structure as the one in returned by the [method load_data] method.
 func save_data(
 	file_path: String,
 	file_format: String,
@@ -175,17 +217,14 @@ func save_data(
 ## all data obtained. Its format is as follows:
 ## [codeblock]
 ## {
-##   "status": <error_code>,
+##   "status": <@GlobalScope.Error>,
 ##   "data": {
-##     "partition_id_1": {
-##       "accessor_id_1": {
-##         "version": "version_number",
-##         "data_1": <data>,
-##         "data_n": <data>
-##       },
-##       "accessor_id_n": { ... },
+##     "accessor_id_1": {
+##       ...
+##       "version": <String> (optional),
+##       "partition": <String>
 ##     },
-##     "partition_id_n": { ... }
+##     "accessor_id_n": { ... }
 ##   }
 ## }
 ## [/codeblock]
@@ -257,6 +296,39 @@ func load_data(
 	
 	return result
 
+## The [method remove_data] method uses the [method remove_partition] method to
+## remove the save directory in the [param file_path], or some of its data. [br]
+## The [param file_format] parameter specifies from what file format the data
+## should be removed (such format shouldn't include the [code]"."[/code]). [br]
+## Optionally, a [param partition_ids] parameter can be passed to
+## specify from what partitions the data should be removed. [br]
+## Also, [param accessor_ids] and [param version_numbers] can be passed to
+## filter even more what information to remove. [br]
+## If left as default, that means all partitions, accessors, and versions
+## are removed, which corresponds to all data from the save file. [br]
+## Furthermore, the [param suppress_errors] flag can be passed to identify if
+## this method should or shouldn't push any errors that occur. [br]
+## After completing the removal, this method returns a [Dictionary] containing
+## all data obtained. That [Dictionary] brings the removed data in the
+## [code]"data"[/code] field and the data the wasn't removed stays in the
+## [code]"updated_data"[/code] field. The format of the returned [Dictionary]
+## is shown in more details below:
+## [codeblock]
+## {
+##   "status": <@GlobalScope.Error>,
+##   "data": {
+##     "accessor_id_1": {
+##       ...
+##       "version": <String> (optional),
+##       "partition": <String>
+##     },
+##     "accessor_id_n": { ... }
+##   },
+##   "updated_data": { ... }
+## }
+## [/codeblock]
+## If an error occurs, the corresponding [enum @GlobalScope.Error] code is
+## returned in the [code]"status"[/code] field of the [Dictionary].
 func remove_data(
 	file_path: String,
 	file_format: String,
@@ -311,6 +383,14 @@ func remove_data(
 	
 	return result
 
+## The [method remove_partition] method removes data from the partition
+## specified by the [param partition_path] parameter.
+## [br]
+## If the [param suppress_errors] parameter is [code]true[/code], this method
+## will try to not push any errors. [br]
+## At the end, this method returns a [Dictionary] with the data
+## obtained. The format of that [Dictionary] follows the same
+## structure as the one returned by the [method remove_data] method.
 func remove_partition(
 	partition_path: String,
 	accessor_ids: Array[String] = [],
@@ -368,20 +448,19 @@ func remove_partition(
 	return result
 
 ## The [method save_partition] method should be overwritten so that it saves
-## [param data] in the partition specified by the
-## [param partition_path] parameter.
-## [br]
+## [param data] in the partition specified by the [param partition_path]
+## parameter. [br]
 ## Optionally, the [param replace] parameter can be passed to tell if the
 ## data should override any already existent data. [br]
 ## Also, the [param suppress_errors] flag can be passed to identify if this
-## method should or not push any errors that occur. [br]
-## The format of the [param data] [Dictionary] should be as follows:
+## method should or shouldn't push any errors that occur. [br]
+## The format of the [param data] [Dictionary] should follow the structure
+## below:
 ## [codeblock]
 ## {
 ##   "accessor_id_1": {
-##     "version": "version_number",
-##     "data_1": "data",
-##     "data_n": "data"
+##     ...
+##     "version": <String> (optional)
 ##   },
 ##   "accessor_id_n": { ... },
 ## }
@@ -399,18 +478,8 @@ func save_partition(
 ## If the [param suppress_errors] parameter is [code]true[/code], this method
 ## shouldn't push any errors. [br]
 ## At the end, this method should return a [Dictionary] with the data
-## obtained. The format of such [Dictionary] should follow the structure:
-## [codeblock]
-## {
-##   "accessor_id_1": {
-##     "version": "version_number",
-##     "partition": "partition_name",
-##     "data_1": "data",
-##     "data_n": "data"
-##   },
-##   "accessor_id_n": { ... },
-## }
-## [/codeblock]
+## obtained. The format of that [Dictionary] should follow the same
+## structure as the one returned by the [method load_data] method.
 func load_partition(
 	_partition_path: String,
 	_suppress_errors: bool = false
