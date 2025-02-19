@@ -398,9 +398,9 @@ func test_read_data_passes_to_executor() -> void:
 	
 	manager.read_data()
 	
-	assert_called(manager.access_executor, "request_reading")
+	assert_called(manager.access_executor, "request_loading")
 
-func test_save_data_emits_reading_started() -> void:
+func test_read_data_emits_reading_started() -> void:
 	watch_signals(manager)
 	
 	manager.access_executor = DoubledAccessExecutor.new()
@@ -409,7 +409,7 @@ func test_save_data_emits_reading_started() -> void:
 	
 	assert_signal_emitted(manager, "reading_started", "Signal not emitted")
 
-func test_save_data_emits_reading_finished() -> void:
+func test_read_data_emits_reading_finished() -> void:
 	watch_signals(manager)
 	
 	manager.access_executor = DoubledAccessExecutor.new()

@@ -476,7 +476,7 @@ func test_remove_partition_updates_in_file_system() -> void:
 	strategy.save_partition(partition_path, data_to_save1, false, suppress_errors)
 	strategy.save_partition(partition_path, data_to_save2, false, suppress_errors)
 	
-	print(strategy.remove_partition(partition_path, [ "accessor_id_1" ], [], suppress_errors))
+	strategy.remove_partition(partition_path, [ "accessor_id_1" ], [], suppress_errors)
 	
 	var expected_updated_data: Dictionary = data_to_save2
 	
@@ -486,8 +486,6 @@ func test_remove_partition_updates_in_file_system() -> void:
 		"status": Error.OK,
 		"data": expected_updated_data
 	}
-	
-	print(load_result)
 	
 	assert_eq(load_result, expected_result, "Updated data didn't match expected")
 

@@ -255,29 +255,6 @@ func request_loading(
 		)
 	)
 
-## The [method request_reading] method queues a reading operation to be executed
-## by this [LokAccessExecutor] the sooner the possible. [br]
-## The parameters of this method and its return are the same of the
-## [method LokAccessStrategy.load_data], with the exception of the
-## [param suppress_errors] not being present and that this method is
-## asynchronous.
-func request_reading(
-	file_path: String,
-	file_format: String,
-	partition_ids: Array[String] = [],
-	accessor_ids: Array[String] = [],
-	version_numbers: Array[String] = []
-) -> Dictionary:
-	return await operate(
-		read_data.bind(
-			file_path,
-			file_format,
-			partition_ids,
-			accessor_ids,
-			version_numbers
-		)
-	)
-
 ## The [method request_removing] method queues a reading operation to be
 ## executed by this [LokAccessExecutor] the sooner the possible. [br]
 ## The parameters of this method and its return are the same of the
@@ -371,40 +348,6 @@ func save_data(
 ## method, which has the same signature with the exception of the
 ## [param suppress_errors] not being present.
 func load_data(
-	file_path: String,
-	file_format: String,
-	partition_ids: Array[String] = [],
-	accessor_ids: Array[String] = [],
-	version_numbers: Array[String] = []
-) -> Dictionary:
-	var result: Dictionary = LokAccessStrategy.create_result()
-	
-	if access_strategy == null:
-		push_error_no_access_strategy()
-		result["status"] = Error.ERR_UNCONFIGURED
-		
-		return result
-	
-	result = access_strategy.load_data(
-		file_path,
-		file_format,
-		partition_ids,
-		accessor_ids,
-		version_numbers,
-		false
-	)
-	
-	return result
-
-## The [method read_data] method is responsible for using the
-## [member access_strategy] to read data. [br]
-## This method is wrapped by the [method request_reading] method, so that
-## it can be executed asynchronously. [br]
-## If you want more information about its parameters and return,
-## see the [method LokAccessStrategy.load_data]
-## method, which has the same signature with the exception of the
-## [param suppress_errors] not being present.
-func read_data(
 	file_path: String,
 	file_format: String,
 	partition_ids: Array[String] = [],

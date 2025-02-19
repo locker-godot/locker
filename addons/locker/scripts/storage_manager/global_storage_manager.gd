@@ -389,9 +389,9 @@ func load_data(
 		version_numbers
 	)
 	
-	loading_finished.emit(result)
-	
 	distribute_result(result, included_accessors)
+	
+	loading_finished.emit(result)
 	
 	return result
 
@@ -417,7 +417,7 @@ func read_data(
 	
 	reading_started.emit()
 	
-	var result: Dictionary = await access_executor.request_reading(
+	var result: Dictionary = await access_executor.request_loading(
 		file_path, file_format, partition_ids, accessor_ids, version_numbers
 	)
 	

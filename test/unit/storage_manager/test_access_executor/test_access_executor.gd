@@ -188,21 +188,6 @@ func test_request_loading_passes_arguments_to_access_strategy() -> void:
 
 #endregion
 
-#region Method request_reading
-
-func test_request_reading_passes_arguments_to_access_strategy() -> void:
-	executor.request_reading("file1", "sav")
-	
-	await wait_for_signal(executor.operation_started, 0.5, "Waiting reading start")
-	
-	assert_called(
-		executor.access_strategy,
-		"load_data",
-		[ "file1", "sav", [], [], [], false ]
-	)
-
-#endregion
-
 #region Method request_removing
 
 func test_request_removing_passes_arguments_to_access_strategy() -> void:
