@@ -222,8 +222,8 @@ func request_removing(
 
 func operate(operation_callable: Callable) -> Dictionary:
 	var new_operation := LokAccessOperation.new(operation_callable)
-	new_operation.started.connect(_on_operation_started, CONNECT_ONE_SHOT)
-	new_operation.finished.connect(_on_operation_finished, CONNECT_ONE_SHOT)
+	new_operation.started.connect(_on_operation_started.bind(new_operation), CONNECT_ONE_SHOT)
+	new_operation.finished.connect(_on_operation_finished.bind(new_operation), CONNECT_ONE_SHOT)
 	
 	mutex.lock()
 	queue_operation(new_operation)
@@ -231,12 +231,7 @@ func operate(operation_callable: Callable) -> Dictionary:
 	
 	semaphore.post()
 	
-	var finished_args: Array = await new_operation.finished
-	
-	var result: Dictionary = {}
-	
-	if finished_args.size() > 0:
-		result = finished_args[0]
+	var result: Dictionary = await new_operation.finished
 	
 	return result
 
