@@ -9,6 +9,9 @@
 ## the group operations started and finished. [br]
 ## This is useful when it's wanted to perform multiple operations on different
 ## save files, which can be indicated individually by each [LokStorageAccessor].
+## [br][br]
+## [b]Version[/b]: 1.0.0 [br]
+## [b]Author[/b]: Daniel Sousa ([url]github.com/nadjiel[/url])
 class_name LokAccessorGroup
 extends Node
 

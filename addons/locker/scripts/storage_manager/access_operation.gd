@@ -7,7 +7,10 @@
 ## and queue different operations in a parallel [Thread]. [br]
 ## Since this class is used with different [Thread]s, it uses the
 ## [method Object.call_deferred] method when emitting signals, so that
-## the main [Thread] can seamlessly connect with these signals.
+## the main [Thread] can seamlessly connect with these signals. [br]
+## [br]
+## [b]Version[/b]: 1.0.0 [br]
+## [b]Author[/b]: Daniel Sousa ([url]github.com/nadjiel[/url])
 class_name LokAccessOperation
 extends RefCounted
 

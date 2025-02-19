@@ -5,7 +5,10 @@
 ## so that it can do its tasks. [br]
 ## It's this class that's responsible for keeping track of all the
 ## [LokStorageAccessor]s in the current scene tree, so that they can
-## easily save and load their data.
+## easily save and load their data. [br]
+## [br]
+## [b]Version[/b]: 1.0.0 [br]
+## [b]Author[/b]: Daniel Sousa ([url]github.com/nadjiel[/url])
 extends LokStorageManager
 
 #region Properties
