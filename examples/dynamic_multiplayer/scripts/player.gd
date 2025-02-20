@@ -1,5 +1,5 @@
 
-class_name Player
+class_name DynamicMultiplayerPlayer
 extends Node2D
 
 const SPEED: float = 256.0

@@ -1,15 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://bfkno7ccr0764"]
+[gd_scene load_steps=6 format=3 uid="uid://bfkno7ccr0764"]
 
 [ext_resource type="Texture2D" uid="uid://cabtwgcshp66e" path="res://icon.svg" id="1_4n58o"]
 [ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/player.gd" id="2_0hilf"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor.gd" id="2_5vyyg"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="4_atapx"]
-[ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/dynamic_player_accessor_v1.gd" id="5_ubttn"]
-
-[sub_resource type="Resource" id="Resource_r0fis"]
-resource_local_to_scene = true
-script = ExtResource("5_ubttn")
-number = "1.0.0"
+[ext_resource type="Resource" uid="uid://253opjoouqyf" path="res://examples/dynamic_multiplayer/resources/player_accessor_v1.tres" id="5_jc4ar"]
 
 [node name="Player" type="Sprite2D"]
 texture = ExtResource("1_4n58o")
@@ -17,14 +12,14 @@ script = ExtResource("2_0hilf")
 
 [node name="StorageAccessor" type="Node" parent="."]
 script = ExtResource("2_5vyyg")
-versions = Array[ExtResource("4_atapx")]([SubResource("Resource_r0fis")])
+versions = Array[ExtResource("4_atapx")]([ExtResource("5_jc4ar")])
 dependency_paths = {
 "player": NodePath(".."),
 "username": NodePath("../UserName")
 }
 
 [node name="UserName" type="Label" parent="."]
-anchors_preset = -1
+anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0

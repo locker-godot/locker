@@ -1,8 +1,7 @@
 [gd_resource type="Resource" script_class="DynamicPlayerAccessorV1" load_steps=2 format=3 uid="uid://253opjoouqyf"]
 
-[ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/dynamic_player_accessor_v1.gd" id="1_ai745"]
+[ext_resource type="Script" path="res://examples/dynamic_multiplayer/scripts/player_accessor_v1.gd" id="1_ai745"]
 
 [resource]
-resource_local_to_scene = true
 script = ExtResource("1_ai745")
 number = "1.0.0"

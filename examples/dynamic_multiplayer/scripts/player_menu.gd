@@ -10,7 +10,7 @@ const PLAYER: PackedScene = preload("res://examples/dynamic_multiplayer/scenes/p
 @export var username: String = "":
 	set = set_username
 
-var player: Player
+var player: DynamicMultiplayerPlayer
 
 func set_username(new_username: String) -> void:
 	username = new_username
@@ -21,7 +21,7 @@ func set_username(new_username: String) -> void:
 	title.text = new_username
 
 func instantiate_player() -> void:
-	player = PLAYER.instantiate() as Player
+	player = PLAYER.instantiate() as DynamicMultiplayerPlayer
 	
 	if username == "player2":
 		player.inputs["up"] = "player2_up"
