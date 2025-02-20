@@ -1,5 +1,5 @@
 
-class_name FileAccessorV1
+class_name FileChoosingFileAccessorV1
 extends LokStorageAccessorVersion
 
 func retrieve_data(_deps: Dictionary) -> Dictionary:

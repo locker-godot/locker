@@ -1,8 +1,7 @@
-[gd_resource type="Resource" script_class="FileLoaderV1" load_steps=2 format=3 uid="uid://s1ibf7wpaah7"]
+[gd_resource type="Resource" script_class="FileChoosingFileAccessorV1" load_steps=2 format=3 uid="uid://d2sogrrxym5pi"]
 
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="1_7j44o"]
 
 [resource]
-resource_local_to_scene = true
 script = ExtResource("1_7j44o")
 number = "1.0.0"

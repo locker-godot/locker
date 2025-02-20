@@ -1,15 +1,10 @@
-[gd_scene load_steps=7 format=3 uid="uid://cbrn0exw0ssrt"]
+[gd_scene load_steps=6 format=3 uid="uid://cbrn0exw0ssrt"]
 
 [ext_resource type="LabelSettings" uid="uid://uxfr14nbvtdb" path="res://examples/file_choosing/resources/file_title_label_settings.tres" id="1_0hxq7"]
 [ext_resource type="Script" path="res://examples/file_choosing/scripts/file_card.gd" id="1_l8x3p"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor.gd" id="2_x8j06"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="3_snras"]
-[ext_resource type="Script" path="res://examples/file_choosing/scripts/file_accessor_v1.gd" id="4_w6if2"]
-
-[sub_resource type="Resource" id="Resource_epkn0"]
-resource_local_to_scene = true
-script = ExtResource("4_w6if2")
-number = "1.0.0"
+[ext_resource type="Resource" uid="uid://d2sogrrxym5pi" path="res://examples/file_choosing/resources/file_accessor_v1.tres" id="4_4s7uf"]
 
 [node name="File" type="PanelContainer"]
 custom_minimum_size = Vector2(150, 0)
@@ -19,7 +14,7 @@ script = ExtResource("1_l8x3p")
 script = ExtResource("2_x8j06")
 id = "game_status"
 partition = "game_status"
-versions = Array[ExtResource("3_snras")]([SubResource("Resource_epkn0")])
+versions = Array[ExtResource("3_snras")]([ExtResource("4_4s7uf")])
 dependency_paths = {
 "file_card": NodePath("..")
 }
