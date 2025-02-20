@@ -173,8 +173,6 @@ func get_file_ids(files_path: String) -> Dictionary:
 ## include the [code]"."[/code]). [br]
 ## Optionally, the [param replace] parameter can be passed to tell if the
 ## data should override any already existent data. [br]
-## Also, the [param suppress_errors] flag can be passed to identify if this
-## method should or shouldn't push any errors that occur. [br]
 ## The structure that the [param data] [Dictionary] should have is as follows:
 ## [codeblock]
 ## {
@@ -196,8 +194,7 @@ func save_data(
 	file_path: String,
 	file_format: String,
 	data: Dictionary,
-	replace: bool = false,
-	suppress_errors: bool = false
+	replace: bool = false
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
@@ -219,7 +216,7 @@ func save_data(
 		var partition_data: Dictionary = data[partition_id]
 		
 		var partition_result: Dictionary = save_partition(
-			partition_path, partition_data, replace, suppress_errors
+			partition_path, partition_data, replace
 		)
 		
 		result["status"] = partition_result["status"]
@@ -248,8 +245,6 @@ func save_data(
 ## filter even more what information to bring back. [br]
 ## If left as default, that means all partitions, accessors, and versions
 ## are read, which corresponds to all data from the save file. [br]
-## Furthermore, the [param suppress_errors] flag can be passed to identify if
-## this method should or shouldn't push any errors that occur. [br]
 ## After completing the loading, this method returns a [Dictionary] containing
 ## all data obtained. Its format is as follows:
 ## [codeblock]
@@ -272,16 +267,12 @@ func load_data(
 	file_format: String,
 	partition_ids: Array[String] = [],
 	accessor_ids: Array[String] = [],
-	version_numbers: Array[String] = [],
-	suppress_errors: bool = false
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
 	# Cancel if file doesn't exist
 	if not LokFileSystemUtil.directory_exists(file_path):
-		if not suppress_errors:
-			LokFileSystemUtil.push_error_directory_not_found(file_path)
-		
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
 	
@@ -305,7 +296,7 @@ func load_data(
 		var partition_path: String = file_path.path_join(partition_name)
 		
 		var partition_result: Dictionary = load_partition(
-			partition_path, suppress_errors
+			partition_path
 		)
 		
 		result["status"] = partition_result["status"]
@@ -343,8 +334,6 @@ func load_data(
 ## filter even more what information to remove. [br]
 ## If left as default, that means all partitions, accessors, and versions
 ## are removed, which corresponds to all data from the save file. [br]
-## Furthermore, the [param suppress_errors] flag can be passed to identify if
-## this method should or shouldn't push any errors that occur. [br]
 ## After completing the removal, this method returns a [Dictionary] containing
 ## all data obtained. That [Dictionary] brings the removed data in the
 ## [code]"data"[/code] field and the data the wasn't removed stays in the
@@ -371,8 +360,7 @@ func remove_data(
 	file_format: String,
 	partition_ids: Array[String] = [],
 	accessor_ids: Array[String] = [],
-	version_numbers: Array[String] = [],
-	suppress_errors: bool = false
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
@@ -402,7 +390,7 @@ func remove_data(
 		var partition_path: String = file_path.path_join(partition_name)
 		
 		var partition_result: Dictionary = remove_partition(
-			partition_path, accessor_ids, version_numbers, suppress_errors
+			partition_path, accessor_ids, version_numbers
 		)
 		
 		result["status"] = partition_result["status"]
@@ -423,20 +411,17 @@ func remove_data(
 ## The [method remove_partition] method removes data from the partition
 ## specified by the [param partition_path] parameter.
 ## [br]
-## If the [param suppress_errors] parameter is [code]true[/code], this method
-## will try to not push any errors. [br]
 ## At the end, this method returns a [Dictionary] with the data
 ## obtained. The format of that [Dictionary] follows the same
 ## structure as the one returned by the [method remove_data] method.
 func remove_partition(
 	partition_path: String,
 	accessor_ids: Array[String] = [],
-	version_numbers: Array[String] = [],
-	suppress_errors: bool = false
+	version_numbers: Array[String] = []
 ) -> Dictionary:
 	# Load so that removed data can be returned
 	var result: Dictionary = load_partition(
-		partition_path, suppress_errors
+		partition_path
 	)
 	
 	result["updated_data"] = {}
@@ -472,7 +457,7 @@ func remove_partition(
 	# Update data with only what should stay
 	else:
 		save_partition(
-			partition_path, result["updated_data"], true, suppress_errors
+			partition_path, result["updated_data"], true
 		)
 	
 	var partition_name: String = LokFileSystemUtil.get_file_name(partition_path)
@@ -489,8 +474,6 @@ func remove_partition(
 ## parameter. [br]
 ## Optionally, the [param replace] parameter can be passed to tell if the
 ## data should override any already existent data. [br]
-## Also, the [param suppress_errors] flag can be passed to identify if this
-## method should or shouldn't push any errors that occur. [br]
 ## The format of the [param data] [Dictionary] should follow the structure
 ## below:
 ## [codeblock]
@@ -505,19 +488,15 @@ func remove_partition(
 func save_partition(
 	_partition_path: String,
 	_data: Dictionary,
-	_replace: bool = false,
-	_suppress_errors: bool = false
+	_replace: bool = false
 ) -> Dictionary: return {}
 
 ## The [method load_partition] method should be overwritten so that it loads
 ## data from the partition specified by the [param partition_path] parameter.
 ## [br]
-## If the [param suppress_errors] parameter is [code]true[/code], this method
-## shouldn't push any errors. [br]
 ## At the end, this method should return a [Dictionary] with the data
 ## obtained. The format of that [Dictionary] should follow the same
 ## structure as the one returned by the [method load_data] method.
 func load_partition(
-	_partition_path: String,
-	_suppress_errors: bool = false
+	_partition_path: String
 ) -> Dictionary: return {}

@@ -36,8 +36,7 @@ func _init(_password: String = "") -> void:
 func save_partition(
 	partition_path: String,
 	data: Dictionary,
-	replace: bool = false,
-	suppress_errors: bool = false
+	replace: bool = false
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
@@ -53,7 +52,7 @@ func save_partition(
 	var load_result: Dictionary = {}
 	
 	if not replace:
-		load_result = load_partition(partition_path, true)
+		load_result = load_partition(partition_path)
 	
 	# Merge previous and new datas
 	result["data"] = data.merged(load_result.get("data", {}))
@@ -75,24 +74,20 @@ func save_partition(
 ## To read more about the parameters of this method and the format of
 ## its return, see [method LokAccessStrategy.load_partition].
 func load_partition(
-	partition_path: String,
-	suppress_errors: bool = false
+	partition_path: String
 ) -> Dictionary:
 	var result: Dictionary = create_result()
 	
 	# Abort if partition doesn't exist
 	if not LokFileSystemUtil.file_exists(partition_path):
-		if not suppress_errors:
-			LokFileSystemUtil.push_error_file_not_found(partition_path)
-		
 		result["status"] = Error.ERR_FILE_NOT_FOUND
 		return result
 	
 	var loaded_content: String = LokFileSystemUtil.read_encrypted_file(
-		partition_path, password, suppress_errors
+		partition_path, password, true
 	)
 	var loaded_data: Variant = LokFileSystemUtil.parse_json_from_string(
-		loaded_content, suppress_errors
+		loaded_content, true
 	)
 	
 	# Cancel if no data could be parsed

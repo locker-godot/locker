@@ -189,7 +189,7 @@ func test_request_saving_passes_arguments_to_access_strategy() -> void:
 	assert_called(
 		executor.access_strategy,
 		"save_data",
-		[ "file1", "sav", { "accessor1": "data" }, false, false ]
+		[ "file1", "sav", { "accessor1": "data" }, false ]
 	)
 
 #endregion
@@ -204,7 +204,7 @@ func test_request_loading_passes_arguments_to_access_strategy() -> void:
 	assert_called(
 		executor.access_strategy,
 		"load_data",
-		[ "file1", "sav", [], [], [], false ]
+		[ "file1", "sav", [], [], [] ]
 	)
 
 #endregion
@@ -219,7 +219,7 @@ func test_request_removing_passes_arguments_to_access_strategy() -> void:
 	assert_called(
 		executor.access_strategy,
 		"remove_data",
-		[ "file1", "sav", [], [], [], false ]
+		[ "file1", "sav", [], [], [] ]
 	)
 
 #endregion

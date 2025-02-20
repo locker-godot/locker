@@ -225,8 +225,7 @@ func request_get_file_ids(files_path: String) -> Dictionary:
 ## The [method request_saving] method queues a saving operation to be executed
 ## by this [LokAccessExecutor] the sooner the possible. [br]
 ## The parameters of this method and its return are the same of the
-## [method LokAccessStrategy.save_data], with the exception of the
-## [param suppress_errors] not being present and that this method is
+## [method LokAccessStrategy.save_data], with the exception that this method is
 ## asynchronous.
 func request_saving(
 	file_path: String,
@@ -246,8 +245,7 @@ func request_saving(
 ## The [method request_loading] method queues a loading operation to be executed
 ## by this [LokAccessExecutor] the sooner the possible. [br]
 ## The parameters of this method and its return are the same of the
-## [method LokAccessStrategy.load_data], with the exception of the
-## [param suppress_errors] not being present and that this method is
+## [method LokAccessStrategy.load_data], with the exception that this method is
 ## asynchronous.
 func request_loading(
 	file_path: String,
@@ -269,9 +267,8 @@ func request_loading(
 ## The [method request_removing] method queues a reading operation to be
 ## executed by this [LokAccessExecutor] the sooner the possible. [br]
 ## The parameters of this method and its return are the same of the
-## [method LokAccessStrategy.remove_data], with the exception of the
-## [param suppress_errors] not being present and that this method is
-## asynchronous.
+## [method LokAccessStrategy.remove_data], with the exception that this method
+## is asynchronous.
 func request_removing(
 	file_path: String,
 	file_format: String,
@@ -349,8 +346,7 @@ func get_file_ids(files_path: String) -> Dictionary:
 ## it can be executed asynchronously. [br]
 ## If you want more information about its parameters and return,
 ## see the [method LokAccessStrategy.save_data]
-## method, which has the same signature with the exception of the
-## [param suppress_errors] not being present.
+## method, which has the same signature.
 func save_data(
 	file_path: String,
 	file_format: String,
@@ -366,7 +362,7 @@ func save_data(
 		return result
 	
 	result = access_strategy.save_data(
-		file_path, file_format, data, replace, false
+		file_path, file_format, data, replace
 	)
 	
 	return result
@@ -377,8 +373,7 @@ func save_data(
 ## it can be executed asynchronously. [br]
 ## If you want more information about its parameters and return,
 ## see the [method LokAccessStrategy.load_data]
-## method, which has the same signature with the exception of the
-## [param suppress_errors] not being present.
+## method, which has the same signature.
 func load_data(
 	file_path: String,
 	file_format: String,
@@ -399,8 +394,7 @@ func load_data(
 		file_format,
 		partition_ids,
 		accessor_ids,
-		version_numbers,
-		false
+		version_numbers
 	)
 	
 	return result
@@ -411,8 +405,7 @@ func load_data(
 ## it can be executed asynchronously. [br]
 ## If you want more information about its parameters and return,
 ## see the [method LokAccessStrategy.remove_data]
-## method, which has the same signature with the exception of the
-## [param suppress_errors] not being present.
+## method, which has the same signature.
 func remove_data(
 	file_path: String,
 	file_format: String,
@@ -433,8 +426,7 @@ func remove_data(
 		file_format,
 		partition_ids,
 		accessor_ids,
-		version_numbers,
-		false
+		version_numbers
 	)
 	
 	return result
