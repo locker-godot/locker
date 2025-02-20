@@ -35,6 +35,20 @@ const AUTOLOAD_PATH := "res://addons/locker/scripts/storage_manager/global_stora
 
 #region Settings
 
+## The [member available_strategy_paths] property should store paths
+## to [LokAccessStrategy]s that will be exposed in the [ProjectSettings] as
+## valid [LokAccessStrategy]s to choose from. [br]
+## When adding new [LokAccessStrategy]s to the [LockerPlugin], if they are
+## choosable in the [ProjectSettings], their path should be added here. [br]
+## They also should have a readable and unique [String] returned from their
+## [method Object._to_string] method.
+static var available_strategy_paths: Array[String] = [
+	"res://addons/locker/scripts/access_strategy/json_access_strategy.gd",
+	"res://addons/locker/scripts/access_strategy/encrypted_access_strategy.gd"
+]:
+	set = set_available_strategy_paths,
+	get = get_available_strategy_paths
+
 ## The [member plugin_settings] property stores a [Dictionary] that describes
 ## all the settings that should be appended to the [ProjectSettings] when
 ## the [LockerPlugin] is activated, so that they can be easily edited through
@@ -261,6 +275,12 @@ static func get_setting_encrypted_strategy_password() -> String:
 
 #region Setters & Getters
 
+static func set_available_strategy_paths(new_paths: Array[String]) -> void:
+	available_strategy_paths = new_paths
+
+static func get_available_strategy_paths() -> Array[String]:
+	return available_strategy_paths
+
 static func set_plugin_settings(new_settings: Dictionary) -> void:
 	plugin_settings = new_settings
 
@@ -271,14 +291,101 @@ static func get_plugin_settings() -> Dictionary:
 
 #region Methods
 
+## The [method get_strategy_scripts] method returns an [Array] of
+## [Script]s from an [Array] of paths pointing to those [Script]s.
+static func get_strategy_scripts(strategy_paths: Array[String]) -> Array[Script]:
+	var scripts: Array[Script] = []
+	
+	for strategy_path: String in strategy_paths:
+		if ResourceLoader.exists(strategy_path):
+			scripts.append(load(strategy_path))
+	
+	return scripts
+
+## The [method get_strategies] method returns an [Array] of
+## [LokAccessStrategy] instances from an [Array] of
+## [LokAccessStrategy] [Script]s.
+static func get_strategies(strategy_scripts: Array[Script]) -> Array[LokAccessStrategy]:
+	var strategies: Array[LokAccessStrategy] = []
+	
+	for script: Script in strategy_scripts:
+		var strategy: Object = script.new()
+		
+		if strategy is LokAccessStrategy:
+			strategies.append(strategy as LokAccessStrategy)
+	
+	return strategies
+
+## The [method get_strategy_strings] method returns an [Array] of
+## stringified [LokAccessStrategy]s from an [Array] of
+## [LokAccessStrategy] instances.
+static func get_strategy_strings(strategies: Array[LokAccessStrategy]) -> Array[String]:
+	var result: Array[String] = []
+	
+	for strategy: LokAccessStrategy in strategies:
+		result.append(str(strategy))
+	
+	return result
+
+## The [method get_string_of_strategies] method converts an [Array] of
+## [LokAccessStrategy]s into a [String] that describes that collection in
+## a way compatible with [code]hint_string[/code]s.
+static func get_string_of_strategies(strategies: Array[LokAccessStrategy]) -> String:
+	var result: String = ""
+	
+	for i: int in strategies.size():
+		var strategy: LokAccessStrategy = strategies[i]
+		
+		result += str(strategy)
+		
+		if i != strategies.size() - 1:
+			result += ","
+	
+	return result
+
+## The [method get_default_strategy_string] method tries to get a
+## [param default] [LokAccessStrategy] [String] that can be used in the
+## [ProjectSettings] as the default choice in the strategies enum.
+static func get_default_strategy_string(default: String, strategies: Array[LokAccessStrategy]) -> String:
+	var result: String = ""
+	
+	var strategy_strings: Array[String] = get_strategy_strings(strategies)
+	
+	for strategy_string: String in strategy_strings:
+		if strategy_string == default:
+			result = default
+			
+			break
+	
+	if result == "" and not strategy_strings.is_empty():
+		result = strategy_strings[0]
+	
+	return result
+
+## The [method update_available_strategies] method uses the
+## [member available_strategy_paths] to update what [LokAccessStrategy] options
+## should be shown in the [ProjectSettings] as options to choose from.
+func update_available_strategies() -> void:
+	var available_strategy_scripts: Array[Script] = get_strategy_scripts(available_strategy_paths)
+	var available_strategies: Array[LokAccessStrategy] = get_strategies(available_strategy_scripts)
+	var string_of_available_strategies: String = get_string_of_strategies(available_strategies)
+	var default_strategy_string: String = get_default_strategy_string("Encrypted", available_strategies)
+	
+	plugin_settings["addons/locker/access_strategy"]["property_info"]["hint_string"] = string_of_available_strategies
+	plugin_settings["addons/locker/access_strategy"]["default_value"] = default_strategy_string
+	plugin_settings["addons/locker/access_strategy"]["current_value"] = default_strategy_string
+
 ## The [method string_to_strategy] method takes a [param string] and
 ## returns a [LokAccessStrategy] that corresponds to that [param string]. [br]
 ## If an invalid [param string] is passed, this method returns
 ## [code]null[/code].
 static func string_to_strategy(string: String) -> LokAccessStrategy:
-	match(string):
-		"JSON": return LokJSONAccessStrategy.new()
-		"Encrypted": return LokEncryptedAccessStrategy.new()
+	var strategy_scripts: Array[Script] = get_strategy_scripts(available_strategy_paths)
+	var strategies: Array[LokAccessStrategy] = get_strategies(strategy_scripts)
+	
+	for strategy: LokAccessStrategy in strategies:
+		if string == str(strategy):
+			return strategy
 	
 	return null
 
@@ -289,12 +396,10 @@ static func string_to_strategy(string: String) -> LokAccessStrategy:
 ## If an invalid [param strategy] is passed, this method returns
 ## an empty [String].
 static func strategy_to_string(strategy: LokAccessStrategy) -> String:
-	if strategy is LokJSONAccessStrategy:
-		return "JSON"
-	if strategy is LokEncryptedAccessStrategy:
-		return "Encrypted"
+	if strategy == null:
+		return ""
 	
-	return ""
+	return str(strategy)
 
 ## The [method save_settings] method takes a [param settings] [Dictionary] and
 ## takes the current value of each one of them from the [ProjectSettings],
@@ -397,12 +502,16 @@ func remove_settings(settings: Dictionary) -> void:
 
 ## The [method start_plugin] method registers the singleton needed by the
 ## [LockerPlugin] as an autoload, so it isn't needed to do that manually. [br]
-## This method also registers the settings of this plugin in the
+## This method also updates and registers the settings of this plugin in the
 ## [ProjectSettings], making sure to load any settings used before deactivating
 ## this plugin. [br]
+## When doing that, this method makes it so arbitrary [LokAccessStratey]s
+## registered in the [member access_strategy_paths] property are also
+## registered in the [ProjectSettings] so that they can be easily selected. [br]
 ## Finally, this method makes sure that whenever a setting from this Plugin
 ## is altered, it is saved in the [ConfigFile] in the [constant CONFIG_PATH].
 func start_plugin() -> void:
+	update_available_strategies()
 	add_autoload_singleton(AUTOLOAD_NAME, AUTOLOAD_PATH)
 	add_settings(plugin_settings)
 	load_settings(plugin_settings)

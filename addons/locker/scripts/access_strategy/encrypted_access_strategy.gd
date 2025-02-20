@@ -97,3 +97,7 @@ func load_partition(
 	result["data"] = loaded_data
 	
 	return result
+
+# Returns a simple String representing this AccessStrategy
+func _to_string() -> String:
+	return "Encrypted"

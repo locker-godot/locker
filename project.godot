@@ -8,10 +8,6 @@
 
 config_version=5
 
-[addons]
-
-locker/encrypted_strategy/password="password"
-
 [application]
 
 config/name="Locker"
