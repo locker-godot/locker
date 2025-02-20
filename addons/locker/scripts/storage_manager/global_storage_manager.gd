@@ -444,8 +444,7 @@ func _init() -> void:
 	
 	var access_strategy: LokAccessStrategy = get_access_strategy()
 	
-	if access_strategy is LokEncryptedAccessStrategy:
-		access_strategy.password = LockerPlugin.get_setting_encrypted_strategy_password()
+	access_strategy.set("password", LockerPlugin.get_setting_encrypted_strategy_password())
 
 # Finalizes AccessExecutor's Thread
 func _exit_tree() -> void:

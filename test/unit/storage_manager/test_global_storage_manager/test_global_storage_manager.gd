@@ -39,8 +39,8 @@ func test_initializes_with_project_settings() -> void:
 	var access_strategy: LokAccessStrategy = manager.get_access_strategy()
 	var encrypted_strategy_password: String = ""
 	
-	if access_strategy is LokEncryptedAccessStrategy:
-		encrypted_strategy_password = access_strategy.get_password()
+	if access_strategy.get(&"password") != null:
+		encrypted_strategy_password = access_strategy.get(&"password")
 	
 	assert_eq(saves_directory, expected_saves_directory, "Unexpected value")
 	assert_eq(save_files_prefix, expected_save_files_prefix, "Unexpected value")
