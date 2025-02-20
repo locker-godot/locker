@@ -1,7 +1,0 @@
-[gd_resource type="Resource" script_class="PlayerAccessorV1" load_steps=2 format=3 uid="uid://bblqqn5kl8i47"]
-
-[ext_resource type="Script" path="res://examples/simple_topdown/player_accessor_v1.gd" id="1_uk82m"]
-
-[resource]
-script = ExtResource("1_uk82m")
-number = "1.0.0"

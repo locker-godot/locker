@@ -1,4 +1,5 @@
 
+class_name SimpleTopdownLabelToastPopup
 extends Label
 
 func popup(_text: String, seconds: float = 1.0) -> void:

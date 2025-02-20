@@ -5,11 +5,26 @@
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_manager/scene_storage_manager.gd" id="1_smdcc"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor.gd" id="2_aiit2"]
 [ext_resource type="Script" path="res://addons/locker/scripts/storage_accessor/storage_accessor_version.gd" id="3_u6py0"]
-[ext_resource type="Resource" uid="uid://bblqqn5kl8i47" path="res://examples/simple_topdown/player_accessor_v1.tres" id="4_b4w5b"]
-[ext_resource type="Script" path="res://examples/simple_topdown/player.gd" id="4_qtr56"]
-[ext_resource type="Script" path="res://examples/simple_topdown/status_popup.gd" id="8_4xjs3"]
+[ext_resource type="Resource" uid="uid://d225um4l5tk37" path="res://examples/simple_topdown/resources/player_accessor_v1.tres" id="4_b4w5b"]
+[ext_resource type="Script" path="res://examples/simple_topdown/scripts/player.gd" id="4_qtr56"]
+[ext_resource type="Script" path="res://examples/simple_topdown/scripts/status_popup.gd" id="8_4xjs3"]
 [ext_resource type="Texture2D" uid="uid://ck45ywglfs561" path="res://examples/simple_topdown/assets/load_circle.svg" id="9_x2762"]
-[ext_resource type="Script" path="res://examples/simple_topdown/loader.gd" id="10_etgrd"]
+[ext_resource type="Script" path="res://examples/simple_topdown/scripts/loader.gd" id="10_etgrd"]
+
+[sub_resource type="Animation" id="Animation_05ess"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
 
 [sub_resource type="Animation" id="Animation_j6151"]
 resource_name = "spin"
@@ -27,21 +42,6 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [0.0, 6.28319]
-}
-
-[sub_resource type="Animation" id="Animation_05ess"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:rotation")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_403np"]
@@ -163,9 +163,12 @@ libraries = {
 }
 autoplay = "spin"
 
-[connection signal="operation_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessOptions/Status" method="_on_storage_operation_finished"]
-[connection signal="operation_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_finished"]
-[connection signal="operation_started" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_started"]
+[connection signal="loading_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessOptions/Status" method="_on_storage_loading_finished"]
+[connection signal="loading_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_finished"]
+[connection signal="loading_started" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_started"]
+[connection signal="saving_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessOptions/Status" method="_on_storage_saving_finished"]
+[connection signal="saving_finished" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_finished"]
+[connection signal="saving_started" from="StorageManager" to="UILayer/UI/AccessContainer/AccessLoader" method="_on_storage_operation_started"]
 [connection signal="color_changed" from="UILayer/UI/ColorSwapping/ColorPicker" to="Player" method="set_modulate"]
 [connection signal="text_submitted" from="UILayer/UI/AccessContainer/AccessOptions/FileSelector" to="StorageManager" method="set_current_file"]
 [connection signal="pressed" from="UILayer/UI/AccessContainer/AccessOptions/Buttons/Save" to="StorageManager" method="save_data"]

@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="SimpleTopdownPlayerAccessorV1" load_steps=2 format=3 uid="uid://d225um4l5tk37"]
+
+[ext_resource type="Script" path="res://examples/simple_topdown/scripts/player_accessor_v1.gd" id="1_km0m7"]
+
+[resource]
+script = ExtResource("1_km0m7")
+number = "1.0.0"
