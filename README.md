@@ -87,7 +87,7 @@ be loaded.</p>
 <h3>Godot Asset Library</h3>
 <em>Latest Stable Version</em>
 <p>
-The Asset Library is the easiest way of downloading this project.
+The <a href="https://godotengine.org/asset-library/asset/3765" target="_blank">Asset Library</a> is the easiest way of downloading this project.
 The version you will encounter there is the <b>latest stable</b> one.
 </p>
 <p>
