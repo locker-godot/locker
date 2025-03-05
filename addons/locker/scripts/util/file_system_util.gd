@@ -428,13 +428,25 @@ static func parse_json_from_string(
 	return json.data
 
 ## The [method load_resources] method is a quick way to load all [Resource]s
-## located in a specific [param directory_path].
-static func load_resources(directory_path: String) -> Array[Resource]:
+static func load_resources(
+	directory_path: String,
+	resource_type: String = ""
+) -> Array[Resource]:
 	var resources: Array[Resource] = []
 	
 	var resource_names: PackedStringArray = get_file_names(directory_path)
 	
+	var formats: PackedStringArray = []
+	
+	if resource_type != "":
+		formats = ResourceLoader.get_recognized_extensions_for_type(resource_type)
+	
 	for resource_name: String in resource_names:
+		var resource_format: String = get_file_format(resource_name)
+		
+		if not LokUtil.filter_value(formats, resource_format):
+			continue
+		
 		var resource_path: String = directory_path.path_join(resource_name)
 		
 		resources.append(load(resource_path))
