@@ -428,6 +428,15 @@ static func parse_json_from_string(
 	return json.data
 
 ## The [method load_resources] method is a quick way to load all [Resource]s
+## located in a specific [param directory_path]. [br]
+## Optionally, a [param resource_type] [String] can be passed to filter
+## what types of [Resource]s should be loaded or to prevent unknown
+## file types from being loaded. [br]
+## As an example, if a [code]"Script"[/code] [String] is passed in the
+## [param resource_type] parameter, only files with formats that can represent
+## [Script]s are loaded. [br]
+## What formats can represent what [Resource] types are dictated by the
+## [method ResourceLoader.get_recognized_extensions_for_type] method.
 static func load_resources(
 	directory_path: String,
 	resource_type: String = ""
