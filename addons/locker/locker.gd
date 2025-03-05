@@ -313,7 +313,7 @@ func _disable_plugin() -> void:
 static func _load_strategy_scripts() -> Array[Script]:
 	var scripts: Array[Script] = []
 	
-	for resource: Resource in LokFileSystemUtil.load_resources(STRATEGY_SCRIPTS_PATH):
+	for resource: Resource in LokFileSystemUtil.load_resources(STRATEGY_SCRIPTS_PATH, "Script"):
 		if not resource is Script:
 			continue
 		
