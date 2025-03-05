@@ -15,7 +15,7 @@
   <a href="https://github.com/locker-godot/locker/releases">
     <img alt="Latest Release" src="https://img.shields.io/github/v/release/locker-godot/locker?labelColor=fdf2ed&color=2D3142&style=for-the-badge">
   </a>
-  <a href="https://ko-fi.com/nadjiel">
+  <a href="https://ko-fi.com/nadjiel" target="_blank">
     <img alt="" src="https://img.shields.io/badge/Ko--fi-ffda6e?logo=kofi&color=ffda6e&style=for-the-badge" >
   </a>
 </p>
@@ -87,7 +87,7 @@ be loaded.</p>
 <h3>Godot Asset Library</h3>
 <em>Latest Stable Version</em>
 <p>
-The Asset Library is the easiest way of downloading this project.
+The <a href="https://godotengine.org/asset-library/asset/3765" target="_blank">Asset Library</a> is the easiest way of downloading this project.
 The version you will encounter there is the <b>latest stable</b> one.
 </p>
 <p>
@@ -106,7 +106,7 @@ Just select the desired version and install it.
 <h3>Itch.io</h3>
 <em>Latest Stable Version</em>
 <p>
-This project is also available on <a href="https://nadjiel.itch.io/locker">Itch.io</a>, if you prefer downloading from there.
+This project is also available on <a href="https://nadjiel.itch.io/locker" target="_blank">Itch.io</a>, if you prefer downloading from there.
 The version available there is also the <b>latest stable</b> one.
 </p>
 
@@ -130,7 +130,7 @@ If you want to download the <b>latest unstable</b> version, you can download it 
 <h2>🧪 Testing</h2>
 <p>
 This project has <b>unit tests</b> (located in the <a href="https://github.com/locker-godot/locker/tree/main/test/unit/"><code>test/unit</code></a> folder) to validate its correct functionality.
-Those tests are written with the use of the <a href="https://github.com/bitwes/Gut">GUT Plugin</a>, by <a href="https://github.com/bitwes">@bitwes</a>, also available in the <a href="https://godotengine.org/asset-library/asset/1709">Godot Asset Library</a>.</p>
+Those tests are written with the use of the <a href="https://github.com/bitwes/Gut" target="_blank">GUT Plugin</a>, by <a href="https://github.com/bitwes" target="_blank">@bitwes</a>, also available in the <a href="https://godotengine.org/asset-library/asset/1709" target="_blank">Godot Asset Library</a>.</p>
 
 <h2>🤝 Contributions</h2>
 <p>If you like this project, consider supporting me on <a target="_blank" href="https://ko-fi.com/nadjiel">Ko-fi</a> or on <a target="_blank" href="https://github.com/sponsors/nadjiel">Github</a> so I can keep on making content like this! :D</p>
@@ -139,7 +139,7 @@ Those tests are written with the use of the <a href="https://github.com/bitwes/G
     <img alt="Buy Me a Coffee at ko-fi.com" border="0" src="https://storage.ko-fi.com/cdn/kofi2.png?v=6" style="border:0px;height:2em;max-width:160px" height="2em">
   </a>
 </p>
-<p>If you can't support me those ways, starring on <a href="https://github.com/locker-godot/locker">Github</a> or rating, commenting or adding to collections on <a href="https://nadjiel.itch.io/locker">Itch.io</a> would go a long way :)</p>
+<p>If you can't support me those ways, starring on <a href="https://github.com/locker-godot/locker">Github</a> or rating, commenting or adding to collections on <a href="https://nadjiel.itch.io/locker" target="_blank">Itch.io</a> would go a long way :)</p>
 <p>Other than that, here are some ways you can contribute to this project, so that we can improve it together:</p>
 <ul>
 <li>If you found a bug, feel free to <a target="_blank" href="https://github.com/locker-godot/locker/issues/new">Create an Issue</a> pointing it out. The more informations the better.
@@ -153,7 +153,7 @@ Also, including a Minimal Reproduction Project would go a long way;</li>
 This framework is distributed under the <a href="https://github.com/locker-godot/locker/blob/main/LICENSE">MIT</a> license, you can use it on your projects.
 Attribution is appreciated, but not necessary.
 </p>
-<p>If you use this project and you'd like to, let me know commenting on <a href="https://nadjiel.itch.io/locker">Itch.io</a>! I'd love to see what you can make with it :)</p>
+<p>If you use this project and you'd like to, let me know commenting on <a href="https://nadjiel.itch.io/locker" target="_blank">Itch.io</a>! I'd love to see what you can make with it :)</p>
 
 <h2>Credits</h2>
 <p>Framework created with ❤️ by <a href="https://github.com/nadjiel" target="_blank">@nadjiel</a></p>
