@@ -4,17 +4,19 @@ extends GutTest
 var GlobalStorageManager: GDScript = preload("res://addons/locker/scripts/storage_manager/global_storage_manager.gd")
 var StorageAccessor: GDScript = preload("res://addons/locker/scripts/storage_accessor/storage_accessor.gd")
 var AccessExecutor: GDScript = preload("res://addons/locker/scripts/storage_manager/access_executor.gd")
+var DoubledGlobalStorageManager: GDScript
 var DoubledStorageAccessor: GDScript
 var DoubledAccessExecutor: GDScript
 
 var manager := LokGlobalStorageManager
 
 func before_all() -> void:
+	DoubledGlobalStorageManager = partial_double(GlobalStorageManager)
 	DoubledStorageAccessor = partial_double(StorageAccessor)
 	DoubledAccessExecutor = double(AccessExecutor)
 
 func before_each() -> void:
-	manager = add_child_autofree(GlobalStorageManager.new())
+	manager = add_child_autofree(DoubledGlobalStorageManager.new())
 	
 	stub(DoubledAccessExecutor, "request_loading").to_return({})
 	stub(DoubledAccessExecutor, "request_get_file_ids").to_return({})
@@ -126,7 +128,7 @@ func test_collect_data_awaits_data_retrieval() -> void:
 			return expected
 	)
 	
-	var result: Dictionary = await manager.collect_data(accessor)
+	var result: Dictionary = await manager.collect_data(accessor, "")
 	
 	assert_eq(result, expected, "Data collection wasn't awaited")
 
@@ -138,7 +140,7 @@ func test_gather_data_ignores_unidentified_accessors() -> void:
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	stub(accessor.retrieve_data).to_return({ "accessor": true })
 	
-	var result: Dictionary = await manager.gather_data()
+	var result: Dictionary = await manager.gather_data([], "")
 	
 	assert_eq(result, {}, "Data obtained")
 
@@ -276,7 +278,7 @@ func test_gather_data_ignores_accessors_without_data() -> void:
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	stub(accessor.retrieve_data).to_return({})
 	
-	var result: Dictionary = await manager.gather_data()
+	var result: Dictionary = await manager.gather_data([], "")
 	
 	assert_eq(result, {}, "Data obtained")
 
@@ -303,7 +305,7 @@ func test_gather_data_awaits_data_retrieval() -> void:
 	
 	manager.accessors = [ accessor ]
 	
-	var result: Dictionary = await manager.gather_data()
+	var result: Dictionary = await manager.gather_data([], "")
 	
 	assert_eq(result, expected, "Data gathering wasn't awaited")
 
@@ -316,7 +318,7 @@ func test_distribute_result_passes_to_accessors() -> void:
 	
 	manager.add_accessor(accessor)
 	
-	manager.distribute_result({})
+	manager.distribute_result({}, [])
 	
 	assert_called(accessor, "consume_data")
 
@@ -344,7 +346,7 @@ func test_distribute_result_sets_version_number() -> void:
 				"version": "2.0.0"
 			}
 		}
-	})
+	}, [])
 	
 	assert_eq(accessor.version_number, "2.0.0", "Version didn't match")
 
@@ -366,7 +368,7 @@ func test_distribute_result_sends_according_to_ids() -> void:
 			"accessor1": accessor1_data.duplicate(),
 			"accessor2": accessor2_data.duplicate(),
 		}
-	})
+	}, [])
 	
 	accessor1_data = { "status": Error.OK, "data": accessor1_data }
 	accessor2_data = { "status": Error.OK, "data": accessor2_data }
@@ -389,7 +391,7 @@ func test_distribute_result_awaits_data_consumption() -> void:
 	
 	manager.accessors = [ accessor ]
 	
-	await manager.distribute_result({})
+	await manager.distribute_result({}, [])
 	
 	assert_eq(result, expected, "Data distribution wasn't awaited")
 
@@ -411,16 +413,38 @@ func test_get_saved_files_ids_passes_to_executor() -> void:
 func test_save_data_passes_to_executor() -> void:
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.save_data()
+	manager.save_data("", "", [], false)
 	
 	assert_called(manager._access_executor, "request_saving")
+
+func test_save_data_awaits_retrieval() -> void:
+	manager._access_executor = DoubledAccessExecutor.new()
+	
+	var result: Dictionary = {}
+	var expected: Dictionary = { "gathered": true }
+	
+	stub(manager.gather_data).to_call(
+		func(
+			_accessors: Array[LokStorageAccessor] = [],
+			_version: String = ""
+		) -> Dictionary:
+			await get_tree().create_timer(0.01).timeout
+			
+			result["gathered"] = true
+			
+			return {}
+	)
+	
+	await manager.save_data("", "", [], false)
+	
+	assert_eq(result, expected, "Gathering wasn't awaited")
 
 func test_save_data_emits_saving_started() -> void:
 	watch_signals(manager)
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.save_data()
+	manager.save_data("", "", [], false)
 	
 	assert_signal_emitted(manager, "saving_started", "Signal not emitted")
 
@@ -429,7 +453,7 @@ func test_save_data_emits_saving_finished() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.save_data()
+	manager.save_data("", "", [], false)
 	
 	assert_signal_emitted(manager, "saving_finished", "Signal not emitted")
 
@@ -440,7 +464,7 @@ func test_save_data_emits_saving_finished() -> void:
 func test_load_data_passes_to_executor() -> void:
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.load_data()
+	manager.load_data("", [], [], [])
 	
 	assert_called(manager._access_executor, "request_loading")
 
@@ -449,7 +473,7 @@ func test_save_data_emits_loading_started() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.load_data()
+	manager.load_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "loading_started", "Signal not emitted")
 
@@ -458,7 +482,7 @@ func test_save_data_emits_loading_finished() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.load_data()
+	manager.load_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "loading_finished", "Signal not emitted")
 
@@ -469,7 +493,7 @@ func test_save_data_emits_loading_finished() -> void:
 func test_read_data_passes_to_executor() -> void:
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.read_data()
+	manager.read_data("", [], [], [])
 	
 	assert_called(manager._access_executor, "request_loading")
 
@@ -478,7 +502,7 @@ func test_read_data_emits_reading_started() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.read_data()
+	manager.read_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "reading_started", "Signal not emitted")
 
@@ -487,7 +511,7 @@ func test_read_data_emits_reading_finished() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.read_data()
+	manager.read_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "reading_finished", "Signal not emitted")
 
@@ -498,7 +522,7 @@ func test_read_data_emits_reading_finished() -> void:
 func test_remove_data_passes_to_executor() -> void:
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.remove_data()
+	manager.remove_data("", [], [], [])
 	
 	assert_called(manager._access_executor, "request_removing")
 
@@ -507,7 +531,7 @@ func test_save_data_emits_removing_started() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.remove_data()
+	manager.remove_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "removing_started", "Signal not emitted")
 
@@ -516,7 +540,7 @@ func test_save_data_emits_removing_finished() -> void:
 	
 	manager._access_executor = DoubledAccessExecutor.new()
 	
-	manager.remove_data()
+	manager.remove_data("", [], [], [])
 	
 	assert_signal_emitted(manager, "removing_finished", "Signal not emitted")
 
