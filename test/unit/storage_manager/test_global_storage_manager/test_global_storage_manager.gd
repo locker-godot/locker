@@ -417,7 +417,7 @@ func test_save_data_passes_to_executor() -> void:
 	
 	assert_called(manager._access_executor, "request_saving")
 
-func test_save_data_awaits_retrieval() -> void:
+func test_save_data_awaits_gathering() -> void:
 	manager._access_executor = DoubledAccessExecutor.new()
 	
 	var result: Dictionary = {}
@@ -467,6 +467,26 @@ func test_load_data_passes_to_executor() -> void:
 	manager.load_data("", [], [], [])
 	
 	assert_called(manager._access_executor, "request_loading")
+
+func test_load_data_awaits_distribution() -> void:
+	manager._access_executor = DoubledAccessExecutor.new()
+	
+	var result: Dictionary = {}
+	var expected: Dictionary = { "distributed": true }
+	
+	stub(manager.distribute_result).to_call(
+		func(
+			_result: Dictionary,
+			_accessors: Array[LokStorageAccessor] = []
+		) -> void:
+			await get_tree().create_timer(0.01).timeout
+			
+			result["distributed"] = true
+	)
+	
+	await manager.load_data("", [], [], [])
+	
+	assert_eq(result, expected, "Distribition wasn't awaited")
 
 func test_save_data_emits_loading_started() -> void:
 	watch_signals(manager)
