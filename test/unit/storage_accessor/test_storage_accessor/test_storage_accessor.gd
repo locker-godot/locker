@@ -336,7 +336,7 @@ func test_retrieve_data_awaits_async_versions() -> void:
 	assert_eq(
 		await accessor.retrieve_data(),
 		expected,
-		"Dependencies weren't passed"
+		"Data retrieval wasn't awaited"
 	)
 
 #endregion
@@ -377,5 +377,28 @@ func test_consume_data_passes_args_to_version() -> void:
 	accessor.consume_data(data)
 	
 	assert_called(version, "_consume_data", [ data, deps ])
+
+func test_consume_data_awaits_async_versions() -> void:
+	var version: LokStorageAccessorVersion = DoubledStorageAccessorVersion.new()
+	
+	var result: Dictionary = {}
+	var expected: Dictionary = { "awaited": true }
+	
+	stub(version._consume_data).to_call(
+		func(_res: Dictionary, _deps: Dictionary) -> void:
+			await get_tree().create_timer(0.01).timeout
+			
+			result["awaited"] = true
+	)
+	
+	accessor.versions = [ version ]
+	
+	await accessor.consume_data({})
+	
+	assert_eq(
+		result,
+		expected,
+		"Data consumption wasn't awaited"
+	)
 
 #endregion
