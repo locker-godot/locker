@@ -280,6 +280,33 @@ func test_gather_data_ignores_accessors_without_data() -> void:
 	
 	assert_eq(result, {}, "Data obtained")
 
+func test_gather_data_awaits_data_retrieval() -> void:
+	var data: Dictionary = { "retrieved": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	
+	accessor.id = "accessor"
+	accessor.partition = "partition"
+	
+	stub(accessor.retrieve_data).to_call(
+		func() -> Dictionary:
+			await get_tree().create_timer(0.01).timeout
+			
+			return data
+	)
+	
+	var expected: Dictionary = {
+		"partition": {
+			"accessor": { "retrieved": true }
+		}
+	}
+	
+	manager.accessors = [ accessor ]
+	
+	var result: Dictionary = await manager.gather_data()
+	
+	assert_eq(result, expected, "Data collection wasn't awaited")
+
 #endregion
 
 #region Method distribute_result
