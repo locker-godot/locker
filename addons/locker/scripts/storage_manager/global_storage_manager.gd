@@ -332,7 +332,7 @@ func load_data(
 		version_numbers
 	)
 	
-	distribute_result(result, included_accessors)
+	await distribute_result(result, included_accessors)
 	
 	loading_finished.emit(result)
 	
