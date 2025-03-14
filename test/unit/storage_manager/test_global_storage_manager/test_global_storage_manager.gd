@@ -78,7 +78,7 @@ func test_get_file_path_returns_path_based_on_id() -> void:
 func test_collect_data_returns_empty_dict() -> void:
 	var expected: Dictionary = {}
 	
-	assert_eq(manager.collect_data(null, ""), expected, "Unexpected result")
+	assert_eq(await manager.collect_data(null, ""), expected, "Unexpected result")
 
 func test_collect_data_returns_sets_version_passed() -> void:
 	var expected: String = "2.0.0"
@@ -97,7 +97,7 @@ func test_collect_data_obtains_data_without_version() -> void:
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	stub(accessor.retrieve_data).to_return(expected.duplicate())
 	
-	var result: Dictionary = manager.collect_data(accessor, "1.0.0")
+	var result: Dictionary = await manager.collect_data(accessor, "1.0.0")
 	
 	assert_eq(result, expected, "Unexpected result")
 
@@ -111,7 +111,7 @@ func test_collect_data_obtains_data_with_version() -> void:
 	
 	expected["version"] = "1.0.0"
 	
-	var result: Dictionary = manager.collect_data(accessor, "1.0.0")
+	var result: Dictionary = await manager.collect_data(accessor, "1.0.0")
 	
 	assert_eq(result, expected, "Unexpected result")
 
@@ -123,7 +123,7 @@ func test_gather_data_ignores_unidentified_accessors() -> void:
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	stub(accessor.retrieve_data).to_return({ "accessor": true })
 	
-	var result: Dictionary = manager.gather_data()
+	var result: Dictionary = await manager.gather_data()
 	
 	assert_eq(result, {}, "Data obtained")
 
@@ -144,7 +144,7 @@ func test_gather_data_includes_identified_accessors() -> void:
 		}
 	}
 	
-	var result: Dictionary = manager.gather_data([], "1.0.0")
+	var result: Dictionary = await manager.gather_data([], "1.0.0")
 	
 	assert_eq(result, expected, "Data obtained")
 
@@ -165,7 +165,7 @@ func test_gather_data_includes_versions() -> void:
 		}
 	}
 	
-	var result: Dictionary = manager.gather_data([], "1.0.0")
+	var result: Dictionary = await manager.gather_data([], "1.0.0")
 	
 	assert_eq(result, expected, "Data obtained")
 
@@ -194,7 +194,7 @@ func test_gather_data_gets_from_multiple_accessors() -> void:
 		}
 	}
 	
-	var result: Dictionary = manager.gather_data([], "1.0.0")
+	var result: Dictionary = await manager.gather_data([], "1.0.0")
 	
 	assert_eq(result, expected, "Data obtained")
 
@@ -222,7 +222,7 @@ func test_gather_data_filters_accessors() -> void:
 		}
 	}
 	
-	var result: Dictionary = manager.gather_data([ accessor1 ], "1.0.0")
+	var result: Dictionary = await manager.gather_data([ accessor1 ], "1.0.0")
 	
 	assert_eq(result, expected, "Data obtained")
 
@@ -253,7 +253,7 @@ func test_gather_data_separates_partitions() -> void:
 		}
 	}
 	
-	var result: Dictionary = manager.gather_data([], "1.0.0")
+	var result: Dictionary = await manager.gather_data([], "1.0.0")
 	
 	assert_eq(result, expected, "Data obtained")
 
@@ -261,7 +261,7 @@ func test_gather_data_ignores_accessors_without_data() -> void:
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
 	stub(accessor.retrieve_data).to_return({})
 	
-	var result: Dictionary = manager.gather_data()
+	var result: Dictionary = await manager.gather_data()
 	
 	assert_eq(result, {}, "Data obtained")
 

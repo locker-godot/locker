@@ -151,7 +151,7 @@ func collect_data(
 	accessor.set_version_number(version_number)
 	
 	var accessor_version: String = accessor.get_version_number()
-	var accessor_data: Dictionary = accessor.retrieve_data()
+	var accessor_data: Dictionary = await accessor.retrieve_data()
 	
 	if accessor_data.is_empty():
 		return {}
@@ -203,7 +203,7 @@ func gather_data(
 		if not LokUtil.filter_value(included_accessors, accessor):
 			continue
 		
-		var accessor_data: Dictionary = collect_data(accessor, version_number)
+		var accessor_data: Dictionary = await collect_data(accessor, version_number)
 		
 		if accessor_data.is_empty():
 			continue
@@ -290,7 +290,7 @@ func save_data(
 	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var data: Dictionary = gather_data(included_accessors, version_number)
+	var data: Dictionary = await gather_data(included_accessors, version_number)
 	
 	saving_started.emit()
 	

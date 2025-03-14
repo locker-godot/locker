@@ -381,7 +381,7 @@ func retrieve_data() -> Dictionary:
 	if not is_active():
 		return {}
 	
-	return _version._retrieve_data(_get_dependencies())
+	return await _version._retrieve_data(_get_dependencies())
 
 ## The [method consume_data] method uses the
 ## [method LokStorageAccessorVersion._consume_data]
