@@ -305,7 +305,7 @@ func test_gather_data_awaits_data_retrieval() -> void:
 	
 	var result: Dictionary = await manager.gather_data()
 	
-	assert_eq(result, expected, "Data collection wasn't awaited")
+	assert_eq(result, expected, "Data gathering wasn't awaited")
 
 #endregion
 
@@ -373,6 +373,25 @@ func test_distribute_result_sends_according_to_ids() -> void:
 	
 	assert_called(accessor1, "consume_data", [ accessor1_data ])
 	assert_called(accessor2, "consume_data", [ accessor2_data ])
+
+func test_distribute_result_awaits_data_consumption() -> void:
+	var result: Dictionary = {}
+	var expected: Dictionary = { "consumed": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	
+	stub(accessor.consume_data).to_call(
+		func(_data: Dictionary) -> void:
+			await get_tree().create_timer(0.01).timeout
+			
+			result["consumed"] = true
+	)
+	
+	manager.accessors = [ accessor ]
+	
+	await manager.distribute_result({})
+	
+	assert_eq(result, expected, "Data distribution wasn't awaited")
 
 #endregion
 
