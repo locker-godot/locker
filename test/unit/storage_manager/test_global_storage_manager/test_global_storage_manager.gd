@@ -80,7 +80,7 @@ func test_collect_data_returns_empty_dict() -> void:
 	
 	assert_eq(await manager.collect_data(null, ""), expected, "Unexpected result")
 
-func test_collect_data_returns_sets_version_passed() -> void:
+func test_collect_data_sets_version_passed() -> void:
 	var expected: String = "2.0.0"
 	
 	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
@@ -114,6 +114,21 @@ func test_collect_data_obtains_data_with_version() -> void:
 	var result: Dictionary = await manager.collect_data(accessor, "1.0.0")
 	
 	assert_eq(result, expected, "Unexpected result")
+
+func test_collect_data_awaits_data_retrieval() -> void:
+	var expected: Dictionary = { "retrieved": true }
+	
+	var accessor: LokStorageAccessor = DoubledStorageAccessor.new()
+	stub(accessor.retrieve_data).to_call(
+		func() -> Dictionary:
+			await get_tree().create_timer(0.01).timeout
+			
+			return expected
+	)
+	
+	var result: Dictionary = await manager.collect_data(accessor)
+	
+	assert_eq(result, expected, "Data collection wasn't awaited")
 
 #endregion
 
