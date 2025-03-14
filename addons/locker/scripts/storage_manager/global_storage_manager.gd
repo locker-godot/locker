@@ -261,7 +261,7 @@ func distribute_result(
 		var accessor_version: String = accessor_data.get("version", "")
 		
 		accessor.set_version_number(accessor_version)
-		accessor.consume_data(accessor_result.duplicate(true))
+		await accessor.consume_data(accessor_result.duplicate(true))
 
 ## The [method get_saved_files_ids] method returns an [Array] of [String]s
 ## with the ids of all files saved in the [member saves_directory].
