@@ -290,9 +290,9 @@ func save_data(
 	var file_path: String = _get_file_path(file_id)
 	var file_format: String = save_files_format
 	
-	var data: Dictionary = await gather_data(included_accessors, version_number)
-	
 	saving_started.emit()
+	
+	var data: Dictionary = await gather_data(included_accessors, version_number)
 	
 	var result: Dictionary = await _access_executor.request_saving(
 		file_path, file_format, data, replace
