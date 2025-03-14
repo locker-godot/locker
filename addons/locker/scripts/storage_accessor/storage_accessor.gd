@@ -393,7 +393,7 @@ func consume_data(data: Dictionary) -> void:
 	if not is_active():
 		return
 	
-	_version._consume_data(data, _get_dependencies())
+	await _version._consume_data(data, _get_dependencies())
 
 ## The [method _find_version] method looks through all the
 ## [member versions] and returns the one that has same
