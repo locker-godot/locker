@@ -1,0 +1,88 @@
+name: Release
+run-name: 🚀 Generating Version or Release
+
+# Runs on pushes on main
+on:
+  push:
+    branches:
+      - main
+
+# Avoids simultaneous workflow instances
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+# Gives permission to create PRs and releases
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      # Checkouts the remote repository
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      # Installs NodeJS 20
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Installs dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Get new release versions in format "packageOne@x.y.z, packageTwo@x.y.z"
+      # Since this project only has the locker package, the output is something like "locker@x.y.z"
+      - name: Get new versions
+        run: |
+          npx @changesets/cli status --output=release.json || true
+
+          if [ ! -f "release.json" ]; then
+            exit 0
+          fi
+          
+          echo "CHANGED_PACKAGES=$(jq -r '.releases | map(.name + "@" + .newVersion) | join(", ")' release.json)" >> "$GITHUB_ENV"
+
+          rm release.json
+
+      # Uses package.json scripts to create a version PR or build a release
+      - name: Create Release Pull Request or Publish
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: npm run version
+          publish: npm run publish
+          commit: ":rocket: release: ${{ env.CHANGED_PACKAGES }}"
+          title: Created release ${{ env.CHANGED_PACKAGES }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Gets version tag if created
+      - name: Get version
+        id: get-version-tag
+        if: steps.changesets.outputs.published == 'true'
+        run: echo "version_tag=v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}" >> $GITHUB_OUTPUT
+
+      # Creates a Github Release
+      - name: Create GitHub Release
+        if: steps.changesets.outputs.published == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*.zip
+          generate_release_notes: false
+          tag_name: ${{ steps.get-version-tag.outputs.version_tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Publishes in the Godot Asset Lib
+      - name: Godot Asset Lib
+        if: steps.changesets.outputs.published == 'true'
+        uses: deep-entertainment/godot-asset-lib-action@v0.6.0
+        with:
+          username: nadjiel
+          password: ${{ secrets.ASSET_STORE_PASSWORD }}
+          assetId: 3765
+          assetTemplate: "build/asset-template.json.hb"

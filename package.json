@@ -1,0 +1,22 @@
+{
+  "name": "locker",
+  "version": "1.1.0",
+  "godotVersion": "4.3",
+  "repository": "https://github.com/locker-godot/locker",
+  "scripts": {
+    "install": "touch node_modules/.gdignore",
+    "change": "changeset add",
+    "version": "changeset version && node dev/version.js",
+    "build": "node dev/build.js",
+    "prepublish": "npm run build",
+    "publish": "node dev/publish.js && changeset publish"
+  },
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@changesets/cli": "^2.28.1",
+    "@types/adm-zip": "^0.5.7",
+    "adm-zip": "^0.5.16"
+  }
+}

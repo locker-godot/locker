@@ -20,3 +20,9 @@ mono_crash.*.json
 /saves/
 /test/saves/*
 /examples/**/saves/
+
+# NodeJS ignores
+node_modules/
+
+# Build ignores
+build/
