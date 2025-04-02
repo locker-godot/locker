@@ -155,6 +155,25 @@ Attribution is appreciated, but not necessary.
 </p>
 <p>If you use this project and you'd like to, let me know commenting on <a href="https://nadjiel.itch.io/locker" target="_blank">Itch.io</a>! I'd love to see what you can make with it :)</p>
 
+<h2>Disclaimer</h2>
+<p>
+This project uses some icons adapted from third party libraries. Here's a list of those icons, together with their licenses:
+</p>
+<dl>
+  <dt>Material Design Icons (Apache 2.0)</dt>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/access_executor.svg"><code>AccessExecutor</code> icon</a>, adapted from <a href="https://pictogrammers.com/library/mdi/icon/share/">"share"</a></dd>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/locker_plugin.svg"><code>LockerPlugin</code> icon</a>, adapted from <a href="https://pictogrammers.com/library/mdi/icon/locker-multiple/">"locker-multiple"</a></dd>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/accessor_group.svg"><code>AccessorGroup</code> icon</a>, adapted from <a href="https://pictogrammers.com/library/mdi/icon/content-save-edit/">"content-save-edit"</a></dd>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/storage_accessor.svg"><code>StorageAccessor</code> icon</a>, adapted from <a href="https://pictogrammers.com/library/mdi/icon/content-save-edit/">"content-save-edit"</a></dd>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/storage_accessor_version.svg"><code>StorageAccessorVersion</code> icon</a>, adapted from <a href="https://pictogrammers.com/library/mdi/icon/content-save-edit/">"content-save-edit"</a></dd>
+  <dt>JAM Icons (MIT)</dt>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/access_operation.svg"><code>AccessOperation</code> icon</a>, adapted from "write-f"</dd>
+  <dt>Bitcoin Icons (MIT)</dt>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/access_strategy.svg"><code>AccessStrategy</code> icon</a>, adapted from <a href="https://bitcoinicons.com/">"two keys"</a></dd>
+  <dt>Phosphor Icons (MIT)</dt>
+  <dd><a href="https://github.com/locker-godot/locker/blob/main/addons/locker/icons/util.svg"><code>Util</code> icon</a>, adapted from <a href="https://phosphoricons.com/?q=%22wrench%22">"wrench"</a></dd>
+</dl>
+
 <h2>Credits</h2>
 <p>Framework created with ❤️ by <a href="https://github.com/nadjiel" target="_blank">@nadjiel</a></p>
 
