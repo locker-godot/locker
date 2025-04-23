@@ -1,6 +1,6 @@
 {
   "name": "locker",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "godotVersion": "4.3",
   "repository": "https://github.com/locker-godot/locker",
   "scripts": {
