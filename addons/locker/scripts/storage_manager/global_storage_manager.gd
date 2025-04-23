@@ -17,8 +17,8 @@ extends LokStorageManager
 ## directory where the save files should be accessed. [br]
 ## By default, this property initializes with the value from the
 ## [code]"addons/locker/saves_directory"[/code] setting in the [ProjectSettings]
-## (which is created by the [LockerPlugin]).
-var saves_directory: String = LockerPlugin.get_setting_saves_directory():
+## (which is created by the [LockerPlugin] using the [LokSettingsManager]).
+var saves_directory: String = LokSettingsManager.get_setting_saves_directory():
 	set = set_saves_directory,
 	get = get_saves_directory
 
@@ -26,8 +26,9 @@ var saves_directory: String = LockerPlugin.get_setting_saves_directory():
 ## the prefix that should be used in the save files when creating them. [br]
 ## By default, this property initializes with the value from the
 ## [code]"addons/locker/save_files_prefix"[/code] setting in the
-## [ProjectSettings] (which is created by the [LockerPlugin]).
-var save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix():
+## [ProjectSettings] (which is created by the [LockerPlugin]
+## using the [LokSettingsManager]).
+var save_files_prefix: String = LokSettingsManager.get_setting_save_files_prefix():
 	set = set_save_files_prefix,
 	get = get_save_files_prefix
 
@@ -35,8 +36,9 @@ var save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix():
 ## the format that should be used in the save files when accessing them. [br]
 ## By default, this property initializes with the value from the
 ## [code]"addons/locker/save_files_format"[/code] setting in the
-## [ProjectSettings] (which is created by the [LockerPlugin]).
-var save_files_format: String = LockerPlugin.get_setting_save_files_format():
+## [ProjectSettings] (which is created by the [LockerPlugin]
+## using the [LokSettingsManager]).
+var save_files_format: String = LokSettingsManager.get_setting_save_files_format():
 	set = set_save_files_format,
 	get = get_save_files_format
 
@@ -46,8 +48,9 @@ var save_files_format: String = LockerPlugin.get_setting_save_files_format():
 ## [LokStorageAccessorVersion]s. [br]
 ## By default, this property initializes with the value from the
 ## [code]"addons/locker/save_versions"[/code] setting in the
-## [ProjectSettings] (which is created by the [LockerPlugin]).
-var save_versions: bool = LockerPlugin.get_setting_save_versions():
+## [ProjectSettings] (which is created by the [LockerPlugin]
+## using the [LokSettingsManager]).
+var save_versions: bool = LokSettingsManager.get_setting_save_versions():
 	set = set_save_versions,
 	get = get_save_versions
 
@@ -117,14 +120,14 @@ func get_access_strategy() -> LokAccessStrategy:
 
 # Initializes values according to ProjectSettings
 func _init() -> void:
-	set_access_strategy(LockerPlugin.get_setting_access_strategy_parsed())
+	set_access_strategy(LokSettingsManager.get_setting_access_strategy_parsed())
 	
 	var access_strategy: LokAccessStrategy = get_access_strategy()
 	
 	if access_strategy != null:
 		access_strategy.set(
 			&"password",
-			LockerPlugin.get_setting_encrypted_strategy_password()
+			LokSettingsManager.get_setting_encrypted_strategy_password()
 		)
 
 # Finalizes AccessExecutor's Thread

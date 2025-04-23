@@ -15,16 +15,16 @@ func load_scripts(path: String) -> Array[Script]:
 	return scripts
 
 func before_all() -> void:
-	_strategy_scripts = load_scripts(LockerPlugin.STRATEGY_SCRIPTS_PATH)
+	_strategy_scripts = load_scripts(LokSettingsManager.STRATEGY_SCRIPTS_PATH)
 
 func after_all() -> void:
 	queue_free()
 
 #region General behavior
 
-func test_locker_knows_strategies() -> void:
+func test_settings_manager_knows_strategies() -> void:
 	var expected: Array[Script] = _strategy_scripts
-	var result: Array[Script] = LockerPlugin._strategy_scripts
+	var result: Array[Script] = LokSettingsManager._strategy_scripts
 	
 	if expected.size() != result.size():
 		fail_test("Result had unexpected size")
@@ -37,18 +37,18 @@ func test_locker_knows_strategies() -> void:
 #region General Methods
 
 func test_set_setting_access_strategy_sets_JSON_strategy() -> void:
-	LockerPlugin.set_setting_access_strategy("JSON")
+	LokSettingsManager.set_setting_access_strategy("JSON")
 	
-	assert_eq(LockerPlugin.get_setting_access_strategy(), "JSON", "Unexpected strategy")
+	assert_eq(LokSettingsManager.get_setting_access_strategy(), "JSON", "Unexpected strategy")
 
 func test_get_setting_access_strategy_parsed_returns_JSON_strategy_instance() -> void:
-	LockerPlugin.set_setting_access_strategy("JSON")
+	LokSettingsManager.set_setting_access_strategy("JSON")
 	
-	assert_eq(str(LockerPlugin.get_setting_access_strategy_parsed()), "JSON", "Unexpected strategy")
+	assert_eq(str(LokSettingsManager.get_setting_access_strategy_parsed()), "JSON", "Unexpected strategy")
 
 func test_load_strategy_scripts_returns_scripts() -> void:
 	var expected: Array[Script] = _strategy_scripts
-	var result: Array[Script] = LockerPlugin._load_strategy_scripts()
+	var result: Array[Script] = LokSettingsManager._load_strategy_scripts()
 	
 	if expected.size() != result.size():
 		fail_test("Result had unexpected size")
@@ -64,7 +64,7 @@ func test_get_strategies_returns_strategy_instances() -> void:
 	
 	var result_str: Array[String] = []
 	
-	for strategy: LokAccessStrategy in LockerPlugin._get_strategies():
+	for strategy: LokAccessStrategy in LokSettingsManager._get_strategies():
 		result_str.append(str(strategy))
 	
 	if expected_str.size() != result_str.size():
@@ -84,7 +84,7 @@ func test_get_strategies_enum_string_includes_all_strategies() -> void:
 		if i != _strategy_scripts.size() - 1:
 			expected += ","
 	
-	var result: String = LockerPlugin._get_strategies_enum_string()
+	var result: String = LokSettingsManager._get_strategies_enum_string()
 	
 	assert_eq(result, expected, "Unexpected enum")
 
@@ -95,15 +95,15 @@ func test_get_strategies_enum_string_includes_all_strategies() -> void:
 func test_get_default_strategy_name_returns_whichever_if_not_found() -> void:
 	var strategy_names: Array[String] = []
 	
-	for strategy: LokAccessStrategy in LockerPlugin._get_strategies():
+	for strategy: LokAccessStrategy in LokSettingsManager._get_strategies():
 		strategy_names.append(str(strategy))
 	
-	var result: String = LockerPlugin._get_default_strategy_name("Unexisting")
+	var result: String = LokSettingsManager._get_default_strategy_name("Unexisting")
 	
 	assert_true(strategy_names.has(result), "Invalid strategy name")
 
 func test_get_default_strategy_name_returns_wanted_name() -> void:
-	var result: String = LockerPlugin._get_default_strategy_name("JSON")
+	var result: String = LokSettingsManager._get_default_strategy_name("JSON")
 	
 	assert_eq(result, "JSON", "JSON strategy not found")
 
@@ -112,17 +112,17 @@ func test_get_default_strategy_name_returns_wanted_name() -> void:
 #region _string_to_strategy
 
 func test_string_to_strategy_parses_encrypted_strategy() -> void:
-	var result: LokAccessStrategy = LockerPlugin._string_to_strategy("Encrypted")
+	var result: LokAccessStrategy = LokSettingsManager._string_to_strategy("Encrypted")
 	
 	assert_eq(str(result), "Encrypted", "Unexpected strategy")
 
 func test_string_to_strategy_parses_json_strategy() -> void:
-	var result: LokAccessStrategy = LockerPlugin._string_to_strategy("JSON")
+	var result: LokAccessStrategy = LokSettingsManager._string_to_strategy("JSON")
 	
 	assert_eq(str(result), "JSON", "Unexpected strategy")
 
 func test_string_to_strategy_doesnt_parse_unknown_strategy() -> void:
-	var result: LokAccessStrategy = LockerPlugin._string_to_strategy("Unknown")
+	var result: LokAccessStrategy = LokSettingsManager._string_to_strategy("Unknown")
 	
 	assert_null(result, "Unexpected strategy")
 
@@ -131,12 +131,12 @@ func test_string_to_strategy_doesnt_parse_unknown_strategy() -> void:
 #region Method _strategy_to_string
 
 func test_strategy_to_string_parses_encrypted_strategy() -> void:
-	var result: String = LockerPlugin._strategy_to_string(LokEncryptedAccessStrategy.new())
+	var result: String = LokSettingsManager._strategy_to_string(LokEncryptedAccessStrategy.new())
 	
 	assert_eq(result, "Encrypted", "Unexpected strategy")
 
 func test_strategy_to_string_parses_json_strategy() -> void:
-	var result: String = LockerPlugin._strategy_to_string(LokJSONAccessStrategy.new())
+	var result: String = LokSettingsManager._strategy_to_string(LokJSONAccessStrategy.new())
 	
 	assert_eq(result, "JSON", "Unexpected strategy")
 

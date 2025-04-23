@@ -27,12 +27,12 @@ func after_all() -> void:
 #region General behavior
 
 func test_initializes_with_project_settings() -> void:
-	var expected_saves_directory: String = LockerPlugin.get_setting_saves_directory()
-	var expected_save_files_prefix: String = LockerPlugin.get_setting_save_files_prefix()
-	var expected_save_files_format: String = LockerPlugin.get_setting_save_files_format()
-	var expected_save_versions: bool = LockerPlugin.get_setting_save_versions()
-	var expected_access_strategy: String = LockerPlugin.get_setting_access_strategy()
-	var expected_encrypted_strategy_password: String = LockerPlugin.get_setting_encrypted_strategy_password()
+	var expected_saves_directory: String = LokSettingsManager.get_setting_saves_directory()
+	var expected_save_files_prefix: String = LokSettingsManager.get_setting_save_files_prefix()
+	var expected_save_files_format: String = LokSettingsManager.get_setting_save_files_format()
+	var expected_save_versions: bool = LokSettingsManager.get_setting_save_versions()
+	var expected_access_strategy: String = LokSettingsManager.get_setting_access_strategy()
+	var expected_encrypted_strategy_password: String = LokSettingsManager.get_setting_encrypted_strategy_password()
 	
 	var saves_directory: String = manager.get_saves_directory()
 	var save_files_prefix: String = manager.get_save_files_prefix()
@@ -48,7 +48,7 @@ func test_initializes_with_project_settings() -> void:
 	assert_eq(save_files_prefix, expected_save_files_prefix, "Unexpected value")
 	assert_eq(save_files_format, expected_save_files_format, "Unexpected value")
 	assert_eq(save_versions, expected_save_versions, "Unexpected value")
-	assert_eq(LockerPlugin._strategy_to_string(access_strategy), expected_access_strategy, "Unexpected value")
+	assert_eq(LokSettingsManager._strategy_to_string(access_strategy), expected_access_strategy, "Unexpected value")
 	
 	if expected_access_strategy == "Encrypted":
 		assert_eq(encrypted_strategy_password, expected_encrypted_strategy_password, "Unexpected value")
