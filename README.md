@@ -10,7 +10,7 @@
     <img alt="Godot v4.3+" src="https://img.shields.io/badge/Godot_v4.3+-%23478cbf?color=478cbf&logo=godotengine&logoColor=ffedf5&style=for-the-badge" />
   </a>
   <a href="LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/locker-godot/locker?labelColor=fdf2ed&color=4F5D75&style=for-the-badge">
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-4F5D75?style=for-the-badge&labelColor=fdf2ed">
   </a>
   <a href="https://github.com/locker-godot/locker/releases">
     <img alt="Latest Release" src="https://img.shields.io/github/v/release/locker-godot/locker?labelColor=fdf2ed&color=2D3142&style=for-the-badge">
